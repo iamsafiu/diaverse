@@ -1,6 +1,8 @@
 # GBrain-First Workspace Rule
 
 - For architecture, cross-repo, dependency, ownership, docs, and impact questions, use local GBrain first when it is available.
+- Preferred lookup pattern: GBrain `list` or `search` -> GBrain `get` canonical page -> raw-file/source verification.
+- Do not use GBrain `query` as the only source for final answers; treat it as optional broad discovery.
 - Use source files for final evidence, line references, and correctness judgments.
 - If GBrain output conflicts with source code, trust source code and recommend a targeted GBrain sync.
 

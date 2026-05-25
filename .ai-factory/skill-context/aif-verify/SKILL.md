@@ -10,6 +10,8 @@ Rules:
 - Verify implementation against source files in each affected repository.
 - Run only verification commands that are appropriate for the affected repositories and available in their project files.
 - Use GBrain to trace cross-repo dependencies when useful, then verify with raw source.
+- Preferred lookup pattern: GBrain `list` or `search` -> GBrain `get` canonical page -> raw-file/source verification.
+- Do not use GBrain `query` as the only source for final answers; treat it as optional broad discovery.
 - If verification discovers stale knowledge, rerun targeted GBrain sync or `C:\Users\Indigo\Desktop\diaverse\scripts\gbrain-sync.ps1`.
 - Report results grouped by repository and include any remaining cross-repo risks.
 

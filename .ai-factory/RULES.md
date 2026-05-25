@@ -1,6 +1,8 @@
 # Workspace Rules
 
 - Prefer local GBrain for architecture, cross-repo, dependency, ownership, docs, and code navigation before broad raw-file search.
+- Preferred GBrain pattern: `list` or `search` -> `get` canonical page -> raw-file/source verification.
+- Do not use GBrain `query` as the only source for final answers; use it only for optional broad discovery.
 - Treat GBrain as a navigation and synthesis layer, not the final authority; verify exact behavior in source files or canonical docs before editing or reporting.
 - If GBrain output disagrees with source code, trust source code and refresh the affected GBrain source with `scripts\gbrain-sync.ps1` or a source-scoped sync command.
 - Do not expose GBrain through public HTTP MCP, ChatGPT connector, tunnel, or background daemon without a separate auth/security review.

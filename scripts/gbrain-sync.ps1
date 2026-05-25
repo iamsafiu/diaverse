@@ -37,8 +37,7 @@ function New-ImportMirror {
         [Parameter(Mandatory = $true)]
         [pscustomobject] $Source,
 
-        [Parameter(Mandatory = $true)]
-        [string[]] $ExcludeDirs
+        [string[]] $ExcludeDirs = @()
     )
 
     if (-not $ExcludeDirs -or $ExcludeDirs.Count -eq 0) {
@@ -139,7 +138,12 @@ $Sources = @(
 if ($SourceId -and $SourceId.Count -gt 0) {
     $wanted = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     foreach ($id in $SourceId) {
-        [void]$wanted.Add($id)
+        foreach ($part in ($id -split ',')) {
+            $normalized = $part.Trim()
+            if ($normalized) {
+                [void]$wanted.Add($normalized)
+            }
+        }
     }
     $Sources = @($Sources | Where-Object { $wanted.Contains($_.Id) })
 }

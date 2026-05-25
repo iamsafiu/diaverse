@@ -32,6 +32,16 @@ Diaverse использует локальный GBrain как навигаци�
 | `aibot-code` | `aibot/` | Copywriting service code lookup |
 | `club10000-bot-code` | `club10000-bot/` | Standalone bot code lookup |
 
+## Рекомендуемый Lookup Pattern
+
+Для важных ответов и работы агента GBrain используется как навигация, а не как единственный источник правды:
+
+1. `list` или `search` - найти подходящие страницы и source.
+2. `get` - прочитать canonical page целиком.
+3. Raw-file/source verification - проверить точное поведение в файлах проекта, коде или canonical docs.
+
+`query` можно использовать как дополнительный broad discovery, но не как единственный источник финального ответа, особенно пока embeddings отключены.
+
 ## Команды
 
 ```powershell

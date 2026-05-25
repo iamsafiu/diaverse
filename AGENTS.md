@@ -76,6 +76,8 @@ diaverse/
 
 - Before answering architecture, dependency, ownership, docs, or cross-repo impact questions, use local GBrain first when it is available.
 - Use `scripts/gbrain.ps1` as the wrapper; do not call a public GBrain HTTP/MCP service unless the user explicitly asks for a separately reviewed security setup.
+- Preferred lookup pattern: use GBrain `list` or `search` to find candidate pages, use GBrain `get` to read the canonical page, then verify exact behavior with raw files or source code.
+- Do not use GBrain `query` as the only source for final answers; treat it as optional broad discovery, especially while embeddings are disabled.
 - Prefer source-scoped lookups:
   - `diaverse-docs` for root documentation
   - `diaverse-aif` for AI Factory context

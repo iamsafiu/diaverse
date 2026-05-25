@@ -2,6 +2,8 @@
 
 - For architecture, cross-repo, dependency, ownership, docs, and impact questions, use local GBrain first when it is available.
 - Use `C:\Users\Indigo\Desktop\diaverse\scripts\gbrain.ps1` with source-scoped lookups before broad raw-file search.
+- Preferred lookup pattern: GBrain `list` or `search` -> GBrain `get` canonical page -> raw-file/source verification.
+- Do not use GBrain `query` as the only source for final answers; treat it as optional broad discovery.
 - Before changing code, verify the exact implementation in the owning repository source files.
 - If GBrain output conflicts with source code, trust source code and run targeted GBrain sync after the change.
 
