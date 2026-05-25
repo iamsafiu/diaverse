@@ -14,7 +14,6 @@ if (-not (Test-Path -LiteralPath $docsPath)) {
 
 $markdownFiles = Get-ChildItem -LiteralPath $docsPath -Recurse -File -Filter "*.md" |
     Where-Object {
-        $_.FullName -notmatch "\\graphify-out\\" -and
         $_.FullName -notmatch "\\docs\\daily\\\d{4}-\d{2}-\d{2}-"
     }
 

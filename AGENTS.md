@@ -20,18 +20,18 @@ diaverse/
 |-- AGENTS.md
 |-- README.md
 |-- .gitignore                  # Tracks workspace docs/context only
-|-- .ai-factory/                 # Cross-repo context only
+|-- .ai-factory/                # Cross-repo context only
 |-- .ai-factory.json            # Top-level AI Factory bootstrap
 |-- .codex/
+|   |-- hooks.json              # Workspace hooks
 |   `-- skills/                 # Workspace-level skills synced from diaweb
-|-- .mcp.json                   # Workspace MCP servers, including shared Graphify
-|-- .graphifyignore             # Shared Graphify exclusions
+|-- .mcp.json                   # Workspace MCP servers, no public GBrain connector
 |-- .tools/
-|   `-- graphify/               # Dedicated Graphify virtual environment
-|-- graphify-out/               # Shared generated knowledge graph artifacts (ignored by git)
+|   `-- gbrain/                 # Local GBrain clone, dependencies, and project brain state
 |-- docs/
 |   |-- README.md               # Documentation portal and navigation
 |   |-- documentation-system.md # Documentation quality and ownership rules
+|   |-- knowledge-system.md     # Local GBrain knowledge layer guide
 |   |-- architecture/           # Cross-repo architecture and maps
 |   |-- product/                # Product contracts and phase docs
 |   |-- features/               # Feature-specific living docs
@@ -48,10 +48,12 @@ diaverse/
 |   |-- daily-work-publish.ps1
 |   |-- daily_work_publish.py
 |   |-- docs-health.ps1
-|   |-- sync-aif-skills.ps1
-|   |-- graphify-build.ps1
-|   |-- graphify-rebuild.py
-|   `-- graphify-update.ps1
+|   |-- gbrain.ps1
+|   |-- gbrain-bootstrap.ps1
+|   |-- gbrain-sources.ps1
+|   |-- gbrain-sync.ps1
+|   |-- gbrain-health.ps1
+|   `-- sync-aif-skills.ps1
 |-- diaweb/                     # Frontend git repo (ignored by root git)
 |-- diaverseapi/                # Backend git repo (ignored by root git)
 |-- aibot/                      # Copywriting service git repo (ignored by root git)
@@ -67,28 +69,33 @@ diaverse/
 - Club10000 bot implementation and restored bot DB truth lives in `club10000-bot`
 - Cross-repo documentation portal lives in `diaverse/docs/README.md`
 - Root git repository truth covers only workspace docs, AI context, and shared scripts
-- Shared graph summary lives in `diaverse/graphify-out/GRAPH_REPORT.md`
-- Shared graph data lives in `diaverse/graphify-out/graph.json`
+- Local knowledge navigation is provided by GBrain sources registered through `scripts/gbrain-sources.ps1`
 
-## Graphify First
+## GBrain First
 
-- Before answering architecture, dependency, ownership, or cross-repo impact questions, consult `C:\Users\Indigo\Desktop\diaverse\graphify-out\GRAPH_REPORT.md`
-- If Graphify MCP is available, query the graph before broad raw-file search
-- Use raw-file search and source reads after that for exact verification, code edits, and line-accurate confirmation
-- If the graph and source code disagree, trust source code and refresh Graphify
+- Before answering architecture, dependency, ownership, docs, or cross-repo impact questions, use local GBrain first when it is available.
+- Use `scripts/gbrain.ps1` as the wrapper; do not call a public GBrain HTTP/MCP service unless the user explicitly asks for a separately reviewed security setup.
+- Prefer source-scoped lookups:
+  - `diaverse-docs` for root documentation
+  - `diaverse-aif` for AI Factory context
+  - `diaweb-code`, `diaverseapi-code`, `aibot-code`, and `club10000-bot-code` for code repositories
+- Use raw-file search and source reads after GBrain for exact verification, code edits, and line-accurate confirmation.
+- If GBrain output and source code disagree, trust source code and refresh the relevant GBrain source.
 
-## Graphify Operations
+## GBrain Operations
 
-- Full workspace rebuild: `powershell -ExecutionPolicy Bypass -File C:\Users\Indigo\Desktop\diaverse\scripts\graphify-build.ps1`
-- Incremental code refresh: `powershell -ExecutionPolicy Bypass -File C:\Users\Indigo\Desktop\diaverse\scripts\graphify-update.ps1`
-- Direct CLI query: `C:\Users\Indigo\Desktop\diaverse\.tools\graphify\.venv\Scripts\python.exe -m graphify query "show the auth flow" --graph C:\Users\Indigo\Desktop\diaverse\graphify-out\graph.json`
-- If the graph goes stale or disagrees with source code, trust the source, then rerun the refresh script from the workspace root
+- Bootstrap local runtime: `powershell -ExecutionPolicy Bypass -File C:\Users\Indigo\Desktop\diaverse\scripts\gbrain-bootstrap.ps1`
+- Register/update sources: `powershell -ExecutionPolicy Bypass -File C:\Users\Indigo\Desktop\diaverse\scripts\gbrain-sources.ps1`
+- Sync all sources: `powershell -ExecutionPolicy Bypass -File C:\Users\Indigo\Desktop\diaverse\scripts\gbrain-sync.ps1`
+- Health check: `powershell -ExecutionPolicy Bypass -File C:\Users\Indigo\Desktop\diaverse\scripts\gbrain-health.ps1`
+- Example docs lookup: `powershell -ExecutionPolicy Bypass -File C:\Users\Indigo\Desktop\diaverse\scripts\gbrain.ps1 list --source diaverse-docs --limit 10`
+- Example code lookup: `powershell -ExecutionPolicy Bypass -File C:\Users\Indigo\Desktop\diaverse\scripts\gbrain.ps1 code-def CopywritingDailyView --json`
 
 ## Workspace AIF Helpers
 
 - Multi-repo status: `powershell -ExecutionPolicy Bypass -File C:\Users\Indigo\Desktop\diaverse\scripts\aif-workspace-status.ps1`
 - Create or switch a shared branch in selected repos: `powershell -ExecutionPolicy Bypass -File C:\Users\Indigo\Desktop\diaverse\scripts\aif-workspace-branch.ps1 -Branch feature/<slug> -Repos diaweb,diaverseapi,club10000-bot -Create`
-- These helpers are safety rails for AIF `full` mode; they do not make the top-level folder a git repository
+- These helpers are safety rails for AIF `full` mode; they do not make the top-level folder a deployable application.
 
 ## AI Factory Usage
 
@@ -116,6 +123,7 @@ When running from `C:\Users\Indigo\Desktop\diaverse`, normal AIF `full` mode mea
 - For multi-repo full plans, use one branch slug across affected repositories, but do not use `codex/` in branch names; prefer normal prefixes such as `feature/`, `fix/`, `chore/`, `refactor/`, or `test/`
 - Before switching branches in a child repository, check for uncommitted changes and pause if branch switching would mix unrelated work
 - During implementation, keep the single top-level plan as the progress source of truth and mark task checkboxes there
+- After meaningful docs or code changes, run targeted GBrain sync or `scripts/gbrain-sync.ps1`; do not auto-capture raw conversations
 - `diaweb` is the only browser-facing entrypoint for staff copywriting flows
 - `diaverseapi` owns auth, RBAC, cabinet APIs, logging, guest flows, and payment integrations
 - `aibot` owns internal copywriting workflows, source-backed planning, and draft generation
@@ -134,12 +142,3 @@ When running from `C:\Users\Indigo\Desktop\diaverse`, normal AIF `full` mode mea
 - Daily entries must not include secrets, tokens, raw environment values, private SSH commands, SSH key paths, internal IPs, private infrastructure details, raw stack traces with sensitive values, or other internal-only notes in `Public digest`
 - Prefer product/user-facing phrasing in `Public digest`; keep implementation details, file names, and debugging context in `Internal log`
 - Mention daily-log writes in the final answer when a task updated the current `docs/daily/YYYY-MM-DD-<author>.md`
- 
-## graphify
-
-This project has a graphify knowledge graph at graphify-out/.
-
-Rules:
-- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
-- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
-- After modifying code files in this session, run `powershell -ExecutionPolicy Bypass -File C:\Users\Indigo\Desktop\diaverse\scripts\graphify-update.ps1` to keep the shared graph current

@@ -1,38 +1,55 @@
 # Research
 
-Updated: 2026-04-21 18:01
+Updated: 2026-05-25 15:45
 Status: ready
 
 ## Active Summary (input for /aif-plan)
 <!-- aif:active-summary:start -->
-Topic: Workspace-level Graphify and AI Factory integration for the full Diaverse system
-Goal: Use one shared AI workspace over `diaweb`, `diaverseapi`, `aibot`, and `club10000-bot` with one common Graphify graph and top-level AIF control plane for cross-repo planning, implementation, review, verification, and commits.
+Topic: Workspace-level GBrain and AI Factory integration for the full Diaverse system
+Goal: Use one shared AI workspace over `diaweb`, `diaverseapi`, `aibot`, and `club10000-bot` with local GBrain sources and top-level AIF control plane for cross-repo planning, implementation, review, verification, and commits.
 Constraints:
   - Keep the child repositories separate; do not create a monorepo
   - The workspace root is a lightweight git repository for documentation, AI context, shared scripts, and workspace config only
   - Repo-local source code remains the final authority
   - Top-level AIF should coordinate cross-repo work without collapsing the child repositories into a monorepo
   - Repo-local AI context is reference/fallback context unless the user explicitly asks to work inside one repository in isolation
+  - Keep GBrain local CLI-first; no public HTTP MCP, no ChatGPT connector, and no automatic raw conversation capture by default
 Decisions:
   - Use `C:\Users\Indigo\Desktop\diaverse` as the shared workspace root
-  - Keep one canonical Graphify graph in `graphify-out/`
+  - Keep local GBrain project state under `.tools/gbrain/home`
+  - Register stable source IDs for root docs, AI Factory context, and each child code repository
   - Use top-level AIF for cross-repo planning, implementation, review, verification, and commit coordination
   - Keep branches, status checks, staging, and commits inside `diaweb`, `diaverseapi`, `aibot`, and `club10000-bot`
   - Keep the top-level plan as the single progress source of truth for workspace-run implementations
   - Sync top-level Codex skills from `diaweb/.agents/skills`
-  - Install Graphify in a dedicated workspace venv under `.tools/graphify/.venv`
 Open questions:
-  - None at the moment
+  - Whether to enable embeddings later after the no-embedding baseline is stable
 Success signals:
   - Top-level Codex sessions can plan, implement, review, verify, and coordinate commits naturally from `diaverse`
-  - Graphify builds and updates against the full workspace
-  - Repo-level sessions in `diaweb`, `diaverseapi`, `aibot`, and `club10000-bot` can all reach the same shared graph
-  - Agents consult the graph first for cross-repo reasoning
-Next step: Use the shared graph as the default cross-repo navigation layer, run AIF from the workspace root by default, and rerun the refresh scripts whenever the code and graph drift
+  - GBrain health checks pass against `diaverse-docs`, `diaverse-aif`, `diaweb-code`, `diaverseapi-code`, `aibot-code`, and `club10000-bot-code`
+  - Agents use GBrain first for cross-repo navigation, then verify exact source files and canonical docs
+Next step: Use local GBrain as the default cross-repo navigation layer, run AIF from the workspace root by default, and rerun GBrain sync whenever code or long-lived docs change
 <!-- aif:active-summary:end -->
 
 ## Sessions
 <!-- aif:sessions:start -->
+### 2026-05-25 - Local GBrain workspace knowledge layer
+What changed:
+  Switched the active workspace knowledge decision to local GBrain sources over root documentation, AI Factory context, and the four child code repositories.
+
+Key notes:
+  - GBrain is local CLI-first through `scripts/gbrain.ps1`
+  - Project-local state lives under `.tools/gbrain/home`
+  - Stable source IDs are `diaverse-docs`, `diaverse-aif`, `diaweb-code`, `diaverseapi-code`, `aibot-code`, and `club10000-bot-code`
+  - No public HTTP MCP, ChatGPT connector, tunnel, daemon, or raw conversation auto-capture is enabled by default
+  - Source code and canonical docs remain the final authority
+
+Links (paths):
+  - `C:\Users\Indigo\Desktop\diaverse\scripts\gbrain.ps1`
+  - `C:\Users\Indigo\Desktop\diaverse\scripts\gbrain-sync.ps1`
+  - `C:\Users\Indigo\Desktop\diaverse\scripts\gbrain-health.ps1`
+  - `C:\Users\Indigo\Desktop\diaverse\docs\knowledge-system.md`
+
 ### 2026-04-28 - Pets and pet skins source of truth
 What changed:
   Captured the backend catalog model for Diaverse pets and pet skins after the production audit showed mixed base pets, legacy character variants, default visuals, and item skins.

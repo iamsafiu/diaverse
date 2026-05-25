@@ -2,19 +2,19 @@
 
 > Единый вход в документацию workspace `diaverse`.
 
-Этот каталог хранит долгоживущую документацию для всех связанных репозиториев:
-`diaweb`, `diaverseapi`, `aibot` и `club10000-bot`. Кодовая истина остается в
-дочерних репозиториях, но продуктовые контракты, cross-repo runbook'и,
-исследования, задачи и daily logs собираются здесь.
+Этот каталог хранит долгоживущую документацию для связанных репозиториев: `diaweb`, `diaverseapi`, `aibot` и `club10000-bot`. Кодовая истина остается в дочерних репозиториях, а продуктовые контракты, cross-repo runbook'и, исследования, задачи и daily logs собираются здесь.
 
 ## Быстрый Старт
 
 ```powershell
-# Проверить структуру, старые пути и локальные ссылки в документации
+# Проверить структуру, старые пути и локальные markdown-ссылки
 powershell -ExecutionPolicy Bypass -File .\scripts\docs-health.ps1
 
-# Обновить shared Graphify после существенных правок docs или кода
-powershell -ExecutionPolicy Bypass -File .\scripts\graphify-update.ps1
+# Синхронизировать локальный GBrain после существенных правок docs или кода
+powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-sync.ps1
+
+# Проверить GBrain источники и базовые smoke checks
+powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 ```
 
 ## Основные Разделы
@@ -22,6 +22,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\graphify-update.ps1
 | Раздел | Назначение |
 | --- | --- |
 | [Documentation System](documentation-system.md) | Правила качества, владельцы, статусы, review cadence |
+| [Knowledge System](knowledge-system.md) | Локальный GBrain, source IDs, sync/health команды, ограничения безопасности |
 | [Product](product/master-plan.md) | Master plan, фазы, исходные продуктовые спецификации |
 | [Architecture](architecture/copywriting-web-architecture.md) | Cross-repo архитектура, file maps, ключевые потоки |
 | [Features](features/cabinet/shop-web.md) | Живые документы по auth, RBAC, shop, Advent, pets, analytics |
@@ -37,6 +38,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\graphify-update.ps1
 | Документ | Путь | Когда читать |
 | --- | --- | --- |
 | Documentation System | [documentation-system.md](documentation-system.md) | Перед изменением docs |
+| Knowledge System | [knowledge-system.md](knowledge-system.md) | Перед GBrain sync, troubleshooting или изменением knowledge workflow |
 | Workspace Architecture | [../.ai-factory/ARCHITECTURE.md](../.ai-factory/ARCHITECTURE.md) | Перед cross-repo решениями |
 | Product Master Plan | [product/master-plan.md](product/master-plan.md) | Перед изменением продуктового scope |
 | Copywriting Web Architecture | [architecture/copywriting-web-architecture.md](architecture/copywriting-web-architecture.md) | Перед изменением staff copywriting |
@@ -49,8 +51,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\graphify-update.ps1
 
 ## Repo-Local Документация
 
-Не все документы нужно переносить сюда. Узкие документы, которые живут рядом с
-кодом и обслуживают только один runtime, остаются в своем репозитории:
+Не все документы нужно переносить сюда. Узкие документы, которые живут рядом с кодом и обслуживают только один runtime, остаются в своем репозитории:
 
 | Репозиторий | Примеры |
 | --- | --- |
@@ -58,11 +59,10 @@ powershell -ExecutionPolicy Bypass -File .\scripts\graphify-update.ps1
 | `aibot` | `aibot/docs/web-copywriting-service.md`, `aibot/docs/ops-alerts.md` |
 | `club10000-bot` | `club10000-bot/docs/referral_system.md` |
 
-Если документ описывает интеграцию двух и более репозиториев, он должен жить в
-корневом `docs/`.
+Если документ описывает интеграцию двух и более репозиториев, он должен жить в корневом `docs/`.
 
 ## See Also
 
 - [Documentation System](documentation-system.md) - правила актуальности и checks.
+- [Knowledge System](knowledge-system.md) - локальный GBrain и workflow обновления знаний.
 - [Workspace Map](../AGENTS.md) - правила работы AI agents в workspace.
-- [Graph Report](../graphify-out/GRAPH_REPORT.md) - текущая карта связей проекта.

@@ -1,9 +1,8 @@
 # Diaverse Workspace
 
-> Coordination repository for Diaverse documentation, AI context, and shared workspace scripts.
+> Coordination repository for Diaverse documentation, AI context, local knowledge tooling, and shared workspace scripts.
 
-This repository does not contain the product source code. The runtime code stays in four
-independent child repositories:
+This repository does not contain the product source code. The runtime code stays in four independent child repositories:
 
 - `diaweb` - Next.js web frontend and same-origin BFF layer.
 - `diaverseapi` - FastAPI backend for auth, cabinet, payments, RBAC, and staff domains.
@@ -17,13 +16,12 @@ independent child repositories:
 | `docs/` | Cross-repo documentation, runbooks, research, tasks, and daily logs |
 | `.ai-factory/` | Workspace AI Factory context, plans, rules, and research |
 | `.codex/skills/` | Workspace-level Codex skills |
-| `scripts/` | Workspace maintenance, docs, daily work, and Graphify helper scripts |
+| `scripts/` | Workspace maintenance, docs, daily work, and GBrain helper scripts |
 | `AGENTS.md` | Workspace map for AI agents |
 
 ## What This Repo Does Not Track
 
-The child repositories are ignored here because they have their own remotes,
-branches, commits, and release workflows:
+The child repositories are ignored here because they have their own remotes, branches, commits, and release workflows:
 
 ```text
 diaweb/
@@ -32,8 +30,7 @@ aibot/
 club10000-bot/
 ```
 
-Generated Graphify outputs, local browser profiles, screenshots, credentials,
-environment files, and temporary artifacts are also ignored.
+Local runtime state under `.tools/`, browser profiles, screenshots, credentials, environment files, and temporary artifacts are also ignored.
 
 ## Common Commands
 
@@ -44,15 +41,23 @@ powershell -ExecutionPolicy Bypass -File .\scripts\docs-health.ps1
 # Check all child repository statuses
 powershell -ExecutionPolicy Bypass -File .\scripts\aif-workspace-status.ps1
 
-# Refresh Graphify when you intentionally want to update the shared graph
-powershell -ExecutionPolicy Bypass -File .\scripts\graphify-update.ps1
+# Bootstrap local GBrain if needed
+powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-bootstrap.ps1
+
+# Register/update GBrain source definitions
+powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-sources.ps1
+
+# Sync GBrain sources after meaningful docs or code changes
+powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-sync.ps1
+
+# Verify local GBrain health
+powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 ```
 
 ## Documentation
 
-Start at [docs/README.md](docs/README.md).
+Start at [docs/README.md](docs/README.md). The local knowledge layer is documented in [docs/knowledge-system.md](docs/knowledge-system.md).
 
 ## Repository Boundary
 
-Commit documentation and workspace context changes here. Commit application code
-inside the owning child repository.
+Commit documentation and workspace context changes here. Commit application code inside the owning child repository.

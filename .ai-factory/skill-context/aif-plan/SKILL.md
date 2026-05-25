@@ -1,9 +1,9 @@
-# Graph-First Workspace Rule
+# GBrain-First Workspace Rule
 
-- For architecture, cross-repo, dependency, ownership, and impact questions, first consult `C:\Users\Indigo\Desktop\diaverse\graphify-out\GRAPH_REPORT.md`.
-- If Graphify MCP is available, query the graph before broad raw-file search.
-- Use raw-file reads after that for verification, exact edits, and line-accurate confirmation.
-- If graph output conflicts with source code, trust source code and note that the graph should be refreshed.
+- For architecture, cross-repo, dependency, ownership, docs, and impact questions, use local GBrain first when it is available.
+- Use `C:\Users\Indigo\Desktop\diaverse\scripts\gbrain.ps1` and source-scoped lookups before broad raw-file search.
+- Use raw-file reads after GBrain for verification, exact edits, and line-accurate confirmation.
+- If GBrain output conflicts with source code, trust source code and plan a targeted GBrain sync.
 
 ## Diaverse Multi-Repo Full Mode
 
@@ -17,7 +17,7 @@ When `$aif-plan full` is invoked from `C:\Users\Indigo\Desktop\diaverse`, overri
 Planning rules:
 
 - Use the top-level `.ai-factory` as the source of truth for the plan.
-- Read the shared Graphify report before broad file search.
+- Use GBrain first for cross-repo navigation, then verify affected files with source reads.
 - Detect affected repositories from the requested feature and from source verification.
 - Do not create branches in unaffected repositories.
 - Use one branch slug across affected repositories. Do not use `codex/` in branch names. Prefer normal branch prefixes such as `feature/`, `fix/`, `chore/`, `refactor/`, or `test/`.
@@ -25,7 +25,7 @@ Planning rules:
 - If a child repository has unrelated uncommitted changes, pause and ask before switching branches.
 - Store the master plan under `C:\Users\Indigo\Desktop\diaverse\.ai-factory\plans\<branch-slug>.md`.
 - If a fast plan is requested, store it in `C:\Users\Indigo\Desktop\diaverse\.ai-factory\PLAN.md` and do not create branches.
-- Never run `git checkout`, `git switch`, `git branch`, `git commit`, or `git merge` against the top-level `diaverse` folder.
+- Never run `git checkout`, `git switch`, `git branch`, `git commit`, or `git merge` against the top-level `diaverse` folder for product code.
 
 Multi-repo full plan format:
 
@@ -33,7 +33,7 @@ Multi-repo full plan format:
 ## Workspace Mode
 - Mode: multi-repo full
 - Workspace root: C:\Users\Indigo\Desktop\diaverse
-- Shared graph: C:\Users\Indigo\Desktop\diaverse\graphify-out\graph.json
+- Knowledge: local GBrain sources via scripts\gbrain.ps1
 
 ## Repository Matrix
 | Repository | Path | Affected | Branch | Git status | Role |
@@ -55,7 +55,7 @@ Multi-repo full plan format:
 - diaverseapi: <pytest/alembic/type/lint commands if applicable>
 - aibot: <pytest/lint commands if applicable>
 - club10000-bot: <pytest/lint/docker commands if applicable>
-- graph: refresh Graphify after code changes
+- knowledge: run targeted GBrain sync after meaningful code/docs changes
 
 ## Commit Plan
 - diaweb: <conventional commit suggestion>

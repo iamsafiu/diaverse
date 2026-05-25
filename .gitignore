@@ -8,7 +8,6 @@
 !README.md
 !AGENTS.md
 !.ai-factory.json
-!.graphifyignore
 !.mcp.json
 
 # Documentation and workspace scripts.
@@ -38,8 +37,6 @@ __pycache__/
 .tmp/
 .tools/
 .worktrees/
-graphify-out/
-graphify-out.rar
 screens/
 tmp*/
 tmp-*/

@@ -340,8 +340,7 @@ Preflight before enabling live propagation:
   `CLUB_EXPIRY_SCAN_DRY_RUN=true`, and
   `CLUB_EXPIRY_AUTO_REMOVE_ENABLED=false` stay enabled through the first
   reconciliation pass.
-- Graphify refresh is intentionally skipped for this rollout until the user
-  explicitly re-allows it.
+- Run targeted GBrain sync after changing this runbook or related club code.
 
 During live reconciliation, operators should capture these identifiers for each
 manual decision or support case:

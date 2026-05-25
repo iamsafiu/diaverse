@@ -18,20 +18,25 @@ Shared coordination workspace for the Diaverse system. This folder groups the we
 ## Shared AI Layer
 
 - **AI Factory:** project planning, implementation workflow, research, and repo-local execution
-- **Graphify:** shared knowledge graph over all four repositories and related docs
+- **GBrain:** local project knowledge layer over root docs, AI context, and child repository code sources
 - **Codex Skills:** workspace-level skills live in `.codex/skills/` and are synced from `diaweb/.agents/skills`
-- **MCP:** top-level `.mcp.json` exposes workspace tools including the shared Graphify server
-- **Root repository:** tracks `docs/`, `.ai-factory/`, `.codex/skills/`, `scripts/`, and workspace config; ignores child repository contents and generated artifacts
+- **MCP:** top-level `.mcp.json` exposes general workspace tools only; GBrain is local CLI-first and not exposed as a public connector by default
+- **Root repository:** tracks `docs/`, `.ai-factory/`, `.codex/skills/`, `scripts/`, and workspace config; ignores child repository contents and local runtime state
 
-## Shared Graph
+## Local GBrain
 
-- Graph root: `C:\Users\Indigo\Desktop\diaverse`
-- Report: `C:\Users\Indigo\Desktop\diaverse\graphify-out\GRAPH_REPORT.md`
-- Data: `C:\Users\Indigo\Desktop\diaverse\graphify-out\graph.json`
-- Visual graph: `C:\Users\Indigo\Desktop\diaverse\graphify-out\graph.html`
+- Wrapper: `C:\Users\Indigo\Desktop\diaverse\scripts\gbrain.ps1`
+- Bootstrap: `C:\Users\Indigo\Desktop\diaverse\scripts\gbrain-bootstrap.ps1`
+- Source registration: `C:\Users\Indigo\Desktop\diaverse\scripts\gbrain-sources.ps1`
+- Sync: `C:\Users\Indigo\Desktop\diaverse\scripts\gbrain-sync.ps1`
+- Health check: `C:\Users\Indigo\Desktop\diaverse\scripts\gbrain-health.ps1`
+- Local state: `C:\Users\Indigo\Desktop\diaverse\.tools\gbrain\home`
+- Source IDs: `diaverse-docs`, `diaverse-aif`, `diaweb-code`, `diaverseapi-code`, `aibot-code`, `club10000-bot-code`
 
 ## Non-Goals
 
 - This workspace is not a monorepo and does not version child repository source code
 - This workspace is not a deployable product
 - This workspace does not replace repo-local source of truth
+- GBrain is not exposed through public HTTP MCP or ChatGPT connector without a separate auth/security review
+- Raw conversations are not auto-captured into GBrain

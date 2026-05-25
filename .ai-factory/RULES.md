@@ -1,8 +1,10 @@
 # Workspace Rules
 
-- Always prefer the shared Graphify report or Graphify MCP for architecture and cross-repo questions before broad raw-file search.
-- Trust source code over graph output when they disagree, then refresh the graph.
-- Refresh the shared graph with `scripts\graphify-build.ps1` or `scripts\graphify-update.ps1` instead of calling raw `graphify update .` directly from the workspace.
+- Prefer local GBrain for architecture, cross-repo, dependency, ownership, docs, and code navigation before broad raw-file search.
+- Treat GBrain as a navigation and synthesis layer, not the final authority; verify exact behavior in source files or canonical docs before editing or reporting.
+- If GBrain output disagrees with source code, trust source code and refresh the affected GBrain source with `scripts\gbrain-sync.ps1` or a source-scoped sync command.
+- Do not expose GBrain through public HTTP MCP, ChatGPT connector, tunnel, or background daemon without a separate auth/security review.
+- Do not auto-capture raw user/Codex conversations into GBrain.
 - Use top-level `diaverse\.ai-factory` as the primary operational AIF context for cross-repo plans, implementation, review, and verification.
 - In the top-level workspace, AIF `full` mode means multi-repo full mode over affected child repositories for product code, plus root repo operations only for root-owned docs/context/scripts.
 - Keep product-code branches, status checks, staging, and commits inside the owning child repositories: `diaweb`, `diaverseapi`, `aibot`, and `club10000-bot`.

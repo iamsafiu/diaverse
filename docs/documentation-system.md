@@ -9,8 +9,7 @@
 - где находится источник правды по домену;
 - что нужно обновить, когда меняется код, контракт или операция.
 
-Корневой `docs/` является порталом для cross-repo знаний. Repo-local документы
-остаются рядом с кодом, если они полезны только одному сервису.
+Корневой `docs/` является порталом для cross-repo знаний. Repo-local документы остаются рядом с кодом, если они полезны только одному сервису.
 
 ## Статусы Документов
 
@@ -35,8 +34,7 @@ review_after: YYYY-MM-DD
 ---
 ```
 
-Для старых документов metadata можно добавлять постепенно при следующем
-существенном изменении.
+Для старых документов metadata можно добавлять постепенно при следующем существенном изменении.
 
 ## Владение
 
@@ -60,13 +58,23 @@ review_after: YYYY-MM-DD
 После изменения:
 
 1. Запустить docs health check.
-2. Если менялся код или долгоживущие docs, обновить Graphify.
+2. Если менялся код или долгоживущие docs, синхронизировать GBrain.
 3. Для meaningful task добавить daily entry, если пользователь не сказал `bez daily` или `no daily`.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\docs-health.ps1
-powershell -ExecutionPolicy Bypass -File .\scripts\graphify-update.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-sync.ps1
 ```
+
+## Связь С GBrain
+
+GBrain помогает быстро находить документы, связи и символы, но не заменяет source of truth. Ответы GBrain нужно подтверждать:
+
+- canonical docs для продуктовых и операционных контрактов;
+- source code для фактического поведения;
+- git status/diff для текущего незакоммиченного состояния.
+
+Сырые переписки и внутренние sensitive детали не должны автоматически попадать в GBrain. `docs/daily` используется для локального аудита, а публичной частью daily считается только `Public digest`.
 
 ## Критерии Качества
 
@@ -74,7 +82,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\graphify-update.ps1
 | --- | --- |
 | Навигация | Документ найден из [README](README.md) или связан из canonical doc |
 | H1 | У активных docs есть один понятный заголовок |
-| Актуальность | Нет ссылок на старые локальные пути из прежнего `Saf` workspace или отдельного `diaweb` checkout |
+| Актуальность | Нет ссылок на старые локальные пути из прежнего workspace или отдельного checkout |
 | Ссылки | Локальные markdown-ссылки ведут на существующие файлы |
 | Читаемость | Короткие секции, таблицы для структурированных данных, без длинных стен текста |
 | Безопасность | Нет секретов, токенов, raw env values или приватных инфраструктурных деталей в публичных разделах |
@@ -82,5 +90,6 @@ powershell -ExecutionPolicy Bypass -File .\scripts\graphify-update.ps1
 ## See Also
 
 - [Docs README](README.md) - карта разделов документации.
+- [Knowledge System](knowledge-system.md) - GBrain source IDs, команды и troubleshooting.
 - [Workspace Map](../AGENTS.md) - правила workspace и Daily Work.
 - [Product Master Plan](product/master-plan.md) - продуктовый источник правды.

@@ -6,11 +6,11 @@ Rules:
 
 - Use the top-level plan in `diaverse\.ai-factory\PLAN.md` or `diaverse\.ai-factory\plans\*.md`.
 - Read the plan's repository matrix or infer affected repositories from completed tasks.
-- Check git status separately for `diaweb`, `diaverseapi`, and `aibot`; never check or commit at the top-level workspace as if it were a git repository.
+- Check git status separately for `diaweb`, `diaverseapi`, `aibot`, and `club10000-bot`; never check or commit at the top-level workspace as if it were a product repository.
 - Verify implementation against source files in each affected repository.
 - Run only verification commands that are appropriate for the affected repositories and available in their project files.
-- Use Graphify to trace cross-repo dependencies, then verify with raw source.
-- If verification discovers graph drift, rerun `C:\Users\Indigo\Desktop\diaverse\scripts\graphify-update.ps1`.
+- Use GBrain to trace cross-repo dependencies when useful, then verify with raw source.
+- If verification discovers stale knowledge, rerun targeted GBrain sync or `C:\Users\Indigo\Desktop\diaverse\scripts\gbrain-sync.ps1`.
 - Report results grouped by repository and include any remaining cross-repo risks.
 
 ## PostgreSQL Migration Verification Guard

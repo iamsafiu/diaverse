@@ -17,14 +17,12 @@ The workspace root adds AI coordination and documentation versioning only. It do
 diaverse/
 |-- .gitignore           # Root repo tracks workspace docs/context only
 |-- README.md            # Root repository landing page
-|-- .ai-factory/         # Cross-repo context and graph-first rules
+|-- .ai-factory/         # Cross-repo context and GBrain-first rules
 |-- .codex/skills/       # Workspace-level skill pack
 |-- .mcp.json            # Workspace MCP registry
-|-- .graphifyignore      # Shared graph exclusions
-|-- .tools/graphify/     # Graphify runtime
-|-- graphify-out/        # Shared generated graph outputs, ignored by root git
+|-- .tools/gbrain/       # Local GBrain runtime and project brain state
 |-- docs/                # Cross-repo runbooks, task briefs, and daily work logs
-|-- scripts/             # Workspace maintenance and daily work scripts
+|-- scripts/             # Workspace maintenance, GBrain, and daily work scripts
 |-- diaweb/              # Frontend repo, ignored by root git
 |-- diaverseapi/         # Backend repo, ignored by root git
 |-- aibot/               # Copywriting service repo, ignored by root git
@@ -75,9 +73,9 @@ Notification creation is a side effect of reward, payment, shop, and guest entit
 
 ```text
 workspace .ai-factory -> cross-repo architecture, research, rules
-repo .ai-factory -> local implementation context
-Graphify -> shared navigation layer over all repos
-source code -> final authority when graph and code disagree
+repo .ai-factory      -> local implementation context
+GBrain                -> local navigation layer over docs, AIF context, and repo code
+source code           -> final authority when GBrain and code disagree
 ```
 
 ## Operating Model
@@ -86,6 +84,7 @@ source code -> final authority when graph and code disagree
 
 - Use top-level AIF from `C:\Users\Indigo\Desktop\diaverse` as the primary control plane for Diaverse work
 - In the workspace root, normal `full` planning means multi-repo full mode over affected child repositories
+- Use GBrain first for architecture, ownership, dependency, and docs lookup
 - Store cross-repo master plans under `diaverse/.ai-factory/plans/`
 - Use repo-level AIF only as an explicit fallback when the user wants to isolate work inside one child repository
 
@@ -96,14 +95,16 @@ source code -> final authority when graph and code disagree
 - Keep progress checkboxes in the top-level plan for workspace-run implementations
 - Commit product code inside each repository that owns changes
 - Commit top-level workspace files in the root repository only when the change is limited to documentation, AI context, shared scripts, or workspace config
-- Keep top-level workspace files focused on coordination, AI context, Graphify helpers, documentation, and scripts
+- Keep top-level workspace files focused on coordination, AI context, GBrain helpers, documentation, and scripts
+- After meaningful code or docs changes, run targeted GBrain sync or `scripts/gbrain-sync.ps1`
 
-### Graphify
+### GBrain
 
-- Build the graph from the workspace root
-- Keep one canonical shared graph in `graphify-out/`
-- Use Graphify summary or MCP queries first for architecture questions
-- Refresh the graph after meaningful code or docs changes
+- Use project-local GBrain state under `.tools/gbrain/home`
+- Keep GBrain source IDs stable so docs, AIF context, and each child repo remain queryable separately
+- Use `list` and code-symbol commands as the no-embedding baseline; keyword search may be enabled or tested separately
+- Do not expose GBrain through public HTTP/MCP or ChatGPT connector by default
+- Do not auto-capture every conversation into GBrain
 
 ### Multi-Repo Full Mode
 
@@ -112,14 +113,14 @@ diaverse/.ai-factory/plans/<branch-slug>.md
         |
         | owns one cross-repo plan
         v
-  +-----------+      +--------------+      +--------+      +---------+
-  |  diaweb   |      | diaverseapi  |      | aibot  |      | club10000 |
-  | git repo  |      | git repo     |      | git    |      | git     |
-  +-----------+      +--------------+      +--------+      +---------+
-       |                    |                  |                |
-       v                    v                  v                v
-  branch/status        branch/status       branch/status    branch/status
-  commit here          commit here         commit here      commit here
+  +-----------+      +--------------+      +--------+      +-------------+
+  |  diaweb   |      | diaverseapi  |      | aibot  |      | club10000   |
+  | git repo  |      | git repo     |      | git    |      | git repo    |
+  +-----------+      +--------------+      +--------+      +-------------+
+       |                    |                  |                  |
+       v                    v                  v                  v
+  branch/status        branch/status       branch/status      branch/status
+  commit here          commit here         commit here        commit here
 ```
 
 Rules:

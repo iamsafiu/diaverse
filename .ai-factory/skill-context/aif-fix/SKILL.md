@@ -1,9 +1,8 @@
-# Graph-First Workspace Rule
+# GBrain-First Workspace Rule
 
-- For architecture, cross-repo, dependency, ownership, and impact questions, first consult `C:\Users\Indigo\Desktop\diaverse\graphify-out\GRAPH_REPORT.md`.
-- If Graphify MCP is available, query the graph before broad raw-file search.
-- Use raw-file reads after that for verification, exact edits, and line-accurate confirmation.
-- If graph output conflicts with source code, trust source code and note that the graph should be refreshed.
+- For architecture, cross-repo, dependency, ownership, docs, and impact questions, use local GBrain first when it is available.
+- Use raw-file reads after GBrain for verification, exact edits, and line-accurate confirmation.
+- If GBrain output conflicts with source code, trust source code and plan a targeted GBrain sync.
 
 ## Diaverse Multi-Repo Fix Mode
 
@@ -11,10 +10,10 @@ When `$aif-fix` is invoked from `C:\Users\Indigo\Desktop\diaverse`, diagnose and
 
 Rules:
 
-- Use Graphify first to identify likely affected repositories.
+- Use GBrain first to identify likely affected repositories.
 - Verify the exact bug path in source files before editing.
-- The fix may touch `diaweb`, `diaverseapi`, and `aibot` in one pass when the bug crosses repo boundaries.
+- The fix may touch `diaweb`, `diaverseapi`, `aibot`, and `club10000-bot` in one pass when the bug crosses repo boundaries.
 - Read the owning repository `AGENTS.md` before editing files there.
-- Keep git operations per child repository and never against the top-level workspace.
+- Keep git operations per child repository and never against the top-level workspace for product code.
 - If the fix requires a plan, store the fix plan under top-level `diaverse\.ai-factory\FIX_PLAN.md`.
-- After code changes, refresh Graphify with the shared update script unless the user asks to skip it.
+- After meaningful code or docs changes, run targeted GBrain sync or `scripts\gbrain-sync.ps1`.

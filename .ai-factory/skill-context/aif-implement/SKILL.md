@@ -1,9 +1,9 @@
-# Graph-First Workspace Rule
+# GBrain-First Workspace Rule
 
-- For architecture, cross-repo, dependency, ownership, and impact questions, first consult `C:\Users\Indigo\Desktop\diaverse\graphify-out\GRAPH_REPORT.md`.
-- If Graphify MCP is available, query the graph before broad raw-file search.
+- For architecture, cross-repo, dependency, ownership, docs, and impact questions, use local GBrain first when it is available.
+- Use `C:\Users\Indigo\Desktop\diaverse\scripts\gbrain.ps1` with source-scoped lookups before broad raw-file search.
 - Before changing code, verify the exact implementation in the owning repository source files.
-- If graph output conflicts with source code, trust source code and note that the graph should be refreshed.
+- If GBrain output conflicts with source code, trust source code and run targeted GBrain sync after the change.
 
 ## Diaverse Multi-Repo Implementation Mode
 
@@ -15,14 +15,14 @@ Implementation rules:
 - Do not search for branch-named plans inside child repositories unless the user explicitly passes an `@plan-file` path there.
 - Before editing code, run or mentally follow the workspace status check for affected repositories.
 - Read the owning repository `AGENTS.md` before editing files in that repository.
-- Use Graphify first for cross-repo navigation, then verify exact source files before edits.
+- Use GBrain first for cross-repo navigation, then verify exact source files before edits.
 - Execute one task at a time and keep task checkboxes in the top-level plan synchronized.
-- Tasks should be tagged with repository ownership such as `[diaweb]`, `[diaverseapi]`, `[aibot]`, or `[cross-repo]`.
+- Tasks should be tagged with repository ownership such as `[diaweb]`, `[diaverseapi]`, `[aibot]`, `[club10000-bot]`, or `[cross-repo]`.
 - A `[cross-repo]` task may edit multiple child repositories, but the final summary must list changes grouped per repository.
 - Run top-level `diaverse` git operations only for root-owned documentation, AI context, shared scripts, and workspace config. Never stage or commit child repository source trees from the root repo.
 - If the plan requires branch checks, use child-repo commands such as `git -C diaweb status --short`.
-- After changing code, refresh the shared graph with `scripts\graphify-update.ps1` unless the user asks to skip it.
-- If source code and Graphify disagree, trust source code and refresh the graph.
+- After meaningful code or docs changes, run targeted GBrain sync or `scripts\gbrain-sync.ps1`.
+- If source code and GBrain disagree, trust source code and refresh the affected source.
 
 Do not redirect the user to run `$aif-implement` inside each child repository. The preferred workflow is one top-level implementation pass from `C:\Users\Indigo\Desktop\diaverse`.
 

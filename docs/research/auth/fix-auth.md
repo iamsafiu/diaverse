@@ -1,25 +1,25 @@
 # Auth Fix Research
 
-Сделал мягкий переход.
+Историческая заметка по мягкому переходу auth cookies.
 
-Что изменилось:
+## Что Изменилось
 
-- Backend теперь умеет настраиваемые cookie names: `CABINET_ACCESS_COOKIE_NAME`, `CABINET_REFRESH_COOKIE_NAME`.
+- Backend поддерживает настраиваемые cookie names: `CABINET_ACCESS_COOKIE_NAME`, `CABINET_REFRESH_COOKIE_NAME`.
 - Legacy-чтение старых `access_token` / `refresh_token` включается только флагом `CABINET_LEGACY_COOKIE_READ_ENABLED=true`.
 - При выдаче новых cookie backend также удаляет старые legacy-cookie, если имена отличаются.
-- Frontend `proxy.ts`, cabinet layout и staff BFF теперь читают env-specific cookie names.
+- Frontend `proxy.ts`, cabinet layout и staff BFF читают env-specific cookie names.
 - Добавлены тесты на два главных сценария: dev игнорирует prod legacy-cookie, prod умеет временно мигрировать legacy refresh-cookie.
 - Миграции БД не нужны.
 
-Проверки:
+## Проверки
 
-- `npm.cmd test -- __tests__/proxy.test.ts` — 14 passed
-- `npm.cmd run typecheck` — passed
-- `python -m pytest tests/test_cabinet_auth.py -q -k "cabinet_probe or cabinet_refresh or logout"` — 10 passed
-- `ruff check ...` по изменённым backend-файлам — passed
-- Graphify не запускал, как попросил.
+- `npm.cmd test -- __tests__/proxy.test.ts` - 14 passed.
+- `npm.cmd run typecheck` - passed.
+- `python -m pytest tests/test_cabinet_auth.py -q -k "cabinet_probe or cabinet_refresh or logout"` - 10 passed.
+- `ruff check ...` по измененным backend-файлам - passed.
+- Knowledge refresh не запускался в рамках этой исторической заметки.
 
-Как включать:
+## Как Включать
 
 Dev:
 
@@ -46,9 +46,3 @@ NEXT_PUBLIC_CABINET_LEGACY_COOKIE_READ_ENABLED=true
 ```
 
 Порядок деплоя для prod: сначала frontend с новыми именами и legacy-read `true`, потом backend с теми же именами и legacy-read `true`. После периода миграции можно выключить legacy-read в обоих местах: `false`.
-
-Graphify потом, если понадобится:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File C:\Users\Indigo\Desktop\diaverse\scripts\graphify-update.ps1
-```
