@@ -23,6 +23,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | --- | --- |
 | [Documentation System](documentation-system.md) | Правила качества, владельцы, статусы, review cadence |
 | [Knowledge System](knowledge-system.md) | Локальный GBrain, source IDs, sync/health команды, ограничения безопасности |
+| [Infrastructure](infrastructure/README.md) | Server topology, deployment matrix, domains, ports, paths, and safe inventory workflow |
 | [Product](product/master-plan.md) | Master plan, фазы, исходные продуктовые спецификации |
 | [Architecture](architecture/copywriting-web-architecture.md) | Cross-repo архитектура, file maps, ключевые потоки |
 | [Features](features/cabinet/shop-web.md) | Живые документы по auth, RBAC, shop, Advent, pets, analytics |
@@ -39,6 +40,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | --- | --- | --- |
 | Documentation System | [documentation-system.md](documentation-system.md) | Перед изменением docs |
 | Knowledge System | [knowledge-system.md](knowledge-system.md) | Перед GBrain sync, troubleshooting или изменением knowledge workflow |
+| Infrastructure | [infrastructure/README.md](infrastructure/README.md) | Перед server inventory, deploy topology changes или runtime troubleshooting |
 | Workspace Architecture | [../.ai-factory/ARCHITECTURE.md](../.ai-factory/ARCHITECTURE.md) | Перед cross-repo решениями |
 | Product Master Plan | [product/master-plan.md](product/master-plan.md) | Перед изменением продуктового scope |
 | Copywriting Web Architecture | [architecture/copywriting-web-architecture.md](architecture/copywriting-web-architecture.md) | Перед изменением staff copywriting |
@@ -65,4 +67,5 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 
 - [Documentation System](documentation-system.md) - правила актуальности и checks.
 - [Knowledge System](knowledge-system.md) - локальный GBrain и workflow обновления знаний.
+- [Infrastructure](infrastructure/README.md) - server topology and safe inventory workflow.
 - [Workspace Map](../AGENTS.md) - правила работы AI agents в workspace.

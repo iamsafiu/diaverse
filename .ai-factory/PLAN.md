@@ -1,4 +1,4 @@
-# Implementation Plan: Replace Graphify With Local GBrain Knowledge Layer
+# Implementation Plan: Server Infrastructure Documentation Inventory
 
 Created: 2026-05-25
 Mode: AIF fast plan, workspace root, no branch changes
@@ -6,283 +6,266 @@ Workspace: `C:\Users\Indigo\Desktop\diaverse`
 
 ## Settings
 
-- Testing: yes - include health checks, dry-runs, docs checks, and GBrain smoke queries.
-- Logging: standard - PowerShell helpers must print `INFO`, `WARN`, `ERROR`; use `DEBUG` only for non-secret diagnostic details.
-- Docs: yes - this migration changes the workspace operating model, so documentation updates are mandatory.
+- Testing: yes - include docs health, script dry-run/help checks, sanitized output review, and GBrain sync/health.
+- Logging: standard - PowerShell helpers must print `INFO`, `WARN`, `ERROR`; use `DEBUG` only for non-secret diagnostics.
+- Docs: yes - this task is documentation-first and must update the docs portal.
 - Roadmap Linkage: none, no `.ai-factory\ROADMAP.md` found.
-- Graphify: remove operationally. Do not run `graphify-build.ps1`, `graphify-update.ps1`, or any Graphify MCP query during implementation.
-- GBrain mode: local CLI first. No public HTTP MCP, no ChatGPT connector, no ngrok/tunnel, no auto-capture of every user message.
-- Safety: the user has a backup copy of `diaverse`, but implementation should still use git status/diff checks and avoid touching child repo source code unless explicitly needed.
+- GBrain: use local GBrain first for docs/navigation context, then verify with raw files and live read-only server inventory.
+- Safety: do not commit secrets, tokens, raw env values, private key contents, raw SSH key paths, private infrastructure-only logs, or destructive commands. Inventory must be read-only.
 
 ## Goal
 
-Replace the current Graphify-first workspace knowledge layer with a local GBrain-based knowledge layer that can answer questions over:
+Create a maintainable server documentation system for Diaverse infrastructure:
 
-- root workspace docs and AI context;
-- child repository codebases as separate GBrain sources;
-- documentation quality and freshness checks.
+- production server;
+- development server;
+- foreign server used for bots and landing/runtime workloads;
+- the services, paths, Docker/Compose projects, reverse proxies, ports, data volumes, logs, backups, and health checks that live on those servers.
 
-The end state should make GBrain the default local lookup path for Diaverse architecture, ownership, dependency, and documentation questions, while source code remains the final authority.
+The end state should let an AI agent quickly answer operational questions like:
+
+- which server runs `diaweb`, `diaverseapi`, `aibot`, or `club10000-bot`;
+- where compose files and repo checkouts live;
+- which containers and reverse-proxy routes are expected;
+- how to inspect, restart, update, or rollback a service safely;
+- when the infrastructure docs were last verified.
 
 ## Non-Goals
 
-- Do not expose GBrain over public HTTP MCP.
-- Do not connect GBrain to ChatGPT web connector in this migration.
-- Do not enable background auto-capture of every Codex/user message.
-- Do not merge child repositories into the root repository.
-- Do not rewrite historical daily logs just to remove old Graphify mentions; remove active operational references and leave immutable history unless the user later asks for a history scrub.
+- Do not change server configuration or restart services during inventory.
+- Do not deploy code.
+- Do not edit product repositories.
+- Do not copy `.env` contents or secrets into documentation.
+- Do not store raw inventory dumps in git.
+- Do not rely on GBrain as the final authority for live server state; live read-only inventory and source files remain the authority.
 
 ## Research Context
 
-The current workspace still has Graphify embedded in active rules and tooling:
+Existing documentation already has operational runbooks:
 
-- `.mcp.json` exposes a `graphify` MCP server.
-- `AGENTS.md`, `.ai-factory\RULES.md`, `.ai-factory\ARCHITECTURE.md`, `.ai-factory\DESCRIPTION.md`, and skill-context files are Graphify-first.
-- `.codex\hooks.json` injects a Graphify reminder before shell usage.
-- `.codex\skills\graphify` exists and `scripts\sync-aif-skills.ps1` can re-overlay it from `C:\Users\Indigo\.agents\skills\graphify`.
-- `scripts\graphify-build.ps1`, `scripts\graphify-update.ps1`, and `scripts\graphify-rebuild.py` are active workspace helpers.
-- `graphify-out\` and `graphify-out.rar` are local generated artifacts ignored by root git.
+- `docs\runbooks\copywriting-production-runtime.md`
+- `docs\runbooks\deploy-vps.md`
+- `docs\runbooks\dev-site-deployment.md`
+- `docs\runbooks\install-vps.md`
+- `docs\runbooks\update-vps.md`
+- `docs\runbooks\update-vps-backend.md`
+- `docs\runbooks\nginx\diaweb-copywriting.conf`
 
-GBrain research from `garrytan/gbrain` shows:
+These should remain action-oriented runbooks. New infrastructure docs should describe current topology and live server inventory:
 
-- Local CLI is sufficient for the first phase: `gbrain search`, `gbrain query`, `gbrain code-def`, `gbrain code-refs`, `gbrain code-callers`, `gbrain code-callees`.
-- GBrain supports multi-source brains, so each Diaverse repo can remain separate.
-- GBrain supports code indexing with `sync --strategy code`, tree-sitter chunking, and symbol/call graph commands.
-- GBrain docs require an operator checkpoint after `gbrain init` when it prints the search-mode cost matrix; implementation must pause and relay that choice instead of silently accepting expensive defaults.
+```text
+docs/infrastructure/
+|-- README.md
+|-- deployment-matrix.md
+|-- domains-and-ports.md
+|-- servers/
+|   |-- prod.md
+|   |-- dev.md
+|   `-- bots-landing.md
+`-- services/
+    |-- diaweb.md
+    |-- diaverseapi.md
+    |-- aibot.md
+    |-- club10000-bot.md
+    `-- reverse-proxy.md
+```
+
+## Server Access Model
+
+Use local SSH aliases in operator machines rather than documenting long SSH commands everywhere:
+
+```text
+diaverse-prod
+diaverse-dev
+diaverse-bots
+```
+
+The implementation may use the SSH details supplied by the user to perform read-only inventory, but committed docs should prefer aliases and sanitized facts. If IP addresses are included, they must be treated as operational infrastructure data and must not be copied into public daily digests or public posts.
 
 ## Target Model
 
 ```text
-Codex / shell
-     |
-     v
-local GBrain CLI
-     |
-     +-- source: diaverse-docs        -> C:\Users\Indigo\Desktop\diaverse\docs
-     +-- source: diaverse-aif         -> C:\Users\Indigo\Desktop\diaverse\.ai-factory
-     +-- source: diaweb-code          -> C:\Users\Indigo\Desktop\diaverse\diaweb
-     +-- source: diaverseapi-code     -> C:\Users\Indigo\Desktop\diaverse\diaverseapi
-     +-- source: aibot-code           -> C:\Users\Indigo\Desktop\diaverse\aibot
-     +-- source: club10000-bot-code   -> C:\Users\Indigo\Desktop\diaverse\club10000-bot
+live servers
+   |
+   | read-only SSH inventory
+   v
+.tmp/server-inventory/        # raw/sanitized snapshots, ignored by git
+   |
+   | curated human review
+   v
+docs/infrastructure/          # canonical committed docs
+   |
+   | docs-health + GBrain sync
+   v
+local GBrain source diaverse-docs
 ```
-
-Root docs and `.ai-factory` should be indexed as markdown knowledge. Child repos should be indexed as code sources first. If repo-local docs are not covered well by `strategy=code`, add repo-docs sources later instead of indexing the whole workspace root recursively.
 
 ## Repository Matrix
 
 | Repository / Area | Path | Affected | Branch changes | Role |
 | --- | --- | --- | --- | --- |
-| root `diaverse` repo | `C:\Users\Indigo\Desktop\diaverse` | yes | none in fast mode | Owns docs, AIF context, scripts, MCP config, hooks, root README/AGENTS |
-| `diaweb` | `C:\Users\Indigo\Desktop\diaverse\diaweb` | read/index only | none | GBrain code source; no product edits planned |
-| `diaverseapi` | `C:\Users\Indigo\Desktop\diaverse\diaverseapi` | read/index only | none | GBrain code source; no product edits planned |
-| `aibot` | `C:\Users\Indigo\Desktop\diaverse\aibot` | read/index only | none | GBrain code source; no product edits planned |
-| `club10000-bot` | `C:\Users\Indigo\Desktop\diaverse\club10000-bot` | read/index only | none | GBrain code source; no product edits planned |
+| root `diaverse` repo | `C:\Users\Indigo\Desktop\diaverse` | yes | none in fast mode | Owns docs, scripts, AI context, GBrain sync |
+| `diaweb` | `C:\Users\Indigo\Desktop\diaverse\diaweb` | read-only reference | none | Service docs source; no product edits |
+| `diaverseapi` | `C:\Users\Indigo\Desktop\diaverse\diaverseapi` | read-only reference | none | Service docs source; no product edits |
+| `aibot` | `C:\Users\Indigo\Desktop\diaverse\aibot` | read-only reference | none | Service docs source; no product edits |
+| `club10000-bot` | `C:\Users\Indigo\Desktop\diaverse\club10000-bot` | read-only reference | none | Service docs source; no product edits |
+| live servers | SSH aliases listed above | read-only inventory | none | Runtime truth for deployed topology |
 
 ## Tasks
 
-### Phase 1 - Bootstrap Local GBrain
+### Phase 1 - Define Infrastructure Documentation Shape
 
-- [x] Task 1: Install or wire GBrain in a reversible local way.
+- [x] Task 1: Create the infrastructure documentation skeleton and templates.
   - Files/paths:
-    - `.tools\gbrain\` for local clone/runtime if global `gbrain` is unavailable.
-    - `scripts\gbrain-bootstrap.ps1`
-    - `scripts\gbrain.ps1`
+    - `docs\infrastructure\README.md`
+    - `docs\infrastructure\servers\prod.md`
+    - `docs\infrastructure\servers\dev.md`
+    - `docs\infrastructure\servers\bots-landing.md`
+    - `docs\infrastructure\services\*.md`
   - Deliverable:
-    - A repeatable bootstrap script that checks `bun`, checks whether `gbrain` is available, and either uses the existing CLI or prepares a local deterministic clone under `.tools\gbrain`.
-    - The script must not install public HTTP services or background daemons.
-    - If `gbrain init` prints an `[AGENT]` search-mode cost matrix, stop and ask the user which mode to use before continuing.
+    - Canonical sections for role, access alias, paths, Docker/Compose, systemd, reverse proxy, domains, data/volumes, backups, health checks, update/restart links, and `last_verified`.
+    - Clear separation between topology docs and action runbooks.
+    - Explicit safety note that secrets/raw env/private keys are never committed.
   - Logging:
-    - `INFO [gbrain]` for detected Bun/GBrain paths and selected install mode.
-    - `WARN [gbrain]` for missing CLI, missing API keys, or fallback-to-local-clone.
-    - `ERROR [gbrain]` for failed install/init.
-    - Never print API keys, tokens, DB URLs, or full environment values.
+    - No runtime logging required for docs-only edits.
   - Dependencies:
     - None.
 
-- [x] Task 2: Initialize the local GBrain brain and register Diaverse sources.
+- [x] Task 2: Update documentation navigation for infrastructure docs.
   - Files/paths:
-    - `scripts\gbrain-sources.ps1`
-    - optional local-only state in `~\.gbrain` and `.tools\gbrain\`
-  - Deliverable:
-    - Local PGLite/default GBrain initialized.
-    - Sources registered with stable IDs:
-      - `diaverse-docs` -> `docs`, markdown strategy.
-      - `diaverse-aif` -> `.ai-factory`, markdown strategy.
-      - `diaweb-code` -> `diaweb`, code strategy.
-      - `diaverseapi-code` -> `diaverseapi`, code strategy.
-      - `aibot-code` -> `aibot`, code strategy.
-      - `club10000-bot-code` -> `club10000-bot`, code strategy.
-    - Use explicit `--source` arguments in scripts; do not add `.gbrain-source` files inside child repos unless we intentionally decide to track them.
-  - Logging:
-    - `INFO [gbrain]` for each source add/update.
-    - `WARN [gbrain]` when a source already exists with a different path or strategy.
-    - `DEBUG [gbrain]` may print source IDs and paths, but no credentials.
-  - Dependencies:
-    - Depends on Task 1.
-
-- [x] Task 3: Sync and smoke-test GBrain without embeddings first.
-  - Files/paths:
-    - `scripts\gbrain-sync.ps1`
-    - `scripts\gbrain-health.ps1`
-  - Deliverable:
-    - Dry-run sync before real sync for every source.
-    - Initial sync can use no-embed/keyword/code metadata mode first, so the migration proves basic lookup without API spend.
-    - Smoke queries:
-      - `gbrain search "cabinet auth"` against docs/AIF.
-      - `gbrain search "club payment"` against docs/AIF.
-      - `gbrain code-def CopywritingDailyView` against `diaweb-code`.
-      - `gbrain code-def TelegramService` against `aibot-code`.
-      - one `code-callers` or `code-refs` check on a symbol that exists after indexing.
-    - Capture failed/missing symbols as implementation notes and adjust source strategy only if needed.
-  - Logging:
-    - `INFO [gbrain]` for dry-run counts, sync counts, and smoke-query pass/fail.
-    - `WARN [gbrain]` for empty sources, skipped embeddings, missing expected symbols, or unsupported file types.
-    - `ERROR [gbrain]` for failed sync.
-  - Dependencies:
-    - Depends on Task 2.
-
-### Phase 2 - Remove Graphify Operational Surface
-
-- [x] Task 4: Remove Graphify runtime, generated artifacts, MCP entry, and scripts.
-  - Files/paths:
-    - `.mcp.json`
-    - `.gitignore`
-    - `.graphifyignore`
-    - `.tools\graphify\`
-    - `graphify-out\`
-    - `graphify-out.rar`
-    - `scripts\graphify-build.ps1`
-    - `scripts\graphify-update.ps1`
-    - `scripts\graphify-rebuild.py`
-  - Deliverable:
-    - `.mcp.json` no longer exposes Graphify.
-    - Graphify runtime/generated artifacts removed from the workspace.
-    - Root `.gitignore` removes Graphify-specific tracking/ignore exceptions and keeps `.tools\` ignored for local runtime state.
-    - No Graphify command remains as an active workspace helper.
-  - Logging:
-    - `INFO [cleanup]` for every removed path category.
-    - `WARN [cleanup]` for already-missing paths.
-    - `ERROR [cleanup]` only if deletion fails after path validation.
-  - Dependencies:
-    - Depends on successful GBrain smoke tests from Task 3.
-
-- [x] Task 5: Remove Graphify from Codex skills/hooks and prevent reintroduction.
-  - Files/paths:
-    - `.codex\hooks.json`
-    - `.codex\skills\graphify\`
-    - `scripts\sync-aif-skills.ps1`
-  - Deliverable:
-    - PreToolUse hook stops injecting Graphify instructions.
-    - Graphify skill directory removed from top-level `.codex\skills`.
-    - `sync-aif-skills.ps1` no longer overlays `C:\Users\Indigo\.agents\skills\graphify`.
-    - Optional replacement hook may remind agents that GBrain is local CLI only, but it must not run GBrain automatically before every shell command.
-  - Logging:
-    - `INFO [skills]` for sync behavior changes.
-    - `WARN [skills]` if legacy Graphify skill is found outside the workspace but intentionally ignored.
-  - Dependencies:
-    - Depends on Task 4.
-
-### Phase 3 - Switch Workspace Rules And Documentation To GBrain
-
-- [x] Task 6: Update active AI Factory and agent rules from Graphify-first to GBrain-first.
-  - Files/paths:
-    - `AGENTS.md`
-    - `.ai-factory\DESCRIPTION.md`
-    - `.ai-factory\ARCHITECTURE.md`
-    - `.ai-factory\RULES.md`
-    - `.ai-factory\RESEARCH.md`
-    - `.ai-factory\skill-context\aif-plan\SKILL.md`
-    - `.ai-factory\skill-context\aif-implement\SKILL.md`
-    - `.ai-factory\skill-context\aif-verify\SKILL.md`
-    - `.ai-factory\skill-context\aif-review\SKILL.md`
-    - `.ai-factory\skill-context\aif-fix\SKILL.md`
-    - `.ai-factory\skill-context\aif-explore\SKILL.md`
-  - Deliverable:
-    - Replace Graphify-first guidance with:
-      - GBrain-first for architecture, ownership, dependency, docs, and code lookup.
-      - `rg`/raw source reads remain required for exact verification and line-accurate code edits.
-      - Source code remains final authority if GBrain output disagrees.
-      - No Graphify refresh step after code/docs changes.
-    - Active `.ai-factory\RESEARCH.md` summary should describe the new GBrain decision. Historical sessions may remain as history.
-  - Logging:
-    - No runtime logging required, but implementation notes should list every updated context file.
-  - Dependencies:
-    - Depends on Tasks 3-5.
-
-- [x] Task 7: Update documentation system around GBrain.
-  - Files/paths:
-    - `README.md`
     - `docs\README.md`
     - `docs\documentation-system.md`
-    - new `docs\knowledge-system.md` or `docs\gbrain.md`
+    - optionally `AGENTS.md` if workspace structure map needs the new folder.
   - Deliverable:
-    - Root README and docs portal describe GBrain as the local knowledge layer.
-    - Documentation workflow explains:
-      - docs health check remains mandatory;
-      - GBrain sync replaces Graphify update;
-      - GBrain answers are navigation/synthesis, not final source truth;
-      - no auto-capture of raw conversations;
-      - no public HTTP MCP by default.
-    - New GBrain/knowledge-system doc includes source IDs, bootstrap/sync/health commands, safe query examples, and troubleshooting.
+    - Docs portal links to the new infrastructure section.
+    - Documentation rules describe infrastructure docs ownership and server-sensitive data handling.
   - Logging:
     - No runtime logging required.
   - Dependencies:
-    - Depends on Task 6.
+    - Depends on Task 1.
 
-### Phase 4 - Verification, Cleanup, And Commit
+### Phase 2 - Add Read-Only Server Inventory Helper
 
-- [x] Task 8: Add migration verification scripts and run them.
+- [x] Task 3: Create a sanitized read-only inventory script.
   - Files/paths:
-    - `scripts\gbrain-health.ps1`
-    - `scripts\docs-health.ps1` if docs exclusions or wording need adjustment.
+    - `scripts\server-inventory.ps1`
+    - `.gitignore` only if an explicit inventory output ignore is needed beyond existing `.tmp/`
   - Deliverable:
-    - `gbrain-health.ps1` verifies:
-      - `gbrain doctor` or equivalent local health command.
-      - expected source IDs exist.
-      - sample docs/code queries work.
-      - no Graphify MCP entry exists.
-      - no active Graphify scripts remain.
-    - `docs-health.ps1` still passes after docs updates.
+    - Script accepts SSH host aliases and writes sanitized inventory under `.tmp\server-inventory\YYYY-MM-DD\<alias>\`.
+    - Commands are read-only only: OS info, Docker version, `docker ps`, `docker compose ls`, Docker networks, selected systemd units, nginx/Traefik config names, listening ports, disk usage summary, repo checkout paths, git remotes/branches, and service health probes where safe.
+    - Script must not run restart/deploy/stop/down/prune/package install commands.
+    - Script must not print or save raw `.env` values; env-like output must be redacted by key pattern.
   - Logging:
-    - `INFO [gbrain-health]` for each passed check.
-    - `WARN [gbrain-health]` for optional embeddings or query quality gaps.
-    - `ERROR [gbrain-health]` for missing required CLI/source/smoke checks.
+    - `INFO [inventory]` for host alias, command category, and output path.
+    - `WARN [inventory]` for missing commands, permission-denied noncritical checks, or unavailable services.
+    - `ERROR [inventory]` for SSH connection failure or sanitizer failure.
+    - Never log secrets, token values, raw env values, or private key contents.
   - Dependencies:
-    - Depends on Tasks 3-7.
+    - Depends on Task 1.
 
-- [x] Task 9: Run final Graphify removal audit.
+- [x] Task 4: Add inventory usage documentation and safety review checklist.
   - Files/paths:
-    - whole workspace root, excluding child repo internals unless needed.
+    - `docs\infrastructure\README.md`
+    - `docs\infrastructure\inventory-checklist.md`
   - Deliverable:
-    - `rg -n "Graphify|graphify|graphify-out|\\.graphifyignore"` should show no active operational references in:
-      - `AGENTS.md`
-      - `README.md`
-      - `docs\README.md`
-      - `docs\documentation-system.md`
-      - `.mcp.json`
-      - `.codex\hooks.json`
-      - `.ai-factory\DESCRIPTION.md`
-      - `.ai-factory\ARCHITECTURE.md`
-      - `.ai-factory\RULES.md`
-      - `.ai-factory\skill-context\*`
-      - `scripts\*`
-    - Historical mentions in `docs\daily`, `.ai-factory\patches`, and old completed plan files may remain unless the user requests a history scrub.
+    - Commands for running inventory against `diaverse-prod`, `diaverse-dev`, and `diaverse-bots`.
+    - Checklist for reviewing snapshots before copying facts into committed docs.
+    - Redaction rules for env-like data, IPs in public output, provider tokens, DB URLs, SSH material, Telegram/session details, and raw logs.
   - Logging:
-    - Record the audit command and result in implementation notes.
+    - No runtime logging required.
   - Dependencies:
-    - Depends on Tasks 4-8.
+    - Depends on Task 3.
+
+### Phase 3 - Collect And Curate Server Facts
+
+- [x] Task 5: Run read-only inventory for all three servers and review sanitized snapshots.
+  - Files/paths:
+    - `.tmp\server-inventory\...` ignored output only
+    - implementation notes in `docs\daily\YYYY-MM-DD-safiu.md`
+  - Deliverable:
+    - Sanitized snapshots exist for prod, dev, and bots/landing servers.
+    - Review notes identify expected service names, compose projects, ports, domains, repo paths, and gaps.
+    - Any sensitive output found by sanitizer is removed before docs are updated.
+  - Logging:
+    - `INFO [inventory]` for each completed host snapshot.
+    - `WARN [inventory]` for inaccessible checks or unknown service ownership.
+    - `ERROR [inventory]` only if a required server cannot be inventoried.
+  - Dependencies:
+    - Depends on Tasks 3-4.
+
+- [x] Task 6: Populate server-level docs from reviewed inventory.
+  - Files/paths:
+    - `docs\infrastructure\servers\prod.md`
+    - `docs\infrastructure\servers\dev.md`
+    - `docs\infrastructure\servers\bots-landing.md`
+  - Deliverable:
+    - Each server doc lists role, SSH alias, expected service groups, repo paths, compose paths, containers, reverse proxy, domains, ports, data/volumes, backup notes, health checks, and last verified date.
+    - Use links to runbooks for actions instead of duplicating long operational procedures.
+  - Logging:
+    - No runtime logging required.
+  - Dependencies:
+    - Depends on Task 5.
+
+- [x] Task 7: Populate service-level infrastructure docs and matrix files.
+  - Files/paths:
+    - `docs\infrastructure\deployment-matrix.md`
+    - `docs\infrastructure\domains-and-ports.md`
+    - `docs\infrastructure\services\diaweb.md`
+    - `docs\infrastructure\services\diaverseapi.md`
+    - `docs\infrastructure\services\aibot.md`
+    - `docs\infrastructure\services\club10000-bot.md`
+    - `docs\infrastructure\services\reverse-proxy.md`
+  - Deliverable:
+    - One matrix shows service -> server -> path -> compose/systemd -> public/private endpoints -> owner repo -> runbook.
+    - Domain/port doc distinguishes public ports, localhost-only ports, internal Docker ports, and reverse proxy routes.
+    - Service docs identify health checks, logs, restart/update runbooks, persistent data, and owner repository.
+  - Logging:
+    - No runtime logging required.
+  - Dependencies:
+    - Depends on Tasks 5-6.
+
+### Phase 4 - Verification And Knowledge Sync
+
+- [x] Task 8: Verify docs and inventory script quality.
+  - Files/paths:
+    - `scripts\docs-health.ps1`
+    - `scripts\server-inventory.ps1`
+    - `docs\infrastructure\**`
+  - Deliverable:
+    - `docs-health.ps1` passes.
+    - `server-inventory.ps1` help/dry-run syntax works without SSH side effects.
+    - `rg` audit finds no committed raw secrets, private key paths, raw env values, or obviously sensitive tokens in `docs\infrastructure` and script output examples.
+  - Logging:
+    - `INFO [verify]` for passed checks.
+    - `WARN [verify]` for known gaps that need manual server access later.
+    - `ERROR [verify]` for docs-health failures or detected sensitive data.
+  - Dependencies:
+    - Depends on Tasks 6-7.
+
+- [x] Task 9: Sync GBrain and update daily work log.
+  - Files/paths:
+    - `docs\daily\YYYY-MM-DD-safiu.md`
+    - local GBrain state under `.tools\gbrain\home`
+  - Deliverable:
+    - Run `scripts\gbrain-sync.ps1 -SourceId diaverse-docs`.
+    - Run `scripts\gbrain-health.ps1`.
+    - Add a sanitized daily entry describing the new infrastructure docs and verification status without IPs, key paths, raw env, or server-private details in `Public digest`.
+  - Logging:
+    - Use existing GBrain script logging.
+  - Dependencies:
+    - Depends on Task 8.
 
 - [x] Task 10: Commit and push root workspace changes.
   - Files/paths:
     - root git repo only.
   - Deliverable:
-    - Root repo commit with conventional message, suggested: `chore: replace graphify with gbrain knowledge layer`.
+    - Root repo commit with suggested message `docs: add server infrastructure inventory`.
     - Push to `git@github.com:iamsafiu/diaverse.git` `main`.
-    - No child repo commits unless implementation unexpectedly changes child repo files.
+    - No child repo commits.
   - Logging:
     - Include commit hash and push result in final implementation notes.
   - Dependencies:
-    - Depends on Tasks 8-9.
+    - Depends on Task 9.
 
 ## Verification Plan
 
@@ -290,47 +273,39 @@ Run from `C:\Users\Indigo\Desktop\diaverse`:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\docs-health.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\server-inventory.ps1 -Help
+powershell -ExecutionPolicy Bypass -File .\scripts\server-inventory.ps1 -HostAlias diaverse-dev -DryRun
+powershell -Command "Write-Host 'Run targeted sensitive-data scan over docs\infrastructure and scripts\server-inventory.ps1'"
+powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-sync.ps1 -SourceId diaverse-docs
 powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 git status --short --branch
 ```
 
-GBrain smoke commands should be executed through the wrapper chosen in Task 1, for example:
+Expected:
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\gbrain.ps1 doctor
-powershell -ExecutionPolicy Bypass -File .\scripts\gbrain.ps1 sources list
-powershell -ExecutionPolicy Bypass -File .\scripts\gbrain.ps1 search "cabinet auth"
-powershell -ExecutionPolicy Bypass -File .\scripts\gbrain.ps1 code-def CopywritingDailyView
-powershell -ExecutionPolicy Bypass -File .\scripts\gbrain.ps1 code-def TelegramService
-```
-
-Graphify removal audit:
-
-```powershell
-rg -n "Graphify|graphify|graphify-out|\.graphifyignore" AGENTS.md README.md docs .ai-factory .codex scripts .mcp.json .gitignore
-```
-
-Expected: no active operational references outside historical logs/patches/old completed plans.
+- docs-health passes with 0 errors;
+- dry-run prints planned read-only categories only;
+- sensitive audit returns no committed secrets/private key paths/raw env values;
+- GBrain health passes after sync;
+- root git status is clean after commit.
 
 ## Rollback Plan
 
-- Use the user's backup copy if the workspace needs a full restore.
-- For normal rollback, use root git:
-  - revert the migration commit;
-  - restore `.mcp.json`, Graphify scripts, `.graphifyignore`, `.codex\skills\graphify`, and Graphify rules from the previous commit.
-- Do not delete the user's `~\.gbrain` data during rollback unless explicitly requested.
+- Use root git to revert the infrastructure documentation commit.
+- Delete ignored `.tmp\server-inventory\...` snapshots if they are no longer needed.
+- Do not delete or change any server state during rollback.
 
 ## Commit Plan
 
 Because this plan has 10 tasks, use commit checkpoints:
 
-1. `chore: add local gbrain workspace helpers`
-   - Tasks 1-3.
-2. `chore: remove graphify workspace tooling`
-   - Tasks 4-5.
-3. `docs: switch workspace knowledge system to gbrain`
-   - Tasks 6-7.
-4. `chore: verify gbrain migration`
+1. `docs: add infrastructure documentation skeleton`
+   - Tasks 1-2.
+2. `chore: add sanitized server inventory helper`
+   - Tasks 3-4.
+3. `docs: document deployed server topology`
+   - Tasks 5-7.
+4. `chore: verify infrastructure docs`
    - Tasks 8-10.
 
 ## Next Step

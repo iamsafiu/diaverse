@@ -41,6 +41,7 @@ review_after: YYYY-MM-DD
 | Тип документа | Где хранить |
 | --- | --- |
 | Cross-repo архитектура, продуктовый контракт, интеграционный runbook | `docs/` |
+| Server topology, deploy matrix, domains, ports, runtime paths, and safe inventory notes | `docs/infrastructure/` |
 | Узкий frontend guide | `diaweb/` рядом с кодом или ссылка из `docs/` |
 | Узкий backend/API/runtime guide | `diaverseapi/docs/` или рядом с backend module |
 | Узкий copywriting runtime guide | `aibot/docs/` |
@@ -76,6 +77,12 @@ GBrain помогает быстро находить документы, свя
 
 Сырые переписки и внутренние sensitive детали не должны автоматически попадать в GBrain. `docs/daily` используется для локального аудита, а публичной частью daily считается только `Public digest`.
 
+## Infrastructure Docs Safety
+
+Infrastructure docs may include curated operational facts such as service names, domains, ports, compose project names, repo checkout paths, volume names, and health-check commands. They must not include secrets, raw `.env` values, private key paths, SSH identity filenames, database URLs, provider tokens, raw logs, Telegram session data, or unreviewed inventory dumps.
+
+Raw inventory snapshots belong under `.tmp/server-inventory/` and must stay ignored by git. Before copying facts into `docs/infrastructure/`, review the snapshot and keep only stable, non-secret topology information.
+
 ## Критерии Качества
 
 | Проверка | Минимум |
@@ -91,5 +98,6 @@ GBrain помогает быстро находить документы, свя
 
 - [Docs README](README.md) - карта разделов документации.
 - [Knowledge System](knowledge-system.md) - GBrain source IDs, команды и troubleshooting.
+- [Infrastructure](infrastructure/README.md) - server topology and safe inventory workflow.
 - [Workspace Map](../AGENTS.md) - правила workspace и Daily Work.
 - [Product Master Plan](product/master-plan.md) - продуктовый источник правды.

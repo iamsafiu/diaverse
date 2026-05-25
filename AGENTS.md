@@ -32,6 +32,7 @@ diaverse/
 |   |-- README.md               # Documentation portal and navigation
 |   |-- documentation-system.md # Documentation quality and ownership rules
 |   |-- knowledge-system.md     # Local GBrain knowledge layer guide
+|   |-- infrastructure/         # Server topology, deployment matrix, and safe inventory docs
 |   |-- architecture/           # Cross-repo architecture and maps
 |   |-- product/                # Product contracts and phase docs
 |   |-- features/               # Feature-specific living docs
