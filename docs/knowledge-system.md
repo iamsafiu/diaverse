@@ -17,6 +17,7 @@ Diaverse использует локальный GBrain как навигаци�
 - GBrain запускается локально через CLI wrapper.
 - Публичный HTTP MCP, ChatGPT connector, туннель или daemon не включены по умолчанию.
 - Raw user/Codex conversations не auto-capture'ятся.
+- `docs/daily/**` не индексируется в GBrain: daily logs являются локальным журналом работы, а не canonical knowledge.
 - Embeddings отключены в базовой конфигурации, чтобы не тратить API budget и не отправлять содержимое наружу без отдельного решения.
 - Sensitive данные, секреты, raw env values и приватные инфраструктурные детали не должны попадать в публичные docs.
 
@@ -53,6 +54,15 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 # Посмотреть страницы документации
 powershell -ExecutionPolicy Bypass -File .\scripts\gbrain.ps1 list --source diaverse-docs --limit 10
 
+# Прочитать точную docs-страницу по slug
+powershell -ExecutionPolicy Bypass -File .\scripts\gbrain.ps1 get infrastructure/services/aibot --source diaverse-docs
+
+# Найти docs-страницы по ключевым словам
+powershell -ExecutionPolicy Bypass -File .\scripts\gbrain.ps1 search "club membership" --source diaverse-docs --limit 5
+
+# Задать natural-language вопрос по docs
+powershell -ExecutionPolicy Bypass -File .\scripts\gbrain.ps1 query "where is aibot deployed" --source diaverse-docs --no-expand --limit 5
+
 # Посмотреть AI Factory context
 powershell -ExecutionPolicy Bypass -File .\scripts\gbrain.ps1 list --source diaverse-aif --limit 10
 
@@ -87,8 +97,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-sync.ps1 -SourceId dia
 | Source отсутствует | Запустить `scripts/gbrain-sources.ps1`, затем `scripts/gbrain-health.ps1` |
 | Docs list пустой | Запустить `scripts/gbrain-sync.ps1 -SourceId diaverse-docs -SkipDryRun` |
 | Code symbol не находится | Синхронизировать соответствующий `*-code` source и проверить, что файл не исключен gitignore/tools logic |
-| Keyword search зависает в no-embedding режиме | Использовать `list`, `code-def`, `code-refs` как baseline; `gbrain-health.ps1` не запускает keyword search без явного `-RunSearchSmoke` |
-| Daily файл пропущен import'ом | Daily logs не считаются canonical knowledge; важные решения нужно переносить в canonical docs или `.ai-factory/RESEARCH.md` |
+| Keyword search не завершает процесс в PGLite | Workspace wrapper запускает `search` с watchdog: если native GBrain уже выдал stdout, но не завершился, wrapper возвращает результат и убивает подвисший Bun-процесс; проверка: `scripts/gbrain-health.ps1` |
+| Daily файл не находится в GBrain | Это ожидаемо: `docs/daily/**` исключен из `diaverse-docs`; важные решения нужно переносить в canonical docs или `.ai-factory/RESEARCH.md` |
 
 ## See Also
 

@@ -170,6 +170,9 @@ if (-not $SkipSmokeQueries) {
     $checks = @()
     $checks += Assert-TextOutput -Name 'list diaverse-docs pages' -Arguments @('list', '--source', 'diaverse-docs', '--limit', '5')
     $checks += Assert-TextOutput -Name 'list diaverse-aif pages' -Arguments @('list', '--source', 'diaverse-aif', '--limit', '5')
+    $checks += Assert-TextOutput -Name 'get diaverse-docs page' -Arguments @('get', 'infrastructure/services/aibot', '--source', 'diaverse-docs')
+    $checks += Assert-TextOutput -Name 'search diaverse-docs pages' -Arguments @('search', 'club membership', '--source', 'diaverse-docs', '--limit', '3')
+    $checks += Assert-TextOutput -Name 'query diaverse-docs pages' -Arguments @('query', 'where is aibot deployed', '--source', 'diaverse-docs', '--no-expand', '--limit', '3')
     $checks += Assert-TextOutput -Name 'code-def CopywritingDailyView' -Arguments @('code-def', 'CopywritingDailyView', '--json')
     $checks += Assert-TextOutput -Name 'code-def TelegramService' -Arguments @('code-def', 'TelegramService', '--json')
     $checks += Assert-TextOutput -Name 'code-refs TelegramService' -Arguments @('code-refs', 'TelegramService', '--json')
@@ -194,8 +197,6 @@ if (-not $SkipSmokeQueries) {
                 Log-Warn "$($check.Name) is optional and did not return usable results."
             }
         }
-    } else {
-        Log-Warn 'Keyword search smoke is skipped by default because no-embedding GBrain search can hang on this workspace; use -RunSearchSmoke to test it explicitly.'
     }
 }
 
