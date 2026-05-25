@@ -1,0 +1,86 @@
+# Documentation System
+
+[Back to Docs](README.md)
+
+## Цель
+
+Документация должна отвечать на два вопроса:
+
+- где находится источник правды по домену;
+- что нужно обновить, когда меняется код, контракт или операция.
+
+Корневой `docs/` является порталом для cross-repo знаний. Repo-local документы
+остаются рядом с кодом, если они полезны только одному сервису.
+
+## Статусы Документов
+
+| Статус | Значение | Правило обновления |
+| --- | --- | --- |
+| `canonical` | Живой источник правды | Обновлять в том же PR/задаче, что и код |
+| `runbook` | Операционная инструкция | Проверять после deploy/runtime изменений |
+| `research` | Исследование или discovery | Не считать контрактом без ссылки из canonical doc |
+| `log` | Исторический лог/расследование | Не редактировать без причины, можно архивировать |
+| `daily` | Локальный daily log | Ведется по правилам Daily Work |
+
+Новые живые документы должны начинаться с короткого metadata-блока:
+
+```yaml
+---
+owner: workspace
+status: canonical
+domain: cabinet
+source_of_truth: diaweb + diaverseapi
+last_reviewed: YYYY-MM-DD
+review_after: YYYY-MM-DD
+---
+```
+
+Для старых документов metadata можно добавлять постепенно при следующем
+существенном изменении.
+
+## Владение
+
+| Тип документа | Где хранить |
+| --- | --- |
+| Cross-repo архитектура, продуктовый контракт, интеграционный runbook | `docs/` |
+| Узкий frontend guide | `diaweb/` рядом с кодом или ссылка из `docs/` |
+| Узкий backend/API/runtime guide | `diaverseapi/docs/` или рядом с backend module |
+| Узкий copywriting runtime guide | `aibot/docs/` |
+| Club10000 bot-specific guide | `club10000-bot/docs/` |
+| Daily work | `docs/daily/YYYY-MM-DD-<author>.md` |
+
+## Изменение Документов
+
+Перед изменением:
+
+1. Найти canonical doc через [README](README.md).
+2. Проверить source code, если документ описывает текущее поведение.
+3. Не переносить секреты, raw env values, private IP, SSH key paths и чувствительные логи в публичные разделы.
+
+После изменения:
+
+1. Запустить docs health check.
+2. Если менялся код или долгоживущие docs, обновить Graphify.
+3. Для meaningful task добавить daily entry, если пользователь не сказал `bez daily` или `no daily`.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\docs-health.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\graphify-update.ps1
+```
+
+## Критерии Качества
+
+| Проверка | Минимум |
+| --- | --- |
+| Навигация | Документ найден из [README](README.md) или связан из canonical doc |
+| H1 | У активных docs есть один понятный заголовок |
+| Актуальность | Нет ссылок на старые локальные пути из прежнего `Saf` workspace или отдельного `diaweb` checkout |
+| Ссылки | Локальные markdown-ссылки ведут на существующие файлы |
+| Читаемость | Короткие секции, таблицы для структурированных данных, без длинных стен текста |
+| Безопасность | Нет секретов, токенов, raw env values или приватных инфраструктурных деталей в публичных разделах |
+
+## See Also
+
+- [Docs README](README.md) - карта разделов документации.
+- [Workspace Map](../AGENTS.md) - правила workspace и Daily Work.
+- [Product Master Plan](product/master-plan.md) - продуктовый источник правды.

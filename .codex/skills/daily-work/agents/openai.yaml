@@ -1,0 +1,4 @@
+interface:
+  display_name: "Daily Work"
+  short_description: "Capture and publish a safe daily work digest."
+  default_prompt: "Use $daily-work status, add, or publish for the local Diaverse daily work log."

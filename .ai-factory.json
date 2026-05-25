@@ -1,0 +1,19 @@
+{
+  "version": "2.8.1",
+  "agents": [
+    {
+      "id": "codex",
+      "skillsDir": ".codex/skills",
+      "installedSkills": [],
+      "mcp": {
+        "github": false,
+        "filesystem": true,
+        "postgres": true,
+        "chromeDevtools": true,
+        "playwright": true
+      },
+      "managedSkills": {}
+    }
+  ],
+  "extensions": []
+}

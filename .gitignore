@@ -1,0 +1,59 @@
+# Deny by default. This root repository tracks workspace documentation,
+# coordination scripts, and AI context only.
+*
+
+# Root workspace docs and config.
+!.gitignore
+!.gitattributes
+!README.md
+!AGENTS.md
+!.ai-factory.json
+!.graphifyignore
+!.mcp.json
+
+# Documentation and workspace scripts.
+!docs/
+!docs/**
+!scripts/
+!scripts/**
+
+# AI Factory context and workspace skills.
+!.ai-factory/
+!.ai-factory/**
+!.codex/
+!.codex/hooks.json
+!.codex/skills/
+!.codex/skills/**
+
+# Never track local secrets, runtime state, generated caches, or child repos.
+.env*
+*.pem
+*.key
+*.p12
+*.pfx
+__pycache__/
+*.py[cod]
+.codex-logs/
+.playwright-mcp/
+.tmp/
+.tools/
+.worktrees/
+graphify-out/
+graphify-out.rar
+screens/
+tmp*/
+tmp-*/
+tmp_*
+audit-*.png
+figma-*.png
+login-animation-check.png
+profile-*.png
+shop-*.png
+brick-webp.png
+NUL
+
+# Child repositories are intentionally independent git repositories.
+diaweb/
+diaverseapi/
+aibot/
+club10000-bot/
