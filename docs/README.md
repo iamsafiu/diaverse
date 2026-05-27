@@ -26,7 +26,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | [Infrastructure](infrastructure/README.md) | Server topology, deployment matrix, domains, ports, paths, and safe inventory workflow |
 | [Product](product/master-plan.md) | Master plan, фазы, исходные продуктовые спецификации |
 | [Architecture](architecture/copywriting-web-architecture.md) | Cross-repo архитектура, file maps, ключевые потоки |
-| [Features](features/cabinet/shop-web.md) | Живые документы по auth, RBAC, shop, Advent, pets, analytics |
+| [Features](features/factory.md) | Живые документы по factory, auth, RBAC, shop, Advent, pets, analytics |
 | [Runbooks](runbooks/copywriting-production-runtime.md) | Deploy, nginx, VPS, production/runtime операции |
 | [Research](research/shop/shop-research.md) | Исследования, старые варианты, discovery notes |
 | [Logs](logs/shop-network.md) | Исторические технические логи и расследования |
@@ -47,6 +47,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | Cabinet Auth Guide | [features/cabinet/auth-guide.md](features/cabinet/auth-guide.md) | Перед изменением auth UI/BFF |
 | Cabinet RBAC Guide | [features/cabinet/rbac-guide.md](features/cabinet/rbac-guide.md) | Перед изменением ролей/permissions |
 | Cabinet Shop Web | [features/cabinet/shop-web.md](features/cabinet/shop-web.md) | Перед изменением shop frontend/BFF |
+| Factory Web | [features/factory.md](features/factory.md) | Перед изменением веб-фабрики, factory API, каталога, ассетов или mobile handoff |
 | Staff Logging | [architecture/staff-logging.md](architecture/staff-logging.md) | Перед изменением staff logging |
 | Advent Calendar | [features/advent-calendar.md](features/advent-calendar.md) | Перед изменением Advent guest/payment flows |
 | Diaverse Club Runbook | [club.md](club.md) | Перед изменением club runtime/ops |
