@@ -1,361 +1,208 @@
-# Implementation Plan: Factory Real Inventory Integration
+# Implementation Plan: Factory Map Inventory And Resource UI Cleanup
 
-Created: 2026-05-27
+Created: 2026-05-28
 Mode: AIF fast plan, workspace root, no branch changes
 Branch: none
 Workspace: `C:\Users\Indigo\Desktop\diaverse`
 
 ## Settings
 
-- Testing: yes - include targeted backend and frontend tests for changed factory inventory, crafting, slot-token, warehouse, and UI selector behavior.
-- Logging: standard - keep existing factory INFO command-boundary logs; add DEBUG logs only for entity resolution, inventory debit/credit/grant decisions, and unexpected recipe/entity mismatches.
-- Docs: no - warn-only docs checkpoint; implementation may update feature docs only if the final contract changes materially.
+- Testing: yes - include targeted frontend tests for factory inventory browse/selection split, map resource strip, minimal bubbles, and border progress. Include a small backend/unit assertion if the game-dollar asset metadata changes.
+- Logging: standard - do not add render-loop logs; keep existing factory client warnings for unexpected icons/unknown states and backend logs unchanged unless an existing warning path needs a clearer message.
+- Docs: no - warn-only docs checkpoint; no feature docs update unless the contract changes beyond UI/resource asset presentation.
 - Roadmap Linkage: none, no non-empty `.ai-factory\ROADMAP.md` found.
-- Knowledge: use local GBrain first for source navigation, then verify exact behavior in source files. Run targeted GBrain sync after meaningful code changes.
+- Knowledge: local GBrain searched first and returned no hits for the factory UI/resource queries; exact behavior was verified from raw docs/source. Run targeted GBrain sync for `diaweb-code` and `diaverseapi-code` after implementation.
+
+## Research Context
+
+Source: `.ai-factory\RESEARCH.md` Active Summary
+
+- Goal: Use the workspace root as the shared AIF control plane over `diaweb`, `diaverseapi`, `aibot`, and `club10000-bot`.
+- Constraints: child repositories remain separate; product code changes belong inside child repositories; source code is the final authority.
+- Decision: keep one top-level plan for workspace-run work and sync local GBrain sources after meaningful code changes.
 
 ## Goal
 
-Finish the factory integration with the existing Diaverse inventory domain instead of using temporary factory-only duplicates. Factory recipes must consume and produce real entities: existing resources, concrete pet shards, user pets, EvoGen vouchers, mutagens, token details, synthesis cores, slot tokens, XDV, and game dollars.
+Clean up the factory inventory and map UI while preserving the mixed-entity recipe selection flow:
+
+- Hide pet fragments and pets from normal factory inventory browsing.
+- Keep concrete fragments and pets available in material selection mode for recipes that require selected `shard_id` or `user_character_id`.
+- Under `Фабрика / Уровень 1` on the map, show a compact resource row with only icon + amount for `xdv`, `game_dollar`, `brick`, `impulse`, and `slot_token`.
+- Fix the game-dollar icon so it uses the `game_balance_usd`/`dollar.webp` visual, not the XDV icon.
+- Minimalize map bubbles by removing verbose texts like `Уровень 1. Добывает ...` and `Руины. Тап чтобы построить`.
+- Replace inner progress bars on map bubbles with a visible clockwise border progress indicator for construction, upgrades, and running production.
 
 ## Current Findings
 
-- EvoGens already exist as `evogen_rare`, `evogen_epic`, `evogen_legendary` custom rewards mapped to `VoucherType.rare_pet_4_evolution`, `VoucherType.epic_pet_4_evolution`, and `VoucherType.legendary_pet_4_evolution`.
-- Pet fragments already exist as concrete `CharacterShard` records tied to a specific `Character`, with rarity, kind/title, icon, and `UserCharacterShard` balances.
-- Existing systems already grant specific shards and random shards by rarity through `random_shard` metadata.
-- The temporary `ResourceType.rare_pet_fragment`, `ResourceType.epic_pet_fragment`, `ResourceType.legendary_pet_fragment`, and `ResourceType.rare_evogen` duplicate existing domains and must stop being the authoritative factory model.
-- The factory catalog still contains recipe keys such as `rare_pet_fragment`, `epic_pet_fragment`, `legendary_pet_fragment`, `rare_evogen`, `evogen_rare`, `character_rare`, and mutagen/nullifier outputs that need a typed resolver instead of direct `ResourceType` lookup.
+- Mechanics doc confirms resource workshops accrue to warehouse continuously, can be collected any time, and stop after 10 hours if not collected: `docs\tasks\fabric\factory-mechanics-final.md`.
+- Backend already accrues warehouse balances lazily by elapsed time, caps at `cap_hours = 10`, marks stopped, and resets `last_accrual_at` after transfer-to-storage.
+- `FactoryInventoryDrawer` currently browses all non-warehouse user inventory balances, so concrete `shard:*` and `user_character:*` rows appear in browse mode.
+- `FactoryInventoryDrawer` also powers material selection; hiding fragments/pets globally would break recipe selection, so filtering must be mode-aware.
+- `assetManifest.ts` currently maps `factory.icon.game_dollar` to `/factory/resources/xdv.svg`.
+- Backend Advent reward metadata maps `game_balance_usd` to `dollar.webp`; factory resource assets currently expose `game_dollar` only with `visual_key="factory.icon.game_dollar"`.
+- Map bubble text is built in `FactoryHotspotLayer.tsx`; active bubbles include `Уровень N. Добывает ...`, and ruins bubbles include `Руины. Тап чтобы построить`.
+- `BuildingInfoBubble` renders progress as an inner horizontal fill; `factoryScene.module.css` already has a spinner for upgrade but not a percentage border.
 
 ## Non-Goals
 
-- Do not create a second shard, pet, EvoGen, or mutagen inventory system.
-- Do not convert concrete shard ownership into generic rarity-only balances.
-- Do not silently delete any user balances if temporary factory resources already exist in an environment.
-- Do not redesign unrelated cabinet, shop, exchange, club, or copywriting flows.
+- Do not change factory crafting semantics or backend inventory debit/credit logic.
+- Do not remove fragments or pets from recipe material pickers.
+- Do not change the 10-hour warehouse cap unless source verification later shows a backend defect.
+- Do not redesign full workshop/detail screens beyond the map bubble progress presentation required here.
 - Do not create branches in fast mode.
-- Do not run browser/manual verification unless the user explicitly asks later.
 
 ## Repository Matrix
 
 | Repository | Path | Affected | Branch changes | Role |
 | --- | --- | --- | --- | --- |
 | root `diaverse` | `C:\Users\Indigo\Desktop\diaverse` | plan only | none | Stores this fast plan and daily entry |
-| `diaverseapi` | `C:\Users\Indigo\Desktop\diaverse\diaverseapi` | yes | none in fast mode | Factory entity resolver, inventory adapters, crafting, warehouse, slot token assembly |
-| `diaweb` | `C:\Users\Indigo\Desktop\diaverse\diaweb` | yes | none in fast mode | Factory UI types, selectors, inventory/warehouse display, recipe screens |
+| `diaweb` | `C:\Users\Indigo\Desktop\diaverse\diaweb` | yes | none | Factory inventory drawer, map header resource strip, icon resolver/manifest, bubble UI/tests |
+| `diaverseapi` | `C:\Users\Indigo\Desktop\diaverse\diaverseapi` | yes, small | none | Factory game-dollar asset metadata if needed |
 | `aibot` | `C:\Users\Indigo\Desktop\diaverse\aibot` | no | none | Not affected |
 | `club10000-bot` | `C:\Users\Indigo\Desktop\diaverse\club10000-bot` | no | none | Not affected |
 
-## Implementation Decisions
-
-- Treat recipe keys like `shard_rare`, `rare_pet_fragment`, `evogen_rare`, `character_rare`, and `rare_mutagen` as typed factory entity aliases, not as automatic `ResourceType` names.
-- Keep generic fragment labels only as UI/recipe wording. Runtime debits and credits must reference concrete `CharacterShard` rows.
-- For shard inputs, require selected concrete `shard_id` or a selected shard balance matching the recipe rarity.
-- For pet inputs, require selected `user_character_id` matching the recipe rarity and current ownership rules.
-- For pet outputs, grant a real `UserCharacter`; where the recipe says "selected type" or "depending on loaded fragment", derive the character from the selected shard's `CharacterShard.character_id`.
-- For random shard outputs, grant existing concrete random shards by rarity through the current shard grant semantics.
-- For EvoGen outputs and slot-token inputs, use existing `UserVoucher`/`Voucher` records, not `ResourceType.rare_evogen`.
-- For mutagen outputs, use `UserMutagen` with `MutationRarity`.
-- Resource workshop production stays warehouse-backed. Production workshop outputs go to real inventory on collect, matching the mechanics doc.
-- If temporary factory resource balances exist, implementation must preserve them as legacy/hidden until a deliberate migration decision is made; do not invent a lossy conversion from generic fragments to concrete shard species.
-
 ## Tasks
 
-### Phase 1 - Inventory Taxonomy Cleanup
+### Phase 1 - Inventory Browse/Selection Split
 
-- [x] Task 1: Define the factory entity resolver contract.
+- [x] Task 1: Make factory inventory browse mode hide fragments and pets while keeping material selection intact.
   - Files/paths:
-    - `docs\tasks\fabric\factory-mechanics-final.md`
-    - `diaverseapi\app\factory\catalog\data\factory_catalog.v1.yaml`
-    - `diaverseapi\app\factory\catalog\schema.py`
-    - `diaverseapi\app\factory\infrastructure\inventory_gateway.py`
-    - new `diaverseapi\app\factory\domain\entities.py` if a separate resolver module is cleaner
+    - `diaweb\frontend\modules\factory\components\FactoryInventoryDrawer.tsx`
+    - `diaweb\frontend\__tests__\modules\factory\FactoryInventoryDrawer.test.tsx`
   - Deliverable:
-    - Add/define a typed mapping for factory recipe aliases: normal resources, currencies, concrete shard aliases by rarity, random shard outputs, character outputs, EvoGen vouchers, mutagens, token details, synthesis cores, and slot tokens.
-    - Document which keys remain legacy aliases and which keys are true persisted inventory keys.
-    - Keep direct `ResourceType` resolution only for real resource types.
+    - In `mode="browse"`, hide concrete `shard:*`, aggregate shard rows, and `user_character:*` pet rows from visible inventory categories.
+    - In `mode="select"`, keep existing compatible concrete balances visible and selectable for recipe requirements.
+    - Preserve slot tokens, token details, resources, EvoGens, mutagens, synthesis cores, nullifiers, biomass, and other production products in browse mode.
+    - Add tests proving browse mode excludes fragments/pets but selection mode still shows and selects concrete material balances.
   - Logging:
-    - Add DEBUG logs when a recipe key resolves to a non-resource entity type or fails validation.
-    - Do not log full user inventory payloads or raw payment data.
+    - Add no new render logs.
+    - Keep the existing `logFactoryClientWarning` paths for incompatible/insufficient/concrete-selection failures.
+    - If a hidden browse item is also unexpectedly selectable in browse mode, do not log per render; cover that with tests.
   - Dependencies:
     - None.
 
-- [x] Task 2: Remove temporary factory-only duplicates from the authoritative model.
+### Phase 2 - Map Header Resource Strip And Icons
+
+- [x] Task 2: Add compact factory resource balances under the map title/level.
   - Files/paths:
-    - `diaverseapi\app\shards_and_resources\models.py`
-    - `diaverseapi\migrations\versions\factory_web_state_20260525.py`
-    - new corrective Alembic migration only if required by applied data/schema state
-    - `diaverseapi\app\factory\tests\test_inventory_gateway.py`
-    - `diaverseapi\app\factory\tests\test_award_resource_support.py`
-  - Deliverable:
-    - Stop treating `rare_pet_fragment`, `epic_pet_fragment`, `legendary_pet_fragment`, and `rare_evogen` as normal `ResourceType` inventory resources.
-    - Replace tests that asserted those fake resources with tests for typed entity aliases.
-    - Preserve existing data safely: if fake resource rows/balances may exist, leave a non-spendable legacy handling path or add a corrective data migration that does not lose user value.
-  - Logging:
-    - Add migration/service INFO logs only for legacy data handling counts if a corrective migration/service path is introduced.
-    - Add DEBUG logs in the resolver when a legacy key is encountered.
-  - Dependencies:
-    - Depends on Task 1.
-
-- [x] Task 3: Normalize factory catalog recipe keys to existing domain names.
-  - Files/paths:
-    - `diaverseapi\app\factory\catalog\data\factory_catalog.v1.yaml`
-    - `diaverseapi\app\factory\catalog\validator.py`
-    - `diaverseapi\app\factory\tests\test_catalog.py`
-    - `diaverseapi\migrations\versions\factory_v2_data.py` as historical reference only
-  - Deliverable:
-    - Prefer canonical aliases such as `shard_rare`, `shard_epic`, `shard_legendary`, `character_rare`, `character_epic`, `evogen_rare`, `evogen_epic`, `evogen_legendary`, and mutagen rarity keys.
-    - Keep designer/mechanics labels in metadata where the UI needs "редкий фрагмент", "эпический фрагмент", or "Эвоген".
-    - Ensure catalog validation rejects unknown entity aliases early with clear errors.
-  - Logging:
-    - Keep catalog loader warnings for invalid aliases.
-    - Add no per-row runtime logs.
-  - Dependencies:
-    - Depends on Task 1.
-
-### Phase 2 - Backend Mixed Inventory Integration
-
-- [x] Task 4: Extend factory inventory gateway for mixed entity balances.
-  - Files/paths:
-    - `diaverseapi\app\factory\infrastructure\inventory_gateway.py`
-    - `diaverseapi\app\factory\schemas.py`
-    - `diaverseapi\app\shards_and_resources\models.py`
-    - `diaverseapi\app\characters\models.py`
-    - `diaverseapi\app\vouchers\models.py`
-    - `diaverseapi\app\factory\tests\test_inventory_gateway.py`
-  - Deliverable:
-    - Support balance snapshots for resources/currencies, shards grouped by rarity and exposed as selectable concrete shard balances, EvoGen vouchers by rarity, mutagens by rarity, and token ingredients.
-    - Support safe debit/credit/grant operations for each entity type needed by factory recipes.
-    - Keep resource balance behavior backwards-compatible for warehouse/resource workshops.
-  - Logging:
-    - DEBUG: entity kind, alias, rarity, selected id presence, amount, reason, and idempotency context.
-    - ERROR/WARN: invalid selected entity, insufficient balance, or entity type mismatch.
-    - Never log full pet/shard/voucher records or private user profile payloads.
-  - Dependencies:
-    - Depends on Tasks 1-3.
-
-- [x] Task 5: Wire crafting start/collect/cancel to real inputs and outputs.
-  - Files/paths:
-    - `diaverseapi\app\factory\services\crafting_service.py`
-    - `diaverseapi\app\factory\services\command_service.py`
-    - `diaverseapi\app\factory\models.py`
-    - `diaverseapi\app\factory\schemas.py`
-    - `diaverseapi\app\factory\tests\test_crafting_service.py`
-    - `diaverseapi\app\factory\tests\test_command_service.py`
-  - Deliverable:
-    - Extend craft start requests to carry selected concrete inputs: `shard_id`, `user_character_id`, `user_voucher_id` or equivalent typed selections.
-    - Validate selected inputs match recipe rarity, ownership, quantity, and current availability before debiting anything.
-    - On collect, grant real outputs: warehouse resources only where intended, concrete random shards, real pets, EvoGen vouchers, mutagens, nullifiers/other existing entities if present.
-    - Preserve idempotency and refund/cancel behavior for reserved ingredients.
-  - Logging:
-    - INFO: craft start/collect/cancel command boundaries already present.
-    - DEBUG: resolved recipe entities, selected inputs, debit reservation, output grant, refund path, and unsupported alias details.
-    - ERROR: partial grant/debit failure with job id and entity alias, without dumping full inventory records.
-  - Dependencies:
-    - Depends on Task 4.
-
-- [x] Task 6: Adapt life-force, pet craft, incubator, EvoGen, mutagen, brick, and biomass behavior to mechanics.
-  - Files/paths:
-    - `diaverseapi\app\factory\services\crafting_service.py`
-    - `diaverseapi\app\factory\domain\policies.py`
-    - `diaverseapi\app\characters\grants.py`
-    - `diaverseapi\app\vouchers\grants.py`
-    - `diaverseapi\app\characters\usecases\mutagen_usecases.py`
-    - `diaverseapi\app\factory\tests\test_crafting_service.py`
-  - Deliverable:
-    - Life-force consumes selected real pet and outputs random concrete shards/resources by rarity.
-    - Pet craft/incubator consume selected concrete shards and output the corresponding real pet type.
-    - Brick/biomass/EvoGen recipes consume concrete shards by required rarity.
-    - EvoGen workshop outputs existing EvoGen vouchers.
-    - Mutagen workshop outputs existing user mutagens.
-  - Logging:
-    - DEBUG: rarity matching, selected source entity, output entity type, and count.
-    - WARN: recipe requires a domain entity that has no existing grant/debit handler yet.
-  - Dependencies:
-    - Depends on Task 5.
-
-- [x] Task 7: Fix slot-token assembly to consume real EvoGen vouchers.
-  - Files/paths:
-    - `diaverseapi\app\factory\services\slot_token_service.py`
-    - `diaverseapi\app\factory\catalog\data\factory_catalog.v1.yaml`
-    - `diaverseapi\app\factory\tests\test_slot_token_service.py`
-    - `diaweb\frontend\modules\factory\components\SlotTokenDialog.tsx`
-  - Deliverable:
-    - Replace `rare_evogen` resource assumptions with existing `evogen_rare` voucher consumption.
-    - Keep token details, synthesis core, and slot token as their correct existing inventory types.
-    - Make the dialog display the user's real available EvoGen count and disable assembly when vouchers are missing.
-  - Logging:
-    - DEBUG: token assembly input resolution and voucher debit decision.
-    - ERROR: idempotency replay mismatch or partial assembly failure.
-  - Dependencies:
-    - Depends on Tasks 4-5.
-
-- [x] Task 8: Keep warehouse semantics limited to resource workshop output.
-  - Files/paths:
-    - `diaverseapi\app\factory\services\warehouse_service.py`
-    - `diaverseapi\app\factory\services\state_service.py`
-    - `diaverseapi\app\factory\services\crafting_service.py`
-    - `diaverseapi\app\factory\tests\test_warehouse_service.py`
-    - `diaverseapi\app\factory\tests\test_state_service.py`
-  - Deliverable:
-    - Resource workshops continue accruing to factory warehouse/storage and transfer to inventory.
-    - Production craft outputs go directly to existing inventory on collect, as the mechanics doc says.
-    - State balances clearly distinguish `factory_warehouse`, `user_inventory`, and selectable domain balances.
-  - Logging:
-    - DEBUG: warehouse settlement and inventory transfer source/destination.
-    - WARN: attempt to place non-resource production output into warehouse.
-  - Dependencies:
-    - Depends on Tasks 4-6.
-
-### Phase 3 - Frontend Contract And UI
-
-- [x] Task 9: Update frontend factory types, API helpers, and catalog view model for typed entities.
-  - Files/paths:
-    - `diaweb\frontend\modules\factory\types.ts`
-    - `diaweb\frontend\modules\factory\api.ts`
-    - `diaweb\frontend\modules\factory\catalogView.ts`
+    - `diaweb\frontend\modules\factory\components\FactoryShell.tsx`
     - `diaweb\frontend\modules\factory\iconResolver.ts`
-    - `diaweb\frontend\modules\factory\assetManifest.ts`
-    - `diaweb\frontend\__tests__\modules\factory\factory-api.test.ts`
+    - `diaweb\frontend\__tests__\modules\factory\FactoryShell.test.tsx`
   - Deliverable:
-    - Remove frontend assumptions that `rare_pet_fragment` and `rare_evogen` are resource keys.
-    - Represent ingredients/outputs with entity kind, rarity, selected id requirements, label, icon, and available quantity.
-    - Resolve shard icons from concrete shard data when available; use generic rarity icon only as fallback.
-  - Logging:
-    - Keep existing `[factory]` DEBUG API logs.
-    - Add WARN only for unknown entity kind or missing icon metadata.
-  - Dependencies:
-    - Depends on backend schema from Tasks 4-5.
-
-- [x] Task 10: Add concrete input selectors to production workshop and compartment screens.
-  - Files/paths:
-    - `diaweb\frontend\modules\factory\components\ProductionWorkshopScreen.tsx`
-    - `diaweb\frontend\modules\factory\components\CompartmentScreen.tsx`
-    - `diaweb\frontend\modules\factory\components\FactoryInventoryDrawer.tsx`
-    - `diaweb\frontend\modules\i18n\dictionaries\ru.json`
-    - `diaweb\frontend\modules\i18n\dictionaries\en.json`
-    - `diaweb\frontend\__tests__\modules\factory\FactoryProductionWorkshopScreen.test.tsx`
-    - `diaweb\frontend\__tests__\modules\factory\FactoryCompartmentScreen.test.tsx`
-  - Deliverable:
-    - For recipes requiring fragments, show selectable concrete shard cards grouped by rarity/species.
-    - For life-force, show selectable owned pets of required rarity.
-    - For EvoGen/token recipes, show real EvoGen voucher availability.
-    - Start craft only when required selections are complete and backend quote says balances are sufficient.
-  - Logging:
-    - No render-loop logs.
-    - WARN through existing UI logging only when backend returns an entity-selection validation error that the UI cannot map.
-  - Dependencies:
-    - Depends on Task 9.
-
-- [x] Task 11: Align inventory, warehouse, and dialogs with real entity balances.
-  - Files/paths:
-    - `diaweb\frontend\modules\factory\components\FactoryInventoryDrawer.tsx`
-    - `diaweb\frontend\modules\factory\components\FactoryWarehouseScreen.tsx`
-    - `diaweb\frontend\modules\factory\components\SlotTokenDialog.tsx`
-    - `diaweb\frontend\modules\factory\components\FactoryUpgradeDialog.tsx`
-    - `diaweb\frontend\modules\i18n\dictionaries\ru.json`
-    - `diaweb\frontend\modules\i18n\dictionaries\en.json`
-    - `diaweb\frontend\__tests__\modules\factory\FactoryInventoryDrawer.test.tsx`
-    - `diaweb\frontend\__tests__\modules\factory\FactoryWarehouseScreen.test.tsx`
-    - `diaweb\frontend\__tests__\modules\factory\FactoryDialogs.test.tsx`
-  - Deliverable:
-    - Inventory section shows real resources, concrete shards, EvoGens, mutagens, and token ingredients without duplicate fake fragment/EvoGen rows.
-    - Warehouse screen only shows warehouse-backed resources and transfers only valid resource quantities.
-    - Slot-token dialog shows "Редкий ЭвоГен" from vouchers, not a resource icon/balance.
+    - Under `Фабрика` and `Уровень N`, render a single compact row of icon + formatted amount for `xdv`, `game_dollar`, `brick`, `impulse`, and `slot_token`.
+    - Use `state.balances` as the source and render zero only if the current state explicitly has zero; otherwise use the existing empty value behavior if a balance is missing.
+    - Keep the row unframed: no cards, no pлашки, no labels unless required for accessible `aria-label`.
+    - Ensure text/numbers do not overlap on mobile widths.
   - Logging:
     - Add no new presentational logs.
-    - Keep existing mutation logs for transfer and assembly actions.
+    - Use an existing client warning only if an expected balance kind cannot resolve an icon in development/test paths.
   - Dependencies:
-    - Depends on Tasks 7-10.
+    - Depends on Task 1 only if shared balance helpers are extracted; otherwise independent.
 
-### Phase 4 - Tests, Migration Safety, And Sync
-
-- [x] Task 12: Add backend coverage for the mixed inventory contract.
+- [x] Task 3: Fix XDV/game-dollar icon resolution.
   - Files/paths:
-    - `diaverseapi\app\factory\tests\test_inventory_gateway.py`
-    - `diaverseapi\app\factory\tests\test_crafting_service.py`
-    - `diaverseapi\app\factory\tests\test_slot_token_service.py`
-    - `diaverseapi\app\factory\tests\test_warehouse_service.py`
-    - `diaverseapi\app\factory\tests\test_catalog.py`
-  - Deliverable:
-    - Cover fake resource rejection/deprecation, concrete shard debit, random shard grant, pet grant, EvoGen voucher grant/debit, mutagen grant, warehouse-only resource transfer, and idempotent replay.
-    - If a corrective migration is introduced, verify PostgreSQL DDL compilation with `alembic upgrade <down_revision>:<new_revision> --sql`.
-  - Logging:
-    - Tests should assert behavior, not logging internals, except where a warning/error path is part of the contract.
-  - Dependencies:
-    - Depends on Tasks 1-8.
-
-- [x] Task 13: Add frontend coverage for typed entity UI flows.
-  - Files/paths:
-    - `diaweb\frontend\__tests__\modules\factory\FactoryProductionWorkshopScreen.test.tsx`
-    - `diaweb\frontend\__tests__\modules\factory\FactoryCompartmentScreen.test.tsx`
-    - `diaweb\frontend\__tests__\modules\factory\FactoryInventoryDrawer.test.tsx`
-    - `diaweb\frontend\__tests__\modules\factory\FactoryWarehouseScreen.test.tsx`
-    - `diaweb\frontend\__tests__\modules\factory\FactoryDialogs.test.tsx`
+    - `diaverseapi\app\factory\services\resource_assets.py`
+    - `diaweb\frontend\modules\factory\assetManifest.ts`
+    - `diaweb\frontend\modules\factory\iconResolver.ts`
     - `diaweb\frontend\__tests__\modules\factory\factory-api.test.ts`
+    - `diaweb\frontend\__tests__\modules\factory\FactoryShell.test.tsx`
   - Deliverable:
-    - Cover shard selector rendering, missing-selection disabled state, selected shard payload, EvoGen voucher display, absence of duplicate fake resources, and warehouse resource-only display.
-    - Keep snapshot/assertions focused on behavior and visible Russian UI labels.
+    - Make `game_dollar` resolve to the same visual entity as `game_balance_usd`, using backend static `dollar.webp` where possible.
+    - Keep XDV on its own XDV icon.
+    - Avoid using `/factory/resources/xdv.svg` as the fallback for `factory.icon.game_dollar`.
+    - Add test coverage for distinct `xdv` and `game_dollar` icon sources.
   - Logging:
-    - No new logs required in tests.
+    - Backend: no new INFO logs; if asset metadata is missing, rely on existing factory state warnings rather than per-request logs.
+    - Frontend: add no runtime logs unless icon resolution falls through to an unknown visual key in development.
   - Dependencies:
-    - Depends on Tasks 9-11.
+    - Independent, but should land before Task 2 verification.
 
-- [x] Task 14: Run targeted verification and sync changed knowledge sources.
+### Phase 3 - Minimal Map Bubbles And Border Progress
+
+- [x] Task 4: Minimalize factory map bubble copy.
   - Files/paths:
-    - `diaverseapi`
+    - `diaweb\frontend\modules\factory\components\FactoryHotspotLayer.tsx`
+    - `diaweb\frontend\__tests__\modules\factory\FactoryScene.test.tsx`
+    - `diaweb\frontend\modules\i18n\dictionaries\ru.json`
+    - `diaweb\frontend\modules\i18n\dictionaries\en.json`
+  - Deliverable:
+    - Active resource/workshop bubbles should not show `Уровень N. Добывает ...` or equivalent verbose production copy.
+    - Ruins/locked bubbles should not show `Руины. Тап чтобы построить` / `Ruins. Tap to build`.
+    - Keep the title and a short state only: active/ready/building/upgrade/repair/cooldown/locked/ruins.
+    - Keep accessibility labels meaningful even when visible copy is minimal.
+  - Logging:
+    - Add no new logs.
+    - Preserve existing development warnings for missing scene mappings or unknown visual keys.
+  - Dependencies:
+    - None.
+
+- [x] Task 5: Replace map bubble inner progress bar with visible clockwise border progress.
+  - Files/paths:
+    - `diaweb\frontend\modules\factory\components\BuildingInfoBubble.tsx`
+    - `diaweb\frontend\modules\factory\components\factoryScene.module.css`
+    - `diaweb\frontend\__tests__\modules\factory\FactoryScene.test.tsx`
+  - Deliverable:
+    - For construction, upgrade, and running production, render progress around the bubble border using `progressPercent`.
+    - The border progress must be visibly thick enough on mobile and desktop and move clockwise from the top.
+    - Remove or hide the inner horizontal progress track on map bubbles.
+    - Continue to show timer/status text; progress remains `aria-hidden` visually while the bubble keeps an accessible status label.
+    - Respect reduced motion where existing animation patterns do.
+  - Logging:
+    - Add no logs; this is pure presentation.
+    - Use tests/class assertions for progress style state rather than runtime diagnostics.
+  - Dependencies:
+    - Depends on Task 4 for final bubble copy shape.
+
+### Phase 4 - Verification And Knowledge Sync
+
+- [x] Task 6: Run targeted verification and sync changed knowledge sources.
+  - Files/paths:
     - `diaweb`
+    - `diaverseapi`
     - `C:\Users\Indigo\Desktop\diaverse\scripts\gbrain-sync.ps1`
   - Deliverable:
-    - Run targeted backend tests for factory catalog, inventory gateway, crafting, slot token, warehouse, state, and command service.
-    - Run targeted frontend tests for factory API, production screens, compartment screens, inventory drawer, warehouse, and dialogs.
-    - Run repo lint/type checks if package scripts are available and implementation changes touch typed contracts.
-    - Sync `diaverseapi-code` and `diaweb-code` GBrain sources after implementation.
+    - Run targeted frontend tests for factory shell, scene, inventory drawer, and API/icon behavior.
+    - Run targeted backend tests only if `resource_assets.py` or related backend schemas are changed.
+    - Run `npm run lint` in `diaweb` if available and the UI changes touch TypeScript/React/CSS.
+    - Run targeted GBrain sync for `diaweb-code` and `diaverseapi-code` after implementation.
   - Logging:
     - Verification should not add runtime logs.
     - Summarize failures by command and first failing assertion during implementation.
   - Dependencies:
-    - Depends on Tasks 12-13.
+    - Depends on Tasks 1-5.
 
 ## Verification Plan
 
-Run from `C:\Users\Indigo\Desktop\diaverse\diaverseapi` after backend changes:
+Run from `C:\Users\Indigo\Desktop\diaverse\diaweb\frontend` after frontend changes, using the repo's actual scripts:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest app\factory\tests\test_catalog.py app\factory\tests\test_inventory_gateway.py app\factory\tests\test_crafting_service.py app\factory\tests\test_slot_token_service.py app\factory\tests\test_warehouse_service.py app\factory\tests\test_state_service.py app\factory\tests\test_command_service.py
-```
-
-If a migration is added, also run:
-
-```powershell
-.\.venv\Scripts\python.exe -m alembic upgrade <down_revision>:<new_revision> --sql
-```
-
-Run from `C:\Users\Indigo\Desktop\diaverse\diaweb` after frontend changes, using the repo's actual scripts:
-
-```powershell
-npm test -- factory-api FactoryProductionWorkshopScreen FactoryCompartmentScreen FactoryInventoryDrawer FactoryWarehouseScreen FactoryDialogs
+npm test -- FactoryInventoryDrawer FactoryShell FactoryScene factory-api
 npm run lint
+```
+
+If backend factory resource asset metadata changes, run from `C:\Users\Indigo\Desktop\diaverse\diaverseapi`:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest app\factory\tests\test_state_service.py app\factory\tests\test_inventory_gateway.py
 ```
 
 Run from `C:\Users\Indigo\Desktop\diaverse` after implementation:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-sync.ps1 -SourceId diaverseapi-code
 powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-sync.ps1 -SourceId diaweb-code
+powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-sync.ps1 -SourceId diaverseapi-code
 ```
 
 ## Commit Plan
 
-- **Commit 1** (after Tasks 1-3, `diaverseapi`): `fix(factory): resolve recipes through existing inventory entities`
-- **Commit 2** (after Tasks 4-8, `diaverseapi`): `fix(factory): wire crafting to real shards and evogens`
-- **Commit 3** (after Tasks 9-11, `diaweb`): `fix(factory): show real inventory entities in factory`
-- **Commit 4** (after Tasks 12-14, affected repos): `test(factory): cover mixed inventory integration`
+- **Commit 1** (after Tasks 1-3, `diaweb` + small `diaverseapi` if needed): `fix(factory): clean inventory resources and currency icons`
+- **Commit 2** (after Tasks 4-6, `diaweb`): `fix(factory): simplify map bubbles and progress`
 
 ## Rollback Plan
 
-- Revert `diaverseapi` commits that introduce typed entity resolver, mixed inventory gateway changes, or craft/slot-token behavior.
-- Revert `diaweb` commits that depend on the new typed entity schema.
-- If a corrective migration is applied, rollback with a deliberate migration path; do not manually edit production balances.
-- Keep temporary legacy handling available until real environments are confirmed to have no fake factory fragment/EvoGen balances.
+- Revert `diaweb` changes to `FactoryInventoryDrawer`, `FactoryShell`, `FactoryHotspotLayer`, `BuildingInfoBubble`, and related CSS/tests.
+- Revert the `diaverseapi` resource asset metadata change if `game_dollar` backend icon metadata causes unexpected static asset behavior.
+- No data migration or inventory repair should be required because this plan changes presentation and asset metadata only.
 
 ## Next Step
 
