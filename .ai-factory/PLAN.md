@@ -1,209 +1,229 @@
-# Implementation Plan: Factory Map Inventory And Resource UI Cleanup
+# Implementation Plan: Raid Mechanics Clarity UI
 
-Created: 2026-05-28
+Created: 2026-05-30
 Mode: AIF fast plan, workspace root, no branch changes
 Branch: none
 Workspace: `C:\Users\Indigo\Desktop\diaverse`
 
 ## Settings
 
-- Testing: yes - include targeted frontend tests for factory inventory browse/selection split, map resource strip, minimal bubbles, and border progress. Include a small backend/unit assertion if the game-dollar asset metadata changes.
-- Logging: standard - do not add render-loop logs; keep existing factory client warnings for unexpected icons/unknown states and backend logs unchanged unless an existing warning path needs a clearer message.
-- Docs: no - warn-only docs checkpoint; no feature docs update unless the contract changes beyond UI/resource asset presentation.
-- Roadmap Linkage: none, no non-empty `.ai-factory\ROADMAP.md` found.
-- Knowledge: local GBrain searched first and returned no hits for the factory UI/resource queries; exact behavior was verified from raw docs/source. Run targeted GBrain sync for `diaweb-code` and `diaverseapi-code` after implementation.
-
-## Research Context
-
-Source: `.ai-factory\RESEARCH.md` Active Summary
-
-- Goal: Use the workspace root as the shared AIF control plane over `diaweb`, `diaverseapi`, `aibot`, and `club10000-bot`.
-- Constraints: child repositories remain separate; product code changes belong inside child repositories; source code is the final authority.
-- Decision: keep one top-level plan for workspace-run work and sync local GBrain sources after meaningful code changes.
+- Testing: quick targeted checks only; add/adjust frontend tests if helper math or rendered labels become non-trivial.
+- Logging: standard; keep existing raid UI logs, add only discrete dev logs for info-panel tab changes if useful.
+- Docs: no mandatory docs checkpoint for this fast UI iteration.
+- Roadmap Linkage: none, `.ai-factory\ROADMAP.md` not found.
+- Constraint: do not change raid mechanics, formulas, prices, rewards, trap rules, or DCR/game-dollar decisions.
+- Constraint: keep the current composition: full-screen raid map plus persistent bottom slots sheet. Do not turn the map into a table page.
 
 ## Goal
 
-Clean up the factory inventory and map UI while preserving the mixed-entity recipe selection flow:
+Make raid mechanics understandable in the mobile UI without overloading the map:
 
-- Hide pet fragments and pets from normal factory inventory browsing.
-- Keep concrete fragments and pets available in material selection mode for recipes that require selected `shard_id` or `user_character_id`.
-- Under `Фабрика / Уровень 1` on the map, show a compact resource row with only icon + amount for `xdv`, `game_dollar`, `brick`, `impulse`, and `slot_token`.
-- Fix the game-dollar icon so it uses the `game_balance_usd`/`dollar.webp` visual, not the XDV icon.
-- Minimalize map bubbles by removing verbose texts like `Уровень 1. Добывает ...` and `Руины. Тап чтобы построить`.
-- Replace inner progress bars on map bubbles with a visible clockwise border progress indicator for construction, upgrades, and running production.
+```text
+map = emotional location choice
+bottom sheet = working area and mechanics explanation
+dispatch step = exact cost/risk/reward confirmation
+result modal = formulas that teach what happened
+```
+
+The player should understand:
+
+- why this location is useful;
+- why this pet is a good or bad match;
+- what "bonus series" does;
+- how Base / Subscription / USDT differ;
+- what rewards and risks apply before sending a pet;
+- why trap ransom and final rewards have those numbers.
 
 ## Current Findings
 
-- Mechanics doc confirms resource workshops accrue to warehouse continuously, can be collected any time, and stop after 10 hours if not collected: `docs\tasks\fabric\factory-mechanics-final.md`.
-- Backend already accrues warehouse balances lazily by elapsed time, caps at `cap_hours = 10`, marks stopped, and resets `last_accrual_at` after transfer-to-storage.
-- `FactoryInventoryDrawer` currently browses all non-warehouse user inventory balances, so concrete `shard:*` and `user_character:*` rows appear in browse mode.
-- `FactoryInventoryDrawer` also powers material selection; hiding fragments/pets globally would break recipe selection, so filtering must be mode-aware.
-- `assetManifest.ts` currently maps `factory.icon.game_dollar` to `/factory/resources/xdv.svg`.
-- Backend Advent reward metadata maps `game_balance_usd` to `dollar.webp`; factory resource assets currently expose `game_dollar` only with `visual_key="factory.icon.game_dollar"`.
-- Map bubble text is built in `FactoryHotspotLayer.tsx`; active bubbles include `Уровень N. Добывает ...`, and ruins bubbles include `Руины. Тап чтобы построить`.
-- `BuildingInfoBubble` renders progress as an inner horizontal fill; `factoryScene.module.css` already has a spinner for upgrade but not a percentage border.
+- `diaweb\frontend\modules\raids\components\RaidLocationCard.tsx` currently shows only location title and entry price on the island.
+- `RaidSlotsSheet.tsx` is now the main persistent bottom sheet with `slots`, `pets`, and `dispatch` steps.
+- `RaidDispatchStep.tsx` already compares modes but does not show enough reward context.
+- `RaidPetCard.tsx` already has pet rarity, price, image, matching bonus label, and availability.
+- `RaidResultModal.tsx` displays rewards but does not explain formulas.
+- `diaverseapi\app\raids\services\state_service.py` currently sends location `effective_chance_percent` calculated for `basic_xdv`, not for every selected mode.
 
-## Non-Goals
+## UX Decisions
 
-- Do not change factory crafting semantics or backend inventory debit/credit logic.
-- Do not remove fragments or pets from recipe material pickers.
-- Do not change the 10-hour warehouse cap unless source verification later shows a backend defect.
-- Do not redesign full workshop/detail screens beyond the map bubble progress presentation required here.
-- Do not create branches in fast mode.
+- Rename visible "Стрик" to "Бонус серии" in user-facing raid UI.
+- Show compact map badges, not large panels, on biome islands.
+- Add a location briefing inside the bottom sheet after a location is selected.
+- Add a segmented subview in the sheet: `Слоты` / `Разведка` / `Награды`.
+- Use formulas sparingly and only where they explain a decision:
+  - `+1% за пэта сюда`
+  - `60% x серия 1.35 = 81%`
+  - `выкуп = 3 x цена входа`
+- For switching locations, warn when the selected start will reset another active bonus series.
 
 ## Repository Matrix
 
 | Repository | Path | Affected | Branch changes | Role |
 | --- | --- | --- | --- | --- |
-| root `diaverse` | `C:\Users\Indigo\Desktop\diaverse` | plan only | none | Stores this fast plan and daily entry |
-| `diaweb` | `C:\Users\Indigo\Desktop\diaverse\diaweb` | yes | none | Factory inventory drawer, map header resource strip, icon resolver/manifest, bubble UI/tests |
-| `diaverseapi` | `C:\Users\Indigo\Desktop\diaverse\diaverseapi` | yes, small | none | Factory game-dollar asset metadata if needed |
+| root `diaverse` | `C:\Users\Indigo\Desktop\diaverse` | plan only | none | Stores this fast plan |
+| `diaweb` | `C:\Users\Indigo\Desktop\diaverse\diaweb` | yes | none | Raid mobile UI and copy |
+| `diaverseapi` | `C:\Users\Indigo\Desktop\diaverse\diaverseapi` | maybe | none | Only if frontend needs mode-specific calculated chances from API |
 | `aibot` | `C:\Users\Indigo\Desktop\diaverse\aibot` | no | none | Not affected |
 | `club10000-bot` | `C:\Users\Indigo\Desktop\diaverse\club10000-bot` | no | none | Not affected |
 
 ## Tasks
 
-### Phase 1 - Inventory Browse/Selection Split
+### Phase 1 - Display Model
 
-- [x] Task 1: Make factory inventory browse mode hide fragments and pets while keeping material selection intact.
+- [x] Task 1: Create raid UI mechanics display helpers.
   - Files/paths:
-    - `diaweb\frontend\modules\factory\components\FactoryInventoryDrawer.tsx`
-    - `diaweb\frontend\__tests__\modules\factory\FactoryInventoryDrawer.test.tsx`
+    - new optional `diaweb\frontend\modules\raids\mechanicsDisplay.ts`
+    - `diaweb\frontend\modules\raids\types.ts`
   - Deliverable:
-    - In `mode="browse"`, hide concrete `shard:*`, aggregate shard rows, and `user_character:*` pet rows from visible inventory categories.
-    - In `mode="select"`, keep existing compatible concrete balances visible and selectable for recipe requirements.
-    - Preserve slot tokens, token details, resources, EvoGens, mutagens, synthesis cores, nullifiers, biomass, and other production products in browse mode.
-    - Add tests proving browse mode excludes fragments/pets but selection mode still shows and selects concrete material balances.
+    - Centralize formatting for bonus series, trap risk, mode duration, mode multipliers, entry price, matching rarity, and reward formulas.
+    - Prefer existing backend state/catalog data. Use frontend constants only for stable display labels already fixed by the mechanics contract: XP x1/x2/x5, chest x1/x2/x4, duration labels.
+    - Add helper to detect whether starting in selected location resets another active bonus series.
   - Logging:
-    - Add no new render logs.
-    - Keep the existing `logFactoryClientWarning` paths for incompatible/insufficient/concrete-selection failures.
-    - If a hidden browse item is also unexpectedly selectable in browse mode, do not log per render; cover that with tests.
+    - No runtime logs in pure helpers.
   - Dependencies:
     - None.
 
-### Phase 2 - Map Header Resource Strip And Icons
+### Phase 2 - Map Badges
 
-- [x] Task 2: Add compact factory resource balances under the map title/level.
+- [x] Task 2: Add compact mechanic badges to biome islands without adding large plates.
   - Files/paths:
-    - `diaweb\frontend\modules\factory\components\FactoryShell.tsx`
-    - `diaweb\frontend\modules\factory\iconResolver.ts`
-    - `diaweb\frontend\__tests__\modules\factory\FactoryShell.test.tsx`
-  - Deliverable:
-    - Under `Фабрика` and `Уровень N`, render a single compact row of icon + formatted amount for `xdv`, `game_dollar`, `brick`, `impulse`, and `slot_token`.
-    - Use `state.balances` as the source and render zero only if the current state explicitly has zero; otherwise use the existing empty value behavior if a balance is missing.
-    - Keep the row unframed: no cards, no pлашки, no labels unless required for accessible `aria-label`.
-    - Ensure text/numbers do not overlap on mobile widths.
-  - Logging:
-    - Add no new presentational logs.
-    - Use an existing client warning only if an expected balance kind cannot resolve an icon in development/test paths.
-  - Dependencies:
-    - Depends on Task 1 only if shared balance helpers are extracted; otherwise independent.
-
-- [x] Task 3: Fix XDV/game-dollar icon resolution.
-  - Files/paths:
-    - `diaverseapi\app\factory\services\resource_assets.py`
-    - `diaweb\frontend\modules\factory\assetManifest.ts`
-    - `diaweb\frontend\modules\factory\iconResolver.ts`
-    - `diaweb\frontend\__tests__\modules\factory\factory-api.test.ts`
-    - `diaweb\frontend\__tests__\modules\factory\FactoryShell.test.tsx`
-  - Deliverable:
-    - Make `game_dollar` resolve to the same visual entity as `game_balance_usd`, using backend static `dollar.webp` where possible.
-    - Keep XDV on its own XDV icon.
-    - Avoid using `/factory/resources/xdv.svg` as the fallback for `factory.icon.game_dollar`.
-    - Add test coverage for distinct `xdv` and `game_dollar` icon sources.
-  - Logging:
-    - Backend: no new INFO logs; if asset metadata is missing, rely on existing factory state warnings rather than per-request logs.
-    - Frontend: add no runtime logs unless icon resolution falls through to an unknown visual key in development.
-  - Dependencies:
-    - Independent, but should land before Task 2 verification.
-
-### Phase 3 - Minimal Map Bubbles And Border Progress
-
-- [x] Task 4: Minimalize factory map bubble copy.
-  - Files/paths:
-    - `diaweb\frontend\modules\factory\components\FactoryHotspotLayer.tsx`
-    - `diaweb\frontend\__tests__\modules\factory\FactoryScene.test.tsx`
+    - `diaweb\frontend\modules\raids\components\RaidLocationCard.tsx`
+    - `diaweb\frontend\modules\raids\components\raidShell.module.css`
     - `diaweb\frontend\modules\i18n\dictionaries\ru.json`
     - `diaweb\frontend\modules\i18n\dictionaries\en.json`
+    - `diaweb\frontend\modules\i18n\types.ts`
   - Deliverable:
-    - Active resource/workshop bubbles should not show `Уровень N. Добывает ...` or equivalent verbose production copy.
-    - Ruins/locked bubbles should not show `Руины. Тап чтобы построить` / `Ruins. Tap to build`.
-    - Keep the title and a short state only: active/ready/building/upgrade/repair/cooldown/locked/ruins.
-    - Keep accessibility labels meaningful even when visible copy is minimal.
+    - Show small island badges: `+N% серия`, trap risk for current/default XDV mode, and short XDV price.
+    - Keep Russian location names and current island placement.
+    - Do not add full cards or opaque name plates over the island art.
   - Logging:
-    - Add no new logs.
-    - Preserve existing development warnings for missing scene mappings or unknown visual keys.
+    - No new logs.
   - Dependencies:
-    - None.
+    - Depends on Task 1 helpers where useful.
 
-- [x] Task 5: Replace map bubble inner progress bar with visible clockwise border progress.
+### Phase 3 - Bottom Sheet Briefing
+
+- [x] Task 3: Add selected-location briefing and sheet subviews.
   - Files/paths:
-    - `diaweb\frontend\modules\factory\components\BuildingInfoBubble.tsx`
-    - `diaweb\frontend\modules\factory\components\factoryScene.module.css`
-    - `diaweb\frontend\__tests__\modules\factory\FactoryScene.test.tsx`
+    - `diaweb\frontend\modules\raids\components\RaidSlotsSheet.tsx`
+    - optional new `diaweb\frontend\modules\raids\components\RaidLocationBriefing.tsx`
+    - optional new `diaweb\frontend\modules\raids\components\RaidRewardPreview.tsx`
+    - `diaweb\frontend\modules\raids\components\raidShell.module.css`
+    - i18n files under `diaweb\frontend\modules\i18n\`
   - Deliverable:
-    - For construction, upgrade, and running production, render progress around the bubble border using `progressPercent`.
-    - The border progress must be visibly thick enough on mobile and desktop and move clockwise from the top.
-    - Remove or hide the inner horizontal progress track on map bubbles.
-    - Continue to show timer/status text; progress remains `aria-hidden` visually while the bubble keeps an accessible status label.
-    - Respect reduced motion where existing animation patterns do.
+    - In the sheet header/body, show selected location summary:
+      - role/purpose of location;
+      - `Бонус серии +N% / cap`;
+      - progress meter;
+      - "влияет: ресурсы и шкатулки; не влияет: XP, цена, ядра, токены".
+    - Add subview control: `Слоты` / `Разведка` / `Награды`.
+    - `Разведка` shows location traits: best pet rarity, primary resource, trap risk, crit, Oasis discount, special loot availability.
+    - `Награды` shows current reward preview: resources, chest chances, special loot zero/available state.
   - Logging:
-    - Add no logs; this is pure presentation.
-    - Use tests/class assertions for progress style state rather than runtime diagnostics.
+    - Optional dev-only `console.debug("[raids.ui] info tab changed", { tab })`.
+    - Do not log scroll/drag events.
   - Dependencies:
-    - Depends on Task 4 for final bubble copy shape.
+    - Depends on Task 1.
 
-### Phase 4 - Verification And Knowledge Sync
+### Phase 4 - Pet And Dispatch Explanation
 
-- [x] Task 6: Run targeted verification and sync changed knowledge sources.
+- [x] Task 4: Make pet cards and dispatch step explain the actual decision.
+  - Files/paths:
+    - `diaweb\frontend\modules\raids\components\RaidPetCard.tsx`
+    - `diaweb\frontend\modules\raids\components\RaidDispatchStep.tsx`
+    - `diaweb\frontend\modules\raids\components\raidShell.module.css`
+    - i18n files under `diaweb\frontend\modules\i18n\`
+  - Deliverable:
+    - Pet card shows why it fits or does not fit:
+      - matching pet: `Подходит: +50% XP`, base/better price;
+      - non-matching pet: `Нет XP-бонуса`, `цена x2/x3` when applicable.
+    - Dispatch mode cards show:
+      - price;
+      - duration;
+      - trap risk;
+      - XP multiplier;
+      - chest multiplier;
+      - slot compatibility/lock reason.
+    - Selected mode summary shows predicted key rewards for selected location + pet + mode.
+    - If a different location currently owns the bonus series, show reset warning before sending.
+  - Logging:
+    - Preserve existing `dispatch mode selected`, command submitted/result/failure logs.
+    - No additional noisy render logs.
+  - Dependencies:
+    - Depends on Tasks 1 and 3.
+
+### Phase 5 - Traps And Results Teaching Moments
+
+- [x] Task 5: Explain trap ransom and reward formulas where the player sees outcomes.
+  - Files/paths:
+    - `diaweb\frontend\modules\raids\components\RaidTrapCard.tsx`
+    - `diaweb\frontend\modules\raids\components\RaidResultModal.tsx`
+    - `diaweb\frontend\modules\raids\components\raidShell.module.css`
+    - i18n files under `diaweb\frontend\modules\i18n\`
+  - Deliverable:
+    - Trap card shows `выкуп = 3 x цена входа` and rescue risk `50%, при провале спасатель застрянет`.
+    - Result modal shows compact formulas for XP, resources, chests, crit, and special loot zero states.
+    - Make result screen feel like a payoff, not a raw list.
+  - Logging:
+    - No new logs.
+  - Dependencies:
+    - Depends on Task 1 helpers where useful.
+
+### Phase 6 - Optional API Support And Verification
+
+- [x] Task 6: Add minimal backend support only if frontend cannot accurately calculate selected-mode reward preview from existing data.
+  - Files/paths if needed:
+    - `diaverseapi\app\raids\schemas.py`
+    - `diaverseapi\app\raids\services\state_service.py`
+    - `diaverseapi\app\raids\tests\test_state_service.py`
+    - `diaweb\frontend\modules\raids\types.ts`
+  - Deliverable:
+    - Prefer no backend change.
+    - If needed, expose mode-specific effective chest chances, e.g. `effective_chance_percent_by_mode`.
+    - Keep response backwards-compatible.
+  - Logging:
+    - Backend: no extra logs for pure read-shape calculation.
+  - Dependencies:
+    - Depends on Task 4 discovering a real data gap.
+
+- [x] Task 7: Run quick verification.
   - Files/paths:
     - `diaweb`
-    - `diaverseapi`
-    - `C:\Users\Indigo\Desktop\diaverse\scripts\gbrain-sync.ps1`
+    - `diaverseapi` only if Task 6 is used
   - Deliverable:
-    - Run targeted frontend tests for factory shell, scene, inventory drawer, and API/icon behavior.
-    - Run targeted backend tests only if `resource_assets.py` or related backend schemas are changed.
-    - Run `npm run lint` in `diaweb` if available and the UI changes touch TypeScript/React/CSS.
-    - Run targeted GBrain sync for `diaweb-code` and `diaverseapi-code` after implementation.
+    - Run targeted frontend checks available in the repo for raids components.
+    - If backend was changed, run targeted raids state tests or compile check.
+    - Do not start a local dev server unless the user explicitly asks.
+    - Manually reason through mobile layout: no text overlap, no map composition drift, sheet remains usable.
   - Logging:
-    - Verification should not add runtime logs.
-    - Summarize failures by command and first failing assertion during implementation.
+    - Remove or reduce any noisy logs found during verification.
   - Dependencies:
-    - Depends on Tasks 1-5.
+    - Depends on implementation tasks.
 
 ## Verification Plan
 
-Run from `C:\Users\Indigo\Desktop\diaverse\diaweb\frontend` after frontend changes, using the repo's actual scripts:
+Default quick checks:
 
 ```powershell
-npm test -- FactoryInventoryDrawer FactoryShell FactoryScene factory-api
-npm run lint
+cd C:\Users\Indigo\Desktop\diaverse\diaweb
 ```
 
-If backend factory resource asset metadata changes, run from `C:\Users\Indigo\Desktop\diaverse\diaverseapi`:
+Use the repo's existing targeted frontend test/lint commands for raid modules if available.
+
+If backend Task 6 is needed:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest app\factory\tests\test_state_service.py app\factory\tests\test_inventory_gateway.py
+cd C:\Users\Indigo\Desktop\diaverse\diaverseapi
+python -m compileall app\raids
+python -m pytest app\raids\tests\test_state_service.py -q
 ```
 
-Run from `C:\Users\Indigo\Desktop\diaverse` after implementation:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-sync.ps1 -SourceId diaweb-code
-powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-sync.ps1 -SourceId diaverseapi-code
-```
+If `pytest` is unavailable locally, record that limitation in the final answer.
 
 ## Commit Plan
 
-- **Commit 1** (after Tasks 1-3, `diaweb` + small `diaverseapi` if needed): `fix(factory): clean inventory resources and currency icons`
-- **Commit 2** (after Tasks 4-6, `diaweb`): `fix(factory): simplify map bubbles and progress`
-
-## Rollback Plan
-
-- Revert `diaweb` changes to `FactoryInventoryDrawer`, `FactoryShell`, `FactoryHotspotLayer`, `BuildingInfoBubble`, and related CSS/tests.
-- Revert the `diaverseapi` resource asset metadata change if `game_dollar` backend icon metadata causes unexpected static asset behavior.
-- No data migration or inventory repair should be required because this plan changes presentation and asset metadata only.
+- Commit 1 after Tasks 1-3: `feat(raids): add location briefing and reward preview`
+- Commit 2 after Tasks 4-7: `feat(raids): clarify dispatch rewards and trap outcomes`
 
 ## Next Step
 
-Run `$aif-implement` from `C:\Users\Indigo\Desktop\diaverse` when ready to execute this fast plan.
+Run `$aif-implement` to execute this fast plan.
