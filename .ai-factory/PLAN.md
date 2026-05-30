@@ -48,7 +48,7 @@ The player should understand:
 - Rename visible "Стрик" to "Бонус серии" in user-facing raid UI.
 - Show compact map badges, not large panels, on biome islands.
 - Add a location briefing inside the bottom sheet after a location is selected.
-- Add a segmented subview in the sheet: `Слоты` / `Разведка` / `Награды`.
+- Keep slots as the main sheet view and expose location mechanics through one `О локации` button.
 - Use formulas sparingly and only where they explain a decision:
   - `+1% за пэта сюда`
   - `60% x серия 1.35 = 81%`
@@ -115,9 +115,9 @@ The player should understand:
       - `Бонус серии +N% / cap`;
       - progress meter;
       - "влияет: ресурсы и шкатулки; не влияет: XP, цена, ядра, токены".
-    - Add subview control: `Слоты` / `Разведка` / `Награды`.
-    - `Разведка` shows location traits: best pet rarity, primary resource, trap risk, crit, Oasis discount, special loot availability.
-    - `Награды` shows current reward preview: resources, chest chances, special loot zero/available state.
+    - Add one `О локации` action instead of separate `Разведка` and `Награды` tabs.
+    - `О локации` opens a modal with location traits: best pet rarity, primary resource, trap risk, crit, Oasis discount, and special loot availability.
+    - The same modal shows current reward preview: resources, chest chances, special loot zero/available state.
   - Logging:
     - Optional dev-only `console.debug("[raids.ui] info tab changed", { tab })`.
     - Do not log scroll/drag events.
