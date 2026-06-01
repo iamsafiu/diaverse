@@ -59,7 +59,7 @@ Branch: none
 
 ### Phase 1: Backend Cadence And Settings Contract
 
-- [ ] Task 1: Add 14-day rollover settings and due-date calculation in `diaverseapi`.
+- [x] Task 1: Add 14-day rollover settings and due-date calculation in `diaverseapi`.
 
   Deliverable:
   - Update `diaverseapi/app/club/schemas.py` and `diaverseapi/app/club/admin_api.py` to expose and normalize:
@@ -81,7 +81,7 @@ Branch: none
 
 ### Phase 2: Periodic Pair Rollover State And Notice Payload
 
-- [ ] Task 2: Generalize `run_monthly_rollover()` into a 14-day periodic rollover while preserving idempotency.
+- [x] Task 2: Generalize `run_monthly_rollover()` into a 14-day periodic rollover while preserving idempotency.
 
   Deliverable:
   - In `diaverseapi/app/club/pairing.py`, add or refactor to a method such as `run_periodic_rollover(program_id=...)`.
@@ -111,7 +111,7 @@ Branch: none
 
 ### Phase 3: Backend Aibot Request For Pairing Rollover Image+Text
 
-- [ ] Task 3: Add a signed `diaverseapi -> aibot` request path for pairing rollover image publication.
+- [x] Task 3: Add a signed `diaverseapi -> aibot` request path for pairing rollover image publication.
 
   Deliverable:
   - Extend `diaverseapi/app/club/aibot_client.py` with a pairing rollover creative config that:
@@ -136,7 +136,7 @@ Branch: none
 
 ### Phase 4: Aibot Pairing Rollover Image Generation And Publish
 
-- [ ] Task 4: Teach `aibot` to generate and publish pairing rollover images using the existing club asset pipeline.
+- [x] Task 4: Teach `aibot` to generate and publish pairing rollover images using the existing club asset pipeline.
 
   Deliverable:
   - Add a signed internal route in `aibot/app/api/routes/club_assets.py`, for example `/internal/club/pairing-rollovers/image`, or extend the current route with an explicit `asset_kind="pairing_rollover"` without changing the leaderboard behavior.
@@ -165,7 +165,7 @@ Branch: none
 
 ### Phase 5: Staff Settings UI
 
-- [ ] Task 5: Add the pairing rollover image prompt to `/staff/club/settings`.
+- [x] Task 5: Add the pairing rollover image prompt to `/staff/club/settings`.
 
   Deliverable:
   - Update `diaweb/frontend/modules/club/types.ts` with the new settings fields.
@@ -186,7 +186,7 @@ Branch: none
 
 ### Phase 6: Tests, Docs, And Knowledge Sync
 
-- [ ] Task 6: Add targeted tests and update operational documentation.
+- [x] Task 6: Add targeted tests and update operational documentation.
 
   Deliverable:
   - `diaverseapi` tests:

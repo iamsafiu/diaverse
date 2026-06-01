@@ -36,6 +36,7 @@ CLUB_AIBOT_SIGNING_SECRET=
 CLUB_AIBOT_TIMEOUT_SECONDS=10
 CLUB_AIBOT_LEADERBOARD_IMAGE_PATH=/internal/club/leaderboards/image
 CLUB_AIBOT_LEADERBOARD_PUBLISH_PATH=/internal/club/leaderboards/publish
+CLUB_AIBOT_PAIRING_ROLLOVER_PUBLISH_PATH=/internal/club/leaderboards/pairing-rollovers/publish
 CLUB_AIBOT_LEADERBOARD_STATUS_PATH=/internal/club/leaderboards/assets/{asset_id}
 CLUB_AIBOT_LEADERBOARD_PREFLIGHT_PATH=/internal/club/leaderboards/preflight
 ```
@@ -143,34 +144,62 @@ Operational invariant:
   participant, including the fallback admin, from appearing in multiple active
   buddy groups.
 
-Monthly marathon reset:
+14-day pairing rollover:
 
-- The scheduler publishes `club_monthly_pairing_rollover` at `10 0 1 * *`.
-- The rollover is idempotent per program and month via
-  `program.metadata_json.last_monthly_pairing_month`.
-- All active buddy groups are closed, active regular members are shuffled, and
-  new pairs are created.
+- The scheduler still publishes the deployment-compatible
+  `club_monthly_pairing_rollover` channel, but it now ticks daily at
+  `10 0 * * *`.
+- The service decides whether work is due by checking
+  `last_successful_rollover_date + pairing_rollover_interval_days <= today`.
+  The default interval is 14 calendar days.
+- The first 14-day cycle is anchored from the latest successful legacy monthly
+  state: prefer `program.metadata_json.last_monthly_pairing_at`, otherwise use
+  the first day of `last_monthly_pairing_month`.
+- Do not use a day-of-month cron such as `*/14`: it resets on month boundaries
+  and produces short gaps such as day 29 to day 1.
+- When due, all active buddy groups are closed, active regular members are
+  shuffled, and new pairs are created.
 - The fallback admin is excluded from the regular shuffle and is used only when
   an odd regular member remains.
-- A Telegram summary is queued with the configured
-  `telegram_monthly_pairs_message_template`.
+- The new primary idempotency metadata is stored under
+  `last_pairing_rollover_period_key`, `last_pairing_rollover_at`,
+  `last_pairing_rollover_anchor_date`, and `last_pairing_rollover_payload`.
+- After the rollover transaction commits, `diaverseapi` sends a signed request
+  to `aibot` to generate and publish one Telegram post with image and caption.
+  No `message_thread_id` is sent, so the post lands in the general/common group
+  destination.
+- If the initial signed `aibot` request fails synchronously, backend queues a
+  plain-text fallback notice with the same pair list, also without a topic id.
+- Pairing rollover images use `pairing_rollover_image_prompt_template` and
+  reuse `leaderboard_image_reference_paths`.
 
 Settings templates:
 
 - `telegram_pair_assigned_message_template` supports
   `{club_title}`, `{member_name}`, `{partner_name}`, `{pair_names}`,
   `{group_code}`, and `{is_fallback}`.
-- `telegram_monthly_pairs_message_template` supports `{club_title}`, `{month}`,
-  `{pairs_list}`, and `{pairs_count}`.
+- `telegram_pairing_rollover_message_template` supports `{club_title}`,
+  `{period_key}`, `{period_start}`, `{period_end}`, `{pairs_list}`,
+  `{pairs_count}`, `{generated_at}`, and legacy `{month}`.
+- `telegram_monthly_pairs_message_template` remains readable as a fallback for
+  older settings.
+- `pairing_rollover_image_prompt_template` supports `{club_title}`,
+  `{period_key}`, `{period_start}`, `{period_end}`, `{pairs_list}`,
+  `{pairs_count}`, and `{generated_at}`.
 
 Logs to inspect:
 
 - `diaverseapi`: `[club.pairing] fallback pair created`, `fallback pair
-  replaced`, `monthly rollover complete`, and `monthly notice queued`.
+  replaced`, `rollover due calculated`, `periodic rollover skipped`,
+  `rollover complete`, and `pairing rollover image publish accepted`.
 - `diaverseapi` outbox: `reason=telegram_pair_assigned` and
-  `reason=monthly_pairing_rollover`.
-- `copywriting-clubbot`: `send_message` ACK/NACK for pair and monthly notice
-  commands.
+  `reason=pairing_rollover_fallback`.
+- `aibot`: `copywriting.api.club_assets.leaderboard_image.requested`,
+  `copywriting.use_case.club_leaderboard_image.generate.start`, and
+  `copywriting.use_case.club_leaderboard_image.userbot_publish_queued` or
+  `.published`.
+- `copywriting-clubbot`: `send_message` ACK/NACK for pair notices and fallback
+  text commands.
 
 ## Lifecycle Policy
 
