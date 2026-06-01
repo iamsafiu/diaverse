@@ -144,19 +144,19 @@ Operational invariant:
   participant, including the fallback admin, from appearing in multiple active
   buddy groups.
 
-14-day pairing rollover:
+15-day pairing rollover:
 
 - The scheduler still publishes the deployment-compatible
   `club_monthly_pairing_rollover` channel, but it now ticks daily at
   `10 0 * * *`.
 - The service decides whether work is due by checking
   `last_successful_rollover_date + pairing_rollover_interval_days <= today`.
-  The default interval is 14 calendar days.
-- The first 14-day cycle is anchored from the latest successful legacy monthly
+  The default interval is 15 calendar days.
+- The first 15-day cycle is anchored from the latest successful legacy monthly
   state: prefer `program.metadata_json.last_monthly_pairing_at`, otherwise use
   the first day of `last_monthly_pairing_month`.
-- Do not use a day-of-month cron such as `*/14`: it resets on month boundaries
-  and produces short gaps such as day 29 to day 1.
+- Do not use a day-of-month cron such as `*/15`: it resets on month boundaries
+  and produces short gaps such as day 31 to day 1.
 - When due, all active buddy groups are closed, active regular members are
   shuffled, and new pairs are created.
 - The fallback admin is excluded from the regular shuffle and is used only when
@@ -172,6 +172,9 @@ Operational invariant:
   plain-text fallback notice with the same pair list, also without a topic id.
 - Pairing rollover images use `pairing_rollover_image_prompt_template` and
   reuse `leaderboard_image_reference_paths`.
+- Pairing rollover pair lines prefer Telegram usernames formatted as
+  `@username`; members without a Telegram username fall back to the existing
+  display-name rules.
 
 Settings templates:
 
