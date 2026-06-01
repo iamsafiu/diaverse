@@ -68,6 +68,78 @@ Required runtime settings:
 
 The `copywriting-api` request path only creates or reuses the publish event and job. The `copywriting-userbot` container owns Pyrogram delivery and marks the draft published after Telegram accepts the messages.
 
+## Auto-generation feature flag
+
+Use two flags to control cost-bearing generation per environment.
+
+Recommended values:
+
+| Environment | `COPYWRITING_GENERATION_ENABLED` | `COPYWRITING_AUTO_GENERATION_ENABLED` | Reason |
+| --- | --- | --- | --- |
+| Production | `true` | `true` | Keep manual and daily copywriting automation active. |
+| Development / staging | `false` | `false` | Prevent token spend from both manual UI generation and scheduled jobs. |
+
+`COPYWRITING_GENERATION_ENABLED=false` has two deployment scopes:
+
+- In `diaweb`, it is a per-frontend BFF kill switch. It blocks staff UI generation requests before they reach `copywriting-api`. Use this when dev and prod point at the same shared copywriting API and only dev should be disabled.
+- In `aibot`, it is a global copywriting API/worker kill switch. It blocks enqueueing cost-bearing LLM/image jobs from the API and dead-letters already queued generation jobs before a worker can call the provider. Use this only when that whole copywriting runtime should stop generating.
+
+`COPYWRITING_AUTO_GENERATION_ENABLED=false` is narrower. It keeps manual generation available, but stops the worker from creating new daily scheduled jobs:
+
+- `generate_daily_run`
+- `generate_daily_fact`
+- `generate_chat_situation_report`
+- `generate_club_benefit`
+
+To disable only the dev frontend when it uses a shared copywriting API, set the flag in the deployed `diaweb` env and recreate only `diaweb`:
+
+```bash
+cd /home/diaweb
+
+grep -q '^COPYWRITING_GENERATION_ENABLED=' frontend/.env.production \
+  && sed -i 's/^COPYWRITING_GENERATION_ENABLED=.*/COPYWRITING_GENERATION_ENABLED=false/' frontend/.env.production \
+  || printf '\nCOPYWRITING_GENERATION_ENABLED=false\n' >> frontend/.env.production
+
+docker compose -f docker-compose.dev-traefik.yml up -d --build diaweb
+```
+
+To disable all generation for a dedicated non-production copywriting API/worker runtime, update the deployed `aibot` environment file and recreate API + worker:
+
+```bash
+cd /srv/aibot
+
+grep -q '^COPYWRITING_GENERATION_ENABLED=' .env.production \
+  && sed -i 's/^COPYWRITING_GENERATION_ENABLED=.*/COPYWRITING_GENERATION_ENABLED=false/' .env.production \
+  || printf '\nCOPYWRITING_GENERATION_ENABLED=false\n' >> .env.production
+
+grep -q '^COPYWRITING_AUTO_GENERATION_ENABLED=' .env.production \
+  && sed -i 's/^COPYWRITING_AUTO_GENERATION_ENABLED=.*/COPYWRITING_AUTO_GENERATION_ENABLED=false/' .env.production \
+  || printf '\nCOPYWRITING_AUTO_GENERATION_ENABLED=false\n' >> .env.production
+
+docker compose -f docker-compose.prod.yml up -d --build copywriting-api copywriting-worker
+```
+
+To re-enable all generation:
+
+```bash
+cd /srv/aibot
+
+sed -i 's/^COPYWRITING_GENERATION_ENABLED=.*/COPYWRITING_GENERATION_ENABLED=true/' .env.production
+sed -i 's/^COPYWRITING_AUTO_GENERATION_ENABLED=.*/COPYWRITING_AUTO_GENERATION_ENABLED=true/' .env.production
+docker compose -f docker-compose.prod.yml up -d --build copywriting-api copywriting-worker
+```
+
+For immediate cost containment before a deploy or config change reaches the host, stop only the worker:
+
+```bash
+cd /srv/aibot
+docker compose -f docker-compose.prod.yml stop copywriting-worker
+```
+
+Stopping the worker also pauses manual queue processing. Prefer the global feature flag once the updated code is deployed.
+
+`COPYWRITING_GENERATION_ENABLED=false` prevents new generation jobs from being queued and prevents already queued generation jobs from reaching LLM/image providers. Jobs already `processing` at the moment of shutdown may finish unless the worker is stopped first.
+
 ## Correlation and logging notes
 
 - nginx forwards `X-Request-ID` from `$request_id`
