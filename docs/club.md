@@ -185,6 +185,7 @@ Default rollout is intentionally non-destructive:
 | Paid, not in chat | Keep paid membership as pending join. | Send invite or approve join request. |
 | Paid, in chat | Keep access until `access_expires_at`. | Monitor payment period and presence. |
 | Paid, no game UUID | Access is valid by Telegram/payment identity. | Link game UUID later when the user enters the game. |
+| Telegram join through an explicit invite link | Grant `invitation` access after the member is confirmed in the club chat; welcome and buddy-pair notices are queued through the backend outbox. | Monitor invite-link hygiene; remove or manually exclude users when access was granted incorrectly. |
 | Unknown Telegram join | Create review record, do not grant paid access silently. | Classify as paid/manual/gift/migration/test or remove. |
 | Roster-only existing member | Treat as review or migration candidate. | Reconcile against old Club10000 payments and current group roster. |
 | Manual/gift/migration/test | Require explicit source and reason; no-expiry must be deliberate. | Maintain `access_expires_at` as the staff-facing access date when applicable. |
@@ -540,7 +541,7 @@ Roster sync flow:
 1. `copywriting-userbot` scans the club supergroup with Pyrogram/MTProto.
 2. It sends signed batches to `POST /v1/internal/club/telegram/roster-snapshot`.
 3. `diaverseapi` creates or updates `ClubMembership` rows with source `telegram_roster_scan`.
-4. Real-time joins from `copywriting-clubbot` create rows with source `telegram_join`.
+4. Real-time no-link joins from `copywriting-clubbot` create review rows with source `telegram_join`; joins that carry Telegram `invite_link` metadata create or update `source=invitation` and activate after in-chat presence is confirmed.
 5. Neither path creates a game `User`. `ClubMembership.user_id` is linked only when an existing user can be matched by Telegram identity.
 6. Linked members read steps from `user_activities`; unlinked members remain visible in `/staff/club/members` and do not break leaderboard snapshots.
 7. A completed full scan may mark missing members as `suspected_left`. Partial or failed scans must not mark members missing.
@@ -567,6 +568,13 @@ Paid path:
 3. Staff or future product flow generates an invite/join path.
 4. `copywriting-clubbot` sends join/member events to `diaverseapi`.
 5. Once numeric Telegram identity is known, membership activates and buddy pairing runs.
+
+Invitation path:
+
+1. A user enters or requests to enter the closed Telegram group through a Telegram invite link.
+2. `copywriting-clubbot` forwards the join request or chat-member update with `invite_link` metadata.
+3. `diaverseapi` records the membership as `source=invitation`; no-link joins stay review-only.
+4. When the member is confirmed in chat, backend activation runs, the member enters normal leaderboards and buddy pairing, and existing outbox commands queue the welcome and pair notices.
 
 The public checkout/join UX is intentionally deferred until product details are confirmed.
 
