@@ -91,6 +91,10 @@ Existing copywriting BFF configuration remains required:
 - `aibot` materializes recipients idempotently per campaign.
 - `aibot` sends a photo with caption when the text fits Telegram caption limits.
 - If the text is too long for a caption, `aibot` sends the photo first and the text as a second message.
+- Broadcast text is normalized to safe Telegram HTML before test send, campaign storage, and worker delivery.
+- Safe links can be entered as `<a href="https://example.com">visible text</a>`.
+- Markdown-style links such as `[visible text](https://example.com)` are converted to Telegram HTML.
+- Telegram-copied hidden links that paste as `visible text (https://example.com)` on a single line are converted back into a hidden link for that line.
 - Blocked, forbidden, or chat-not-found recipients become terminal `blocked`.
 - Retry-after and rate-limit style errors move recipients to `retry_pending` and requeue the worker job.
 - Campaign status becomes `completed` only when all recipients are terminal.
