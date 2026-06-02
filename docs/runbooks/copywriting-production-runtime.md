@@ -17,6 +17,7 @@
   - `copywriting_exports` for exported draft artifacts
   - `copywriting_generated_images` for generated draft images; mounted read-only into `copywriting-userbot` for Telegram publishing
   - `copywriting_broadcast_images` for auth-bot broadcast images shared by `copywriting-api` and `copywriting-worker`
+- `copywriting-volume-init` runs as root before `copywriting-api` and `copywriting-worker` to set ownership on the broadcast image volume; the app containers still run as the non-root `copywriting` user.
 
 ## Bring-up order
 

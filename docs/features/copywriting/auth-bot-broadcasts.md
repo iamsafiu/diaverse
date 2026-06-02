@@ -62,9 +62,10 @@ Do not store raw values in docs, git, daily public digest, or scripts.
 - `COPYWRITING_BROADCAST_MAX_IMAGE_SIZE_BYTES`
 - `COPYWRITING_BROADCAST_TEST_TG_USER_ID`
 - `COPYWRITING_BROADCAST_BOT_PROFILE`
-- Auth bot Telegram token env used by the configured bot profile.
+- `TELEGRAM_BOT_TOKEN_AUTH` when `COPYWRITING_BROADCAST_BOT_PROFILE=auth` (`TELEGRAM_AUTH_BOT_TOKEN` is also supported by the resolver).
 
 The path configured by `COPYWRITING_BROADCAST_MEDIA_DIR` must be shared between `copywriting-api` and `copywriting-worker`, because the API stores the uploaded image and the worker reads it during Telegram delivery.
+In Docker Compose production runtime, `copywriting-volume-init` must complete before `copywriting-api` and `copywriting-worker` so the shared broadcast image volume is writable by the non-root `copywriting` user.
 
 ### `diaweb`
 
