@@ -64,6 +64,8 @@ Do not store raw values in docs, git, daily public digest, or scripts.
 - `COPYWRITING_BROADCAST_BOT_PROFILE`
 - Auth bot Telegram token env used by the configured bot profile.
 
+The path configured by `COPYWRITING_BROADCAST_MEDIA_DIR` must be shared between `copywriting-api` and `copywriting-worker`, because the API stores the uploaded image and the worker reads it during Telegram delivery.
+
 ### `diaweb`
 
 Existing copywriting BFF configuration remains required:

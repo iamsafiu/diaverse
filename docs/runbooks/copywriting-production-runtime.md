@@ -16,6 +16,7 @@
   - `copywriting_userbot_session` for the Pyrogram session store
   - `copywriting_exports` for exported draft artifacts
   - `copywriting_generated_images` for generated draft images; mounted read-only into `copywriting-userbot` for Telegram publishing
+  - `copywriting_broadcast_images` for auth-bot broadcast images shared by `copywriting-api` and `copywriting-worker`
 
 ## Bring-up order
 
