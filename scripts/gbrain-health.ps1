@@ -128,7 +128,7 @@ if ($doctor.ExitCode -eq 0) {
 $list = Invoke-GBrainCapture -Arguments @('sources', 'list', '--json')
 $json = ($list.Output -join "`n") | ConvertFrom-Json
 $sourceIds = @($json.sources | ForEach-Object { $_.id })
-$required = @('diaverse-docs', 'diaverse-aif', 'diaweb-code', 'diaverseapi-code', 'aibot-code', 'club10000-bot-code')
+$required = @('diaverse-docs', 'diaverse-aif', 'diaweb-code', 'diaverseapi-code', 'aibot-code', 'club10000-bot-code', 'diaverse-auth-bot-code')
 
 foreach ($id in $required) {
     if ($sourceIds -notcontains $id) {

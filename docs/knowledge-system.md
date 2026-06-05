@@ -4,11 +4,11 @@
 
 ## Назначение
 
-Diaverse использует локальный GBrain как навигационный слой по документации, AI Factory context и коду четырех дочерних репозиториев. Он помогает быстро найти связанные документы, кодовые символы и возможные зоны влияния, но не является финальным источником правды.
+Diaverse использует локальный GBrain как навигационный слой по документации, AI Factory context и коду пяти дочерних репозиториев. Он помогает быстро найти связанные документы, кодовые символы и возможные зоны влияния, но не является финальным источником правды.
 
 Финальная проверка всегда делается по:
 
-- source code в `diaweb`, `diaverseapi`, `aibot`, `club10000-bot`;
+- source code в `diaweb`, `diaverseapi`, `aibot`, `club10000-bot`, `diaverse-auth-bot`;
 - canonical docs в `docs/`;
 - текущему git status/diff.
 
@@ -31,6 +31,7 @@ Diaverse использует локальный GBrain как навигаци�
 | `diaverseapi-code` | `diaverseapi/` | Backend code lookup |
 | `aibot-code` | `aibot/` | Copywriting service code lookup |
 | `club10000-bot-code` | `club10000-bot/` | Standalone bot code lookup |
+| `diaverse-auth-bot-code` | `diaverse-auth-bot/` | Telegram auth transport code lookup |
 
 ## Рекомендуемый Lookup Pattern
 

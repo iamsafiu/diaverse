@@ -46,6 +46,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | Product Master Plan | [product/master-plan.md](product/master-plan.md) | Перед изменением продуктового scope |
 | Copywriting Web Architecture | [architecture/copywriting-web-architecture.md](architecture/copywriting-web-architecture.md) | Перед изменением staff copywriting |
 | Copywriting Auth Bot Broadcasts | [features/copywriting/auth-bot-broadcasts.md](features/copywriting/auth-bot-broadcasts.md) | Перед изменением рассылок через auth bot в staff copywriting |
+| Copywriting Club10000 Broadcasts | [features/copywriting/club10000-broadcasts.md](features/copywriting/club10000-broadcasts.md) | Перед изменением рассылок через `@club10000_bot` в staff copywriting |
 | Cabinet Auth Guide | [features/cabinet/auth-guide.md](features/cabinet/auth-guide.md) | Перед изменением auth UI/BFF |
 | Diaverse Auth Bot | [features/cabinet/auth-bot.md](features/cabinet/auth-bot.md) | Перед изменением Telegram auth bot, login-session approve или mobile Telegram link flow |
 | Cabinet RBAC Guide | [features/cabinet/rbac-guide.md](features/cabinet/rbac-guide.md) | Перед изменением ролей/permissions |

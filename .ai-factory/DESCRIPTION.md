@@ -10,10 +10,12 @@ Shared coordination workspace for the Diaverse system. This folder groups the we
 - **diaverseapi** - FastAPI backend, SQLModel/SQLAlchemy, Alembic, PostgreSQL, Redis, task processing
 - **aibot** - internal copywriting service, FastAPI + worker + Telegram ingest runtimes, OpenAI/Groq-backed LLM workflows
 - **club10000-bot** - standalone Club10000 Telegram bot, aiohttp callbacks, aiogram runtime, Prodamus recurring payments, and bot-local PostgreSQL state
+- **diaverse-auth-bot** - stateless Telegram auth transport adapter for Diaverse browser login and mobile Telegram linking
 
 ## Current Cross-Repo Integrations
 
 - **Club:** `diaverseapi/app/club` owns the Diaverse club subscription/marathon domain and signed internal club APIs. `diaweb` exposes `/staff/club`. `aibot/app/clubbot` is the thin Telegram adapter runtime for joins, invites, removals, moderation, and other Diaverse system actions, deployed as `copywriting-clubbot` on the foreign bot server. `club10000-bot` owns the legacy Club10000 Telegram bot runtime and its restored bot DB; it should bridge normalized payment events to `diaverseapi` instead of writing to the Diaverse DB directly. `aibot` also generates club benefit posts and leaderboard images through signed service requests; leaderboard content publishes by default through the existing Premium `copywriting-userbot` queue into the configured Telegram topic. Env-backed Bot API targets such as `bot_profile=club` remain explicit fallbacks, not the default club content path.
+- **Auth bot:** `diaverse-auth-bot` owns only the Telegram transport for login and mobile-link deep links. `diaverseapi/app/security` owns login session state, user provisioning, Telegram identity persistence, cookies, RBAC assignment, and account-linking semantics.
 
 ## Shared AI Layer
 
@@ -31,7 +33,7 @@ Shared coordination workspace for the Diaverse system. This folder groups the we
 - Sync: `C:\Users\Indigo\Desktop\diaverse\scripts\gbrain-sync.ps1`
 - Health check: `C:\Users\Indigo\Desktop\diaverse\scripts\gbrain-health.ps1`
 - Local state: `C:\Users\Indigo\Desktop\diaverse\.tools\gbrain\home`
-- Source IDs: `diaverse-docs`, `diaverse-aif`, `diaweb-code`, `diaverseapi-code`, `aibot-code`, `club10000-bot-code`
+- Source IDs: `diaverse-docs`, `diaverse-aif`, `diaweb-code`, `diaverseapi-code`, `aibot-code`, `club10000-bot-code`, `diaverse-auth-bot-code`
 
 ## Non-Goals
 

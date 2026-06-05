@@ -2,12 +2,13 @@
 
 > Coordination repository for Diaverse documentation, AI context, local knowledge tooling, and shared workspace scripts.
 
-This repository does not contain the product source code. The runtime code stays in four independent child repositories:
+This repository does not contain the product source code. The runtime code stays in five independent child repositories:
 
 - `diaweb` - Next.js web frontend and same-origin BFF layer.
 - `diaverseapi` - FastAPI backend for auth, cabinet, payments, RBAC, and staff domains.
 - `aibot` - internal copywriting service used by `diaweb` staff tooling.
 - `club10000-bot` - standalone Club10000 Telegram bot.
+- `diaverse-auth-bot` - thin Telegram transport adapter for web login and mobile Telegram linking.
 
 ## What This Repo Tracks
 
@@ -28,6 +29,7 @@ diaweb/
 diaverseapi/
 aibot/
 club10000-bot/
+diaverse-auth-bot/
 ```
 
 Local runtime state under `.tools/`, browser profiles, screenshots, credentials, environment files, and temporary artifacts are also ignored.

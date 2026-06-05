@@ -4,7 +4,7 @@
 
 ## Назначение
 
-Auth-bot broadcast - staff-инструмент в разделе copywriting для мгновенной рассылки Telegram-сообщения пользователям, которые уже имеют Telegram identity в Diaverse. С точки зрения пользователя сообщение приходит от Telegram auth bot. Исполнение кампании, очередь, получатели, статусы и ретраи принадлежат не auth bot repo, а связке `diaweb` + `aibot` + `diaverseapi`.
+Auth-bot broadcast - staff-инструмент в разделе copywriting для мгновенной рассылки Telegram-сообщения пользователям, которые хотя бы раз стартовали auth bot и прошли его approve-flow. С точки зрения пользователя сообщение приходит от Telegram auth bot. Исполнение кампании, очередь, получатели, статусы и ретраи принадлежат не auth bot repo, а связке `diaweb` + `aibot` + `diaverseapi`.
 
 ## Ownership
 
@@ -18,7 +18,7 @@ Auth-bot broadcast - staff-инструмент в разделе copywriting д
 
 ## Product Contract
 
-- Audience: active, non-deleted `diaverseapi` users where `users.tg_user_id IS NOT NULL`.
+- Audience: active, non-deleted `diaverseapi` users present in `auth_bot_broadcast_contacts`; this table is populated only by auth-bot internal approve flows, not by generic `users.tg_user_id`.
 - Image is mandatory.
 - Text is mandatory.
 - Test send is mandatory before mass send in the current browser session.
@@ -148,3 +148,7 @@ npm run typecheck
 - The browser never calls `aibot` directly.
 - BFF routes pass multipart bytes but must not log image bytes or message text.
 - Docs and daily public digest must not include bot tokens, raw secrets, server addresses, SSH commands, or raw environment values.
+
+## See Also
+
+- [Club10000 Broadcasts In Copywriting](club10000-broadcasts.md)

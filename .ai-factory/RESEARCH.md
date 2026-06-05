@@ -1,38 +1,199 @@
 # Research
 
-Updated: 2026-05-25 15:45
-Status: ready
+Updated: 2026-06-04 11:55
+Status: active
 
 ## Active Summary (input for /aif-plan)
 <!-- aif:active-summary:start -->
-Topic: Workspace-level GBrain and AI Factory integration for the full Diaverse system
-Goal: Use one shared AI workspace over `diaweb`, `diaverseapi`, `aibot`, and `club10000-bot` with local GBrain sources and top-level AIF control plane for cross-repo planning, implementation, review, verification, and commits.
+Topic: Advent calendar revenue analysis and monetization strategy
+Goal: Analyze the April and May Advent calendars, understand revenue, currency/payment-method behavior, paid/free day balance, funnel losses, and define a strategy to raise calendar revenue toward 2000 USDT.
 Constraints:
-  - Keep the child repositories separate; do not create a monorepo
-  - The workspace root is a lightweight git repository for documentation, AI context, shared scripts, and workspace config only
-  - Repo-local source code remains the final authority
-  - Top-level AIF should coordinate cross-repo work without collapsing the child repositories into a monorepo
-  - Repo-local AI context is reference/fallback context unless the user explicitly asks to work inside one repository in isolation
-  - Keep GBrain local CLI-first; no public HTTP MCP, no ChatGPT connector, and no automatic raw conversation capture by default
+  - Explore mode allows persisting research only in `.ai-factory/RESEARCH.md`; no product code or other docs were edited
+  - Production database inspection was read-only and aggregated; no user ids, guest ids, IPs, tokens, checkout URLs, or raw provider payloads are captured here
+  - Revenue is counted from successful paid Advent unlocks in the relevant 2026 calendar windows
+  - Business source prices are USD/USDT; Pay1Time and Prodamus collect through RUB provider amounts via FX; crypto uses USDTTRC20
+  - Old 2024 Zion rows attached to the April calendar exist in raw data and must be excluded from 2026 calendar-window analysis
 Decisions:
-  - Use `C:\Users\Indigo\Desktop\diaverse` as the shared workspace root
-  - Keep local GBrain project state under `.tools/gbrain/home`
-  - Register stable source IDs for root docs, AI Factory context, and each child code repository
-  - Use top-level AIF for cross-repo planning, implementation, review, verification, and commit coordination
-  - Keep branches, status checks, staging, and commits inside `diaweb`, `diaverseapi`, `aibot`, and `club10000-bot`
-  - Keep the top-level plan as the single progress source of truth for workspace-run implementations
-  - Sync top-level Codex skills from `diaweb/.agents/skills`
+  - April calendar `aprelskiy_kalendar` is a 15-day calendar: 2026-04-15 through 2026-04-30, 6 paid and 9 free days, full paid path listed at 19 USD
+  - May calendar `mayskiy_kalendar` is a 31-day calendar: 2026-05-01 through 2026-06-05, active as of 2026-06-04, 8 paid and 23 free days, full paid path listed at 29 USD
+  - Main monetization issue is the first paid gate, not late-calendar pricing or weak first paid rewards: April day 3 and May day 5 cut a large portion of engaged users despite generous reward bundles
+  - After the first paid gate, remaining players are highly monetizable; later paid days show strong reached-to-paid conversion
+  - Recommended direction: keep a low-friction free runway, sell a discounted pass/mini-pass, make Pay1Time/RUB the primary CTA, and keep crypto secondary
 Open questions:
-  - Whether to enable embeddings later after the no-embedding baseline is stable
+  - Exact next calendar theme, reward inventory, and whether a pass product can be implemented before the next launch
+  - Whether to A/B test first paid day timing and pass pricing or ship a single improved calendar model
+  - Whether failed/abandoned crypto checkout users should receive a guided SBP fallback prompt
+  - Whether calendar cell display titles are the same as actual reward bundles; several DB rows show title/reward mismatches that may weaken perceived value
 Success signals:
-  - Top-level Codex sessions can plan, implement, review, verify, and coordinate commits naturally from `diaverse`
-  - GBrain health checks pass against `diaverse-docs`, `diaverse-aif`, `diaweb-code`, `diaverseapi-code`, `aibot-code`, and `club10000-bot-code`
-  - Agents use GBrain first for cross-repo navigation, then verify exact source files and canonical docs
-Next step: Use local GBrain as the default cross-repo navigation layer, run AIF from the workspace root by default, and rerun GBrain sync whenever code or long-lived docs change
+  - Calendar revenue reaches or exceeds 2000 USDT
+  - First paid gate conversion improves from roughly 11-13% of reached users to at least 20-25%
+  - ARPPU rises from May's 18.16 USDT toward 27 USDT or higher
+  - Pay1Time remains the dominant successful path while failed crypto checkout leakage falls
+Next step: Convert this research into an implementation/product plan outside explore mode if changes are needed; likely work touches Advent pricing/admin data, checkout UX, pass/bundle products, and payment fallback messaging
 <!-- aif:active-summary:end -->
 
 ## Sessions
 <!-- aif:sessions:start -->
+### 2026-06-04 11:55 - April and May Advent revenue strategy
+What changed:
+  Captured a read-only production analysis of the April and May Advent calendars, including configuration, revenue, payment methods, currency behavior, paid-day funnel performance, and a recommended monetization strategy toward 2000 USDT calendar revenue.
+
+Methodology:
+  - Used local project context and source code to verify Advent models, finance reporting, and payment fact logic.
+  - Queried production PostgreSQL through existing server access with read-only SQL.
+  - Counted only successful paid Advent unlocks within the 2026 calendar windows.
+  - Treated USD and USDT source prices as base real-money revenue; RUB is provider collection currency for Pay1Time/Prodamus after FX.
+  - Excluded raw user identifiers, guest session identifiers, IPs, tokens, checkout URLs, provider payloads, and other sensitive values.
+  - Noted but excluded old 2024 Zion success rows attached to the April calendar from 2026 window analysis.
+
+Calendar configuration:
+  - April calendar: `aprelskiy_kalendar`, title `Апрельский календарь`, 15 days, 2026-04-15 through 2026-04-30, 6 paid days and 9 free days, full paid path 19 USD.
+  - April paid days: day 3 = 1 USD `Галаклей`; day 5 = 2 USD `Необычная шкатулка`; day 8 = 4 USD `Редкая шкатулка`; day 11 = 3 USD `ДНК капсулы`; day 13 = 5 USD `Кирпичи`; day 15 = 4 USD `Легендарная шкатулка`.
+  - May calendar: `mayskiy_kalendar`, title `Майский календарь`, 31 days, 2026-05-01 through 2026-06-05, active and published as of 2026-06-04, 8 paid days and 23 free days, full paid path 29 USD.
+  - May paid days: day 5 = 2 USD `Необычная шкатулка`; day 9 = 3 USD `Редкая шкатулка`; day 12 = 2 USD `Эпическая шкатулка`; day 15 = 4 USD `Эпическая шкатулка`; day 18 = 5 USD `Шестеренки`; day 23 = 3 USD `Кирпичи`; day 26 = 4 USD `ДНК капсулы`; day 30 = 6 USD `Эвоген эпический`.
+
+Revenue summary:
+  - April full window: 555 starters, 24 completed, 4.3% completion, average reached day 6.35, 64 unique payers, 233 paid payments, 653 USDT revenue, 2.80 USDT average payment, 10.20 USDT ARPPU.
+  - May month only, 2026-05-01 through 2026-05-31: 759 starters, 35 completed, 4.6% completion, average reached day 12.71, 73 unique payers, 385 paid payments, 1285 USDT revenue, 3.34 USDT average payment, 17.60 USDT ARPPU.
+  - May line-to-date, 2026-05-01 through 2026-06-04: 773 starters, 35 completed, 4.5% completion, average reached day 12.62, 74 unique payers, 404 paid payments, 1344 USDT revenue, 3.33 USDT average payment, 18.16 USDT ARPPU.
+  - To reach 2000 USDT from the May line-to-date baseline, the gap is about 656 USDT. At 74 payers, required ARPPU is about 27.03 USDT.
+
+Payment methods and currency:
+  - April Pay1Time/SBP: 219 paid payments, 57 paid actors, 614 USDT revenue, about 48757.80 RUB provider total.
+  - April Prodamus: 6 paid payments, 4 paid actors, 21 USDT revenue, about 1574.51 RUB provider total.
+  - April Zion crypto: 8 paid payments, 6 paid actors, 18 USDT revenue.
+  - May through 2026-06-04 Pay1Time/SBP: 373 paid payments, 67 paid actors, 1253 USDT revenue, about 95705.99 RUB provider total.
+  - May through 2026-06-04 Prodamus: 24 paid payments, 10 paid actors, 73 USDT revenue, about 5248.30 RUB provider total.
+  - May through 2026-06-04 Zion crypto: 7 paid payments, 3 paid actors, 18 USDT revenue.
+  - May checkout behavior shows crypto as high-friction: 178 crypto attempt actors produced only 3 paid actors by 2026-06-04, while Pay1Time carried more than 90% of revenue.
+
+Actual reward source of truth:
+  - The effective reward list comes from `cab_advent_item_rewards` when rows exist for a cell.
+  - If `cab_advent_item_rewards` exists, `CabAdventService._resolve_rewards_for_item` grants that list instead of the primary `cab_advent_items.reward_*` fields.
+  - There are no run override rows for the April or May calendars, so the reward lists below are the effective run-1 rewards.
+  - April has 33 `cab_advent_item_rewards` rows; May has 49 `cab_advent_item_rewards` rows.
+  - Some configured cell titles do not match the effective reward bundle. This matters because players buy perceived value, not hidden DB value.
+
+April reward map:
+  - Day 1 free, title `Кирпичи`: Кирпичи x50.
+  - Day 2 free, title `Шестеренки`: Шестеренки x50.
+  - Day 3 paid 1 USD, title `Галаклей`: Базовая шкатулка x5; Галаклей x300; Обычный мутаген x10; Ядерные желуди x300.
+  - Day 4 free, title `ДНК капсулы`: ДНК капсулы x50.
+  - Day 5 paid 2 USD, title `Необычная шкатулка`: Кирпичи x2000; Глаз оракула редкий x5; Необычная шкатулка x10; Обычный мутаген x20.
+  - Day 6 free, title `Галаклей`: Галаклей x500.
+  - Day 7 free, title `Серебряный ваучер в Пустоши`: фактически Галаклей x700.
+  - Day 8 paid 4 USD, title `Редкая шкатулка`: Эвоген редкий x1; Редкий мутаген x20; Ядерные желуди x500; Редкая шкатулка x10; Шестеренки x300.
+  - Day 9 free, title `Кирпичи`: Кирпичи x1000.
+  - Day 10 free, title `Серебряный ваучер в Оазис`: фактически ДНК капсулы x100.
+  - Day 11 paid 3 USD, title `ДНК капсулы`: Редкий мутаген x20; XP капсулы x200; ДНК капсулы x500; Глаз оракула эпический x5.
+  - Day 12 free, title `Эвоген редкий`: Эвоген редкий x1.
+  - Day 13 paid 5 USD, title `Кирпичи`: Кирпичи x10000; Обычный мутаген x50; Эпическая шкатулка x10.
+  - Day 14 free, title `Мифическая шкатулка`: фактически Эвоген легендарный x1.
+  - Day 15 paid 4 USD, title `Легендарная шкатулка`: Редкий мутаген x20; Легендарная шкатулка x10; Страховка мутации x5; XP капсулы x300.
+
+May reward map:
+  - Day 1 free, title `Патроны`: Патроны x50.
+  - Day 2 free, title `Кирпичи`: Кирпичи x50.
+  - Day 3 free, title `Базовая шкатулка`: ДНК капсулы x20; Базовая шкатулка x5.
+  - Day 4 free, title `Галаклей`: Галаклей x50.
+  - Day 5 paid 2 USD, title `Необычная шкатулка`: фактически Мифическая шкатулка x5; XP капсулы x1500.
+  - Day 6 free, title `Шестеренки`: Шестеренки x100.
+  - Day 7 free, title `ДНК капсулы`: ДНК капсулы x100.
+  - Day 8 free, title `Ядерные желуди`: Ядерные желуди x150.
+  - Day 9 paid 3 USD, title `Редкая шкатулка`: фактически XP капсулы x1500; Легендарная шкатулка x10.
+  - Day 10 free, title `Кирпичи`: Кирпичи x500.
+  - Day 11 free, title `Ядерные желуди`: Ядерные желуди x400.
+  - Day 12 paid 2 USD, title `Эпическая шкатулка`: Обычный мутаген x50; Эпическая шкатулка x5; Кирпичи x10000.
+  - Day 13 free, title `Патроны`: Патроны x500.
+  - Day 14 free, title `XP капсулы`: XP капсулы x100.
+  - Day 15 paid 4 USD, title `Эпическая шкатулка`: Обычный мутаген x50; Кирпичи x20000; Патроны x5000; Эпическая шкатулка x5.
+  - Day 16 free, title `ДНК капсулы`: ДНК капсулы x150.
+  - Day 17 free, title `Галаклей`: Галаклей x750.
+  - Day 18 paid 5 USD, title `Шестеренки`: Шестеренки x4000; Эпическая шкатулка x10; Кирпичи x15000; XP капсулы x300; Редкий мутаген x30.
+  - Day 19 free, title `Ядерные желуди`: Ядерные желуди x500.
+  - Day 20 free, title `Глаз оракула эпический`: Глаз оракула эпический x5.
+  - Day 21 free, title `Эвоген редкий`: Эвоген редкий x1.
+  - Day 22 free, title `Патроны`: Патроны x1500.
+  - Day 23 paid 3 USD, title `Кирпичи`: ДНК капсулы x500; Редкий мутаген x30; Кирпичи x10000.
+  - Day 24 free, title `Мифическая шкатулка`: Мифическая шкатулка x5.
+  - Day 25 free, title `Обычный мутаген`: Обычный мутаген x30.
+  - Day 26 paid 4 USD, title `ДНК капсулы`: ДНК капсулы x500; XP капсулы x200; Шестеренки x2000; Ядерные желуди x5000.
+  - Day 27 free, title `Кирпичи`: Кирпичи x10000.
+  - Day 28 free, title `Легендарная шкатулка`: Легендарная шкатулка x5.
+  - Day 29 free, title `Редкий мутаген`: Редкий мутаген x20.
+  - Day 30 paid 6 USD, title `Эвоген эпический`: Эвоген эпический x2.
+  - Day 31 free, title `Эвоген эпический`: Легендарный мутаген x10; Эвоген эпический x1.
+
+Reward-to-funnel interpretation:
+  - April day 3 and May day 5 were generous first paid bundles, but both performed poorly. April day 3 gave four reward types for 1 USD and converted only 12.7% of reached users. May day 5 gave Mythical box x5 plus XP x1500 for 2 USD and converted only 10.8% of reached users. This points to first-payment psychology and checkout friction, not insufficient reward value.
+  - Later paid days convert well because the audience is already qualified. April day 13 converted 93.1% of reached users at 5 USD with Epic box x10 plus Brick x10000 plus Common mutagen x50. May day 30 converted 89.2% of reached users at 6 USD with Epic EvoGen x2.
+  - Strong late free rewards such as May day 24 Mythical box x5, day 28 Legendary box x5, and day 31 Epic EvoGen plus Legendary mutagen are good for satisfaction, but they do not solve acquisition into the paying path because only about 4.5% of starters complete the calendar.
+  - May has better perceived jackpot design than April: Legendary box x10 at day 9, repeated Epic boxes, large resource bundles, and Epic EvoGen x2 at day 30. This likely helped ARPPU rise from 10.20 to 18.16 USDT.
+  - Several title/reward mismatches probably reduce conversion: May day 5 is titled `Необычная шкатулка` but grants `Мифическая шкатулка x5`; May day 9 is titled `Редкая шкатулка` but grants `Легендарная шкатулка x10`; April day 14 is titled `Мифическая шкатулка` but grants `Эвоген легендарный x1`; April day 7 and day 10 are titled as vouchers but grant resources. The player-facing cell should advertise the best actual reward.
+  - Reward bundles should be named as bundles when there are multiple rewards. For example, `Мифический набор: шкатулки + XP`, `Легендарный набор`, `Эвоген-пак`, `Мутационный набор`. A single title hides value when a paid cell grants 3-5 items.
+
+Reward-driven strategy update:
+  - Keep the first paid gate at day 5 or later, but make it an explicitly named bundle. Example: `Мифический стартовый набор` with Mythical box x5 plus XP/resource bonus.
+  - Do not underprice or hide late high-value cells. Day 30-style EvoGen rewards can anchor the pass price: the pass is not buying small cells, it is buying guaranteed access to the EvoGen/jackpot track.
+  - Put the highest-perceived reward classes on paid milestones: Legendary/Mythical boxes, EvoGen vouchers, rare/legendary mutagens, and utility boosts. Use plain resources as secondary fillers, not as the headline paid reward.
+  - Use free days immediately before paid gates to build desire for the next paid cell: tease the category, then pay off with a bundle. Example: free day 8 gives nuclear acorns, paid day 9 gives `Легендарный набор`.
+  - Avoid naming paid cells by a low-prestige component when the actual bundle contains a higher-prestige item. The visible name should always be the strongest item.
+
+April paid-day funnel:
+  - Day 3, 1 USD: 441 reached from previous day, 142 attempted, 56 paid, 62 payments, 62 USDT revenue. Reached-to-paid was 12.7%; attempt-to-paid was 39.4%.
+  - Day 5, 2 USD: 80 reached, 47 attempted, 34 paid, 40 payments, 80 USDT revenue. Reached-to-paid was 42.5%; attempt-to-paid was 72.3%.
+  - Day 8, 4 USD: 55 reached, 33 attempted, 29 paid, 34 payments, 136 USDT revenue. Reached-to-paid was 52.7%; attempt-to-paid was 87.9%.
+  - Day 11, 3 USD: 38 reached, 36 attempted, 29 paid, 34 payments, 102 USDT revenue. Reached-to-paid was 76.3%; attempt-to-paid was 80.6%.
+  - Day 13, 5 USD: 29 reached, 28 attempted, 27 paid, 31 payments, 155 USDT revenue. Reached-to-paid was 93.1%; attempt-to-paid was 96.4%.
+  - Day 15, 4 USD: 27 reached, 24 attempted, 24 paid, 28 payments, 112 USDT revenue. Reached-to-paid was 88.9%; attempt-to-paid was 100.0%.
+
+May paid-day funnel through 2026-06-04:
+  - Day 5, 2 USD: 627 reached from previous day, 247 attempted, 68 paid, 78 payments, 156 USDT revenue. Reached-to-paid was 10.8%; attempt-to-paid was 27.5%.
+  - Day 9, 3 USD: 73 reached, 63 attempted, 57 paid, 63 payments, 189 USDT revenue. Reached-to-paid was 78.1%; attempt-to-paid was 90.5%.
+  - Day 12, 2 USD: 59 reached, 52 attempted, 51 paid, 56 payments, 112 USDT revenue. Reached-to-paid was 86.4%; attempt-to-paid was 98.1%.
+  - Day 15, 4 USD: 52 reached, 44 attempted, 42 paid, 47 payments, 188 USDT revenue. Reached-to-paid was 80.8%; attempt-to-paid was 95.5%.
+  - Day 18, 5 USD: 44 reached, 39 attempted, 37 paid, 40 payments, 200 USDT revenue. Reached-to-paid was 84.1%; attempt-to-paid was 94.9%.
+  - Day 23, 3 USD: 39 reached, 37 attempted, 37 paid, 40 payments, 120 USDT revenue. Reached-to-paid was 94.9%; attempt-to-paid was 100.0%.
+  - Day 26, 4 USD: 39 reached, 36 attempted, 36 paid, 39 payments, 156 USDT revenue. Reached-to-paid was 92.3%; attempt-to-paid was 100.0%.
+  - Day 30, 6 USD: 37 reached, 33 attempted, 33 paid, 35 payments, 210 USDT revenue. Reached-to-paid was 89.2%; attempt-to-paid was 100.0%.
+
+Key interpretation:
+  - The early paid gate is the biggest revenue and retention leak. April day 3 and May day 5 converted only about 11-13% of users who had reached the previous day.
+  - Once a user crosses the first paid gate, later paid cells convert very strongly, often 80-95% of reached users.
+  - The calendar currently monetizes a small but committed paying segment; the next revenue step should increase first-purchase conversion and ARPPU, not simply add more blockers.
+  - May improved ARPPU from 10.20 to 18.16 USDT, but still needs about 27 USDT ARPPU at current payer volume to reach 2000 USDT.
+  - Pay1Time/SBP should be the primary payment path; crypto should remain available but not be the main CTA.
+
+Recommended 31-day monetization model:
+  - Keep paid days at 8, but make the first four days free to build commitment before the first paywall.
+  - Paid day placement: 5, 9, 12, 15, 18, 23, 26, 30.
+  - A-la-carte prices: day 5 = 3 USD, day 9 = 4 USD, day 12 = 3 USD, day 15 = 5 USD, day 18 = 6 USD, day 23 = 5 USD, day 26 = 5 USD, day 30 = 9 USD.
+  - Full a-la-carte path: 40 USD.
+  - Early full pass before day 5: 24.90 USD.
+  - Regular full pass after day 5: 29.90 USD.
+  - Mini-pass for first three paid days: 8.90-9.90 USD.
+  - Psychological framing: sell the pass as a premium route with guaranteed access and visible savings, not as a punishment for free players.
+
+Recommended 15-day monetization model:
+  - Use 4 paid days instead of 6 to avoid an overly dense short-calendar paywall.
+  - Paid day placement: 5, 8, 11, 15.
+  - A-la-carte prices: 3 USD, 4 USD, 5 USD, 8 USD.
+  - Full a-la-carte path: 20 USD.
+  - Short-calendar pass: 14.90 USD.
+
+Priority actions:
+  - Move the first paid gate away from day 3; day 5 is the earliest reasonable first premium day.
+  - Add full pass and mini-pass products so ARPPU can rise without relying only on many low-value payments.
+  - Make Pay1Time/SBP the dominant visible payment CTA and offer a clear fallback from failed/abandoned crypto attempts.
+  - Do not increase paid-day count until first-gate conversion improves.
+  - Track next launch with these KPIs: first paid gate reached-to-attempt, reached-to-paid, pass conversion, ARPPU, Pay1Time success rate, crypto fallback recovery, completion rate, and revenue per starter.
+
+Links (paths):
+  - `C:\Users\Indigo\Desktop\diaverse\diaverseapi\app\cabinet\offers\advent\models.py`
+  - `C:\Users\Indigo\Desktop\diaverse\diaverseapi\app\cabinet\offers\advent\payment_facts.py`
+  - `C:\Users\Indigo\Desktop\diaverse\diaverseapi\app\cabinet\finance\reporting.py`
+  - `C:\Users\Indigo\Desktop\diaverse\diaverseapi\app\analytics\usecases.py`
+
 ### 2026-05-25 - Local GBrain workspace knowledge layer
 What changed:
   Switched the active workspace knowledge decision to local GBrain sources over root documentation, AI Factory context, and the four child code repositories.

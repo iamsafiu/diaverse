@@ -246,6 +246,58 @@ Production activation order:
 6. Flip Zion visibility/enabled flags only after post-deploy pay1time smoke passes.
 7. Re-run production smoke on both rails and confirm cabinet logging shows no stuck or review-required anomalies.
 
+### Tribute Advent test rollout (2026-06)
+
+`tribute-hosted` is a test rail for authenticated Advent paid cells only. It is intentionally not enabled for guest checkout, shop, Crypton, Factory, Raids, or Club flows.
+
+Runtime prerequisites:
+
+- `CABINET_GENERIC_PAYMENTS_ENABLED=true`
+- `CABINET_PAYMENTS_TRIBUTE_VISIBLE=false` before smoke setup
+- `CABINET_PAYMENTS_TRIBUTE_ENABLED=false` before smoke setup
+- `TRIBUTE_API_TOKEN` set from Tribute merchant/admin credentials
+- `TRIBUTE_CALLBACK_URL=https://<api-host>/v1/cabinet/payments/tribute/callback`
+- `TRIBUTE_CALLBACK_RELAY_TOKEN` set to a high-entropy secret
+- `TRIBUTE_PAYMENT_CURRENCY=RUB` for current Advent USD/USDT to RUB quote behavior
+
+Generated Tribute order requests append the local relay token as:
+
+```text
+<TRIBUTE_CALLBACK_URL>?callback_token=<TRIBUTE_CALLBACK_RELAY_TOKEN>
+```
+
+This token is only a local guard until provider signature support is confirmed. The backend still treats the callback payload as advisory: it resolves the local session and calls Tribute `GET /orders/{id}` before marking a payment paid.
+
+Eligibility:
+
+- authenticated Advent users can see/use Tribute when flags are enabled, even without a linked Telegram ID;
+- Tribute `customerId` uses local stable identity `diaverse_user:<user_uuid>` and does not depend on `users.tg_user_id`;
+- guest users must not receive an available Tribute method;
+- if Tribute is configured as default, authenticated Advent users may receive it as the default provider.
+
+Safe activation order:
+
+1. Configure backend env with all `TRIBUTE_*` values, but keep Tribute hidden/disabled.
+2. Deploy backend.
+3. Deploy frontend with `tribute-hosted` metadata.
+4. Smoke existing Pay1Time/Zion/Prodamus behavior.
+5. Enable `CABINET_PAYMENTS_TRIBUTE_VISIBLE=true` in stage and verify capability payloads for guest, authenticated without Telegram, and authenticated with Telegram.
+6. Enable `CABINET_PAYMENTS_TRIBUTE_ENABLED=true` in stage and run an authenticated Advent checkout; include at least one user without linked Telegram ID.
+7. Verify hosted redirect, callback receipt, server-side reconciliation, finalization, and cabinet logging review paths.
+8. Repeat in production only after stage smoke passes.
+
+Rollback:
+
+- `CABINET_PAYMENTS_TRIBUTE_ENABLED=false` stops new Tribute order creation.
+- `CABINET_PAYMENTS_TRIBUTE_VISIBLE=false` hides the method from UI capability payloads.
+- Existing created sessions should be left for reconciliation/manual review; do not delete local sessions.
+
+Logging and docs safety:
+
+- never log or publish Tribute API tokens, relay tokens, full callback payloads, payer PII, local Tribute customer IDs, or full hosted checkout URLs;
+- logs may include provider code, public checkout reference, local session id, provider order id, provider status, and `checkout_url_present`;
+- API responses may include redirect URLs for the browser, but diagnostics, normalized errors, tests, and docs must redact token-bearing provider links.
+
 ### Return flow contract
 
 Каждый checkout получает opaque `public_checkout_reference`. Во внешний URL не светятся внутренние `UUID` заказа или payment session.

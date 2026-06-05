@@ -4,12 +4,13 @@
 
 ## Workspace Overview
 
-This folder is the shared Diaverse workspace. It is not a monorepo. The workspace root is a lightweight git repository for cross-repo documentation, AI context, shared scripts, and coordination files only. It groups four related implementation repositories:
+This folder is the shared Diaverse workspace. It is not a monorepo. The workspace root is a lightweight git repository for cross-repo documentation, AI context, shared scripts, and coordination files only. It groups five related implementation repositories:
 
 - `diaweb` - Next.js web frontend and same-origin BFF layer
 - `diaverseapi` - FastAPI backend for auth, cabinet, game, RBAC, payments, and staff domains
 - `aibot` - internal copywriting service used by `diaweb` staff tooling
 - `club10000-bot` - standalone Club10000 Telegram bot with Prodamus recurring payment callbacks and its own PostgreSQL state
+- `diaverse-auth-bot` - stateless Telegram auth transport adapter for Diaverse browser login and mobile Telegram linking
 
 The workspace owns cross-repo AI context, shared scripts, root documentation, and top-level Codex skills. Product implementation commits, branches, and source changes still belong to the individual child repositories.
 
@@ -58,7 +59,8 @@ diaverse/
 |-- diaweb/                     # Frontend git repo (ignored by root git)
 |-- diaverseapi/                # Backend git repo (ignored by root git)
 |-- aibot/                      # Copywriting service git repo (ignored by root git)
-`-- club10000-bot/              # Club10000 bot git repo (ignored by root git)
+|-- club10000-bot/              # Club10000 bot git repo (ignored by root git)
+`-- diaverse-auth-bot/          # Diaverse auth bot git repo (ignored by root git)
 ```
 
 ## Source of Truth
@@ -68,6 +70,7 @@ diaverse/
 - Backend implementation truth lives in `diaverseapi`
 - Copywriting service truth lives in `aibot`
 - Club10000 bot implementation and restored bot DB truth lives in `club10000-bot`
+- Diaverse auth bot implementation truth lives in `diaverse-auth-bot`
 - Cross-repo documentation portal lives in `diaverse/docs/README.md`
 - Root git repository truth covers only workspace docs, AI context, and shared scripts
 - Local knowledge navigation is provided by GBrain sources registered through `scripts/gbrain-sources.ps1`
@@ -81,7 +84,7 @@ diaverse/
 - Prefer source-scoped lookups:
   - `diaverse-docs` for root documentation
   - `diaverse-aif` for AI Factory context
-  - `diaweb-code`, `diaverseapi-code`, `aibot-code`, and `club10000-bot-code` for code repositories
+  - `diaweb-code`, `diaverseapi-code`, `aibot-code`, `club10000-bot-code`, and `diaverse-auth-bot-code` for code repositories
 - Use raw-file search and source reads after GBrain for exact verification, code edits, and line-accurate confirmation.
 - If GBrain output and source code disagree, trust source code and refresh the relevant GBrain source.
 
@@ -102,7 +105,7 @@ diaverse/
 
 ## AI Factory Usage
 
-Top-level AI Factory in this workspace is the primary operational control plane for the whole Diaverse system. When Codex is opened in `C:\Users\Indigo\Desktop\diaverse`, AIF may plan, implement, review, and verify cross-repo work across `diaweb`, `diaverseapi`, `aibot`, and `club10000-bot` from this single workspace root.
+Top-level AI Factory in this workspace is the primary operational control plane for the whole Diaverse system. When Codex is opened in `C:\Users\Indigo\Desktop\diaverse`, AIF may plan, implement, review, and verify cross-repo work across `diaweb`, `diaverseapi`, `aibot`, `club10000-bot`, and `diaverse-auth-bot` from this single workspace root.
 
 Repo-local `.ai-factory` folders are local reference context and fallback entrypoints. They are not the default execution surface for cross-repo work.
 
@@ -120,9 +123,9 @@ When running from `C:\Users\Indigo\Desktop\diaverse`, normal AIF `full` mode mea
 
 - Use top-level skills and top-level `.ai-factory` as the default for Diaverse work, including cross-repo implementation
 - Use repo-local skills and repo-local `.ai-factory` only when the user explicitly wants to work inside one repository in isolation
-- Create branches, status checks, staging, and commits for product code only inside `diaweb`, `diaverseapi`, `aibot`, or `club10000-bot`
+- Create branches, status checks, staging, and commits for product code only inside `diaweb`, `diaverseapi`, `aibot`, `club10000-bot`, or `diaverse-auth-bot`
 - Use the top-level `diaverse` git repo only for root-owned docs, `.ai-factory`, `.codex`, `scripts`, and workspace config
-- Never add `diaweb`, `diaverseapi`, `aibot`, or `club10000-bot` contents to the root repo
+- Never add `diaweb`, `diaverseapi`, `aibot`, `club10000-bot`, or `diaverse-auth-bot` contents to the root repo
 - For multi-repo full plans, use one branch slug across affected repositories, but do not use `codex/` in branch names; prefer normal prefixes such as `feature/`, `fix/`, `chore/`, `refactor/`, or `test/`
 - Before switching branches in a child repository, check for uncommitted changes and pause if branch switching would mix unrelated work
 - During implementation, keep the single top-level plan as the progress source of truth and mark task checkboxes there
@@ -131,6 +134,7 @@ When running from `C:\Users\Indigo\Desktop\diaverse`, normal AIF `full` mode mea
 - `diaverseapi` owns auth, RBAC, cabinet APIs, logging, guest flows, and payment integrations
 - `aibot` owns internal copywriting workflows, source-backed planning, and draft generation
 - `club10000-bot` owns the standalone Club10000 Telegram bot runtime, Prodamus callback handling, bot-local funnels, reminders, referrals, and restored bot DB state
+- `diaverse-auth-bot` owns the stateless Telegram transport runtime for `/start login_<token>` and mobile `auth_`/`authdev_` link approvals
 - Do not treat this top-level folder as a deployable application
 
 ## Daily Work Capture

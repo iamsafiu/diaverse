@@ -1,13 +1,14 @@
-# Architecture: Shared Workspace Over Four Repositories
+# Architecture: Shared Workspace Over Five Repositories
 
 ## Overview
 
-Diaverse uses four separate repositories coordinated through a shared workspace root:
+Diaverse uses five separate repositories coordinated through a shared workspace root:
 
 - `diaweb` handles the browser-facing frontend and BFF routes
 - `diaverseapi` handles cabinet, auth, staff, and game backend domains
 - `aibot` handles internal copywriting workflows consumed by `diaweb`
 - `club10000-bot` handles the standalone Club10000 Telegram bot, Prodamus callbacks, and its restored bot-local database
+- `diaverse-auth-bot` handles Telegram transport for Diaverse browser login and mobile Telegram linking
 
 The workspace root adds AI coordination and documentation versioning only. It does not add code dependencies or runtime coupling beyond the integrations that already exist.
 
@@ -26,7 +27,8 @@ diaverse/
 |-- diaweb/              # Frontend repo, ignored by root git
 |-- diaverseapi/         # Backend repo, ignored by root git
 |-- aibot/               # Copywriting service repo, ignored by root git
-`-- club10000-bot/       # Club10000 bot repo, ignored by root git
+|-- club10000-bot/       # Club10000 bot repo, ignored by root git
+`-- diaverse-auth-bot/   # Auth bot repo, ignored by root git
 ```
 
 ## Dependency Rules
@@ -39,8 +41,21 @@ diaweb -> aibot          # internal JWT-backed BFF integration for copywriting
 diaverseapi -> aibot     # signed club creative asset requests only
 aibot -> diaverseapi     # copywriting-clubbot signed club Telegram events/outbox only
 club10000-bot -> diaverseapi   # signed normalized Club10000 payment events only
+diaverse-auth-bot -> diaverseapi   # signed auth login-session and mobile-link approvals only
 workspace -> repos       # AI context only, no runtime dependency
 ```
+
+### Auth Bot
+
+```text
+diaweb auth UI -> diaverseapi/app/security login-session API
+diaverseapi    -> login token and browser polling state in Redis
+Telegram user  -> diaverse-auth-bot /start login_<token>
+diaverse-auth-bot -> signed internal HTTP -> diaverseapi/app/security
+diaverseapi    -> user provisioning, Telegram identity persistence, cookies, RBAC, account-linking
+```
+
+The auth bot is stateless by design. It must not own a database, Redis state, user provisioning, browser cookies, or broadcast recipient truth. Durable Telegram identity state belongs to `diaverseapi` through `users.tg_user_id` and `bot_users.platform_id`.
 
 ### Club
 
@@ -91,7 +106,7 @@ source code           -> final authority when GBrain and code disagree
 ### Implementation
 
 - Implement cross-repo plans from the workspace root when the task may touch more than one repository
-- Edit product code only inside `diaweb`, `diaverseapi`, `aibot`, or `club10000-bot`
+- Edit product code only inside `diaweb`, `diaverseapi`, `aibot`, `club10000-bot`, or `diaverse-auth-bot`
 - Keep progress checkboxes in the top-level plan for workspace-run implementations
 - Commit product code inside each repository that owns changes
 - Commit top-level workspace files in the root repository only when the change is limited to documentation, AI context, shared scripts, or workspace config
@@ -121,6 +136,15 @@ diaverse/.ai-factory/plans/<branch-slug>.md
        v                    v                  v                  v
   branch/status        branch/status       branch/status      branch/status
   commit here          commit here         commit here        commit here
+
+  +--------------------+
+  | diaverse-auth-bot  |
+  | git repo           |
+  +--------------------+
+           |
+           v
+   branch/status
+   commit here
 ```
 
 Rules:

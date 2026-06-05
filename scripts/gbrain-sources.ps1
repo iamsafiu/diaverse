@@ -106,7 +106,8 @@ $Sources = @(
     [pscustomobject]@{ Id = 'diaweb-code'; Path = (Join-Path $WorkspaceRoot 'diaweb'); Name = 'Diaweb Code'; Federated = $false; Strategy = 'code' },
     [pscustomobject]@{ Id = 'diaverseapi-code'; Path = (Join-Path $WorkspaceRoot 'diaverseapi'); Name = 'Diaverse API Code'; Federated = $false; Strategy = 'code' },
     [pscustomobject]@{ Id = 'aibot-code'; Path = (Join-Path $WorkspaceRoot 'aibot'); Name = 'Aibot Code'; Federated = $false; Strategy = 'code' },
-    [pscustomobject]@{ Id = 'club10000-bot-code'; Path = (Join-Path $WorkspaceRoot 'club10000-bot'); Name = 'Club10000 Bot Code'; Federated = $false; Strategy = 'code' }
+    [pscustomobject]@{ Id = 'club10000-bot-code'; Path = (Join-Path $WorkspaceRoot 'club10000-bot'); Name = 'Club10000 Bot Code'; Federated = $false; Strategy = 'code' },
+    [pscustomobject]@{ Id = 'diaverse-auth-bot-code'; Path = (Join-Path $WorkspaceRoot 'diaverse-auth-bot'); Name = 'Diaverse Auth Bot Code'; Federated = $false; Strategy = 'code' }
 )
 
 $registry = Get-SourceRegistry

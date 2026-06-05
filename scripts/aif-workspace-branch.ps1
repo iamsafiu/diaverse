@@ -2,7 +2,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$Branch,
 
-    [string[]]$Repos = @('diaweb', 'diaverseapi', 'aibot', 'club10000-bot'),
+    [string[]]$Repos = @('diaweb', 'diaverseapi', 'aibot', 'club10000-bot', 'diaverse-auth-bot'),
 
     [switch]$Create
 )

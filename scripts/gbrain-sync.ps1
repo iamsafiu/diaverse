@@ -132,7 +132,8 @@ $Sources = @(
     [pscustomobject]@{ Id = 'diaweb-code'; Path = (Join-Path $WorkspaceRoot 'diaweb'); Strategy = 'code'; Mode = 'sync' },
     [pscustomobject]@{ Id = 'diaverseapi-code'; Path = (Join-Path $WorkspaceRoot 'diaverseapi'); Strategy = 'code'; Mode = 'sync' },
     [pscustomobject]@{ Id = 'aibot-code'; Path = (Join-Path $WorkspaceRoot 'aibot'); Strategy = 'code'; Mode = 'sync' },
-    [pscustomobject]@{ Id = 'club10000-bot-code'; Path = (Join-Path $WorkspaceRoot 'club10000-bot'); Strategy = 'code'; Mode = 'sync' }
+    [pscustomobject]@{ Id = 'club10000-bot-code'; Path = (Join-Path $WorkspaceRoot 'club10000-bot'); Strategy = 'code'; Mode = 'sync' },
+    [pscustomobject]@{ Id = 'diaverse-auth-bot-code'; Path = (Join-Path $WorkspaceRoot 'diaverse-auth-bot'); Strategy = 'code'; Mode = 'sync' }
 )
 
 if ($SourceId -and $SourceId.Count -gt 0) {
