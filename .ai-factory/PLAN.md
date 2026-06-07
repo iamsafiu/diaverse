@@ -1,251 +1,403 @@
-# Implementation Plan: Raid Vouchers for Premium Raids
+# Implementation Plan: Crypton Pet Evolution Selection
 
-Branch: none
-Created: 2026-06-06
-Mode: fast
+**Created:** 2026-06-07
+**Mode:** fast
+**Branch:** none
+**Testing:** yes
+**Logging:** verbose
+**Docs/Roadmap:** warn-only
 
-## Settings
+## Goal
 
-- Testing: yes
-- Logging: verbose
-- Docs: warn-only
+Add pet evolution selection to the Crypton offer builder so a user can choose the desired evolution for a selected pet, submit that choice with a custom desired price, and receive the purchased pet with that evolution after approval and payment.
+
+## Product Decisions
+
+- For pet/character Crypton offers, do not show the recommended price in the user modal because evolution-specific pricing is not defined yet.
+- For pet/character Crypton offers, do not block user-entered desired price as "above market"; staff/Crypton can review, approve, reject, or counter the request manually.
+- Store the selected evolution in the existing Crypton request metadata/snapshots and fulfillment line options. No database migration is planned.
+- Validate evolution server-side against authoritative pet rarity rules. Default legacy submissions to evolution 1 only when no selection exists.
+- Show selected evolution in web UI, staff request UI, backend notification payloads, and Telegram notifications.
 
 ## Scope
 
-Implement location-specific raid vouchers that unlock the existing USDT raid mechanics without creating new payment orders.
+Affected repositories:
 
-In scope:
+- `diaweb` - Crypton modal UI, API payload/types, staff panel display, frontend tests, i18n.
+- `diaverseapi` - Crypton request contract, validation, metadata/snapshot, fulfillment options, notification payloads, backend tests.
+- `diaverse-auth-bot` - Telegram Crypton status caption rendering and tests.
 
-- Backend raid-owned voucher entity and grant inventory.
-- One voucher consumed for one dispatched pet.
-- Voucher-gated `start_raid` for `mode_key=usdt`.
-- Raid state inventory counts for the selected location.
-- Raid lifecycle/merge support for voucher grants as raid-owned profile children.
-- Frontend display label change from `USDT` to a user-facing premium/voucher mode label.
-- Frontend voucher count, insufficient-voucher state, and buy-voucher CTA copy/link target.
-- Frontend handling for raid command `status=blocked` returned via HTTP 200.
-- Targeted backend and frontend tests.
+Not affected:
 
-Out of scope:
+- `aibot`
+- `club10000-bot`
+- Root workspace implementation code
 
-- Shop sale items, shop category implementation, checkout, or pricing.
-- Sellable shop catalog rows for raid vouchers.
-- Legacy CSV compensation, backfill, or migration of old voucher balances.
-- Voucher icon asset upload. Use stable icon keys/placeholders and wire uploaded icons in a later task.
-- Renaming the technical backend `mode_key=usdt`; keep it for catalog/reward compatibility.
-- Removing legacy paid raid finalizer behavior for already-created payment orders.
+## Context Verified
 
-## Repo Matrix
-
-| Repo | Role | Planned changes |
-| --- | --- | --- |
-| `diaverseapi` | Raid domain, persistence, API state, start command | New voucher grants, inventory state, voucher consumption on premium raids |
-| `diaweb` | Raid UI, BFF/client types, i18n | Premium label, voucher counts, insufficient state, CTA |
-| root `diaverse` | Coordination | This plan and daily log only |
-
-## Research Context
-
-Sources checked:
-
-- Local GBrain raid docs: raid mechanics, gameplay guide, legacy compensation notes, economy audit.
-- Backend source: `diaverseapi/app/raids`, raid catalog YAML, command/payment/state services, immunity implementation.
-- Frontend source: `diaweb/frontend/modules/raids`, raid i18n dictionaries, shop route data.
-- Desktop CSV `Vouchers and immunities` was inspected only as historical reference; compensation is not part of this plan.
-
-Relevant current behavior:
-
-- The existing `usdt` mode is the premium raid mechanics bucket: 24h duration, no traps, no slot limit, boosted rewards.
-- Current `start_raid` for `mode.entry_currency == "usdt"` creates a `RaidPaymentOrder` and returns `payment_required`.
-- Immunities already have a modern raid-owned grant/effect design that can be used as the local pattern.
-- Existing legacy `RaidVoucher` / `UserRaidVoucher` model names are not suitable for this implementation.
-
-## Design Decisions
-
-1. Create a new raid-owned grant entity, not a generic voucher table.
-   - Proposed model: `RaidVoucherGrant`.
-   - Proposed table: `raid_voucher_grants`.
-   - Location-specific grants: `rusty_wastelands`, `oasis`, `radioactive_cave`.
-
-2. Keep technical mode `usdt`, change only user-facing raid mode copy.
-   - Recommended Russian label: `Премиум`.
-   - Recommended English label: `Premium`.
-   - Keep `RaidBalance.key = "usdt"` and `usdtLabel` for the real USDT wallet/balance.
-   - UI can mention that premium raids require vouchers.
-
-3. Consumption is one grant per participant.
-   - A request with 3 selected pets must lock and consume 3 available grants for that location.
-   - Each consumed grant should store both `consumed_run_id` and `consumed_participant_id`.
-   - Also store `consumed_user_character_id` for audit clarity.
-   - This makes the per-pet mapping explicit while still allowing run-level reporting.
-
-4. No partial consumption.
-   - If fewer than N grants are available, return blocked `insufficient_raid_voucher`.
-   - Do not create a run.
-   - Do not consume any grants.
-
-5. Use the existing raid idempotency and locking pattern.
-   - Lock profile/idempotency first.
-   - Select grants with row locks inside the same transaction.
-   - Create run and participants.
-   - Pair participant rows with selected grants deterministically.
-   - Mark grants consumed in the same transaction.
-
-6. Keep paid raid finalization backward-compatible.
-   - New starts must not create direct USDT payment orders.
-   - The old payment finalizer can keep creating runs for already-created payment orders.
-   - If run creation helpers are refactored to expose participants, update the payment finalizer call site at the same time.
-
-7. Treat command `status` as the business result on the frontend.
-   - HTTP 200 with `status=blocked` is still a failed business command.
-   - Premium voucher failures must remain visible and must not clear the selected pet or close the actionable flow.
-
-## Commit Plan
-
-- **Commit 1** (after tasks 1-3): `feat: add raid voucher grants`
-- **Commit 2** (after tasks 4-8): `feat: gate premium raids with vouchers`
-- **Commit 3** (after tasks 9-12): `feat: show raid vouchers in premium mode`
+- `diaverseapi/app/cabinet/item_catalog/providers.py` already exposes character metadata with `min_evolution`, `max_evolution`, and `evolution_options`.
+- `diaverseapi/app/cabinet/fulfillment/handlers.py` already grants characters using `options_json.evolution`.
+- `diaverseapi/app/characters/grants.py` validates requested evolution against character rarity limits.
+- `diaweb/frontend/modules/staff-shop/shop-pet-evolution.ts` already has helper functions for character evolution options.
+- Crypton currently calculates recommended price from base offer unit price, which is not valid for pet evolution pricing.
+- Existing `.ai-factory/RESEARCH.md` content is unrelated to this feature and was not reused as a source of truth.
 
 ## Tasks
 
-### Phase 1: Backend Voucher Foundation
+### Backend Phase
 
-- [x] Task 1: Add raid voucher domain definitions and API schemas.
-  - Files: `diaverseapi/app/raids/domain/vouchers.py`, `diaverseapi/app/raids/schemas.py`.
-  - Define stable item keys, location mapping, display metadata, `icon_key`, and `required_per_pet = 1`.
-  - Add `RaidErrorCode.insufficient_raid_voucher`.
-  - Add response schemas for voucher grants/inventory counts: `RaidVoucherGrantRead`, `RaidVoucherInventoryRead`.
-  - Keep actual icon files out of scope; expose stable keys/metadata that can map to uploaded icons later.
-  - Logging requirements: keep domain definitions pure; log only schema validation failures at existing API/service boundaries, DEBUG for resolved voucher definition during service calls, ERROR for impossible definition/location mismatches.
+- [x] **1. Backend: Add Evolution Contract, Validation Error, and HTTP Mapping**
 
-- [x] Task 2: Add `RaidVoucherGrant` model, Alembic migration, and model registration.
-  - Files: `diaverseapi/app/raids/models.py`, `diaverseapi/migrations/env.py`, `diaverseapi/migrations/versions/<new>_raid_voucher_grants.py`, `diaverseapi/app/raids/tests/test_models.py`.
-  - Add `RaidVoucherGrantStatus` with `available`, `consumed`, `expired`.
-  - Fields: `profile_id`, `user_id`, `item_key`, `location_key`, `status`, source tuple, consumed run/participant/user-character refs, consumed timestamp, metadata, timestamps.
-  - Add FKs:
-    - `profile_id -> raid_profiles.uuid` with `CASCADE`.
-    - `user_id -> users.uuid` with `SET NULL`.
-    - `source_line_id -> cab_fulfillment_lines.uuid` with `SET NULL`.
-    - `consumed_run_id -> raid_runs.uuid` with `SET NULL`.
-    - `consumed_participant_id -> raid_participants.uuid` with `SET NULL`.
-  - Add indexes for available grants by profile/location/status and unique idempotent source unit keys.
-  - Register the new model in `migrations/env.py` so Alembic metadata includes it.
-  - Update raid model contract tests for expected tables, user FKs, and profile cascade tables.
-  - Do not use legacy `RaidVoucher` or `UserRaidVoucher`.
-  - Logging requirements: no runtime logs in migration; verification must capture Alembic SQL output and migration errors. Application code using this model must avoid logging user ids unless already standard in raid logs.
+Repository: `diaverseapi`
 
-- [x] Task 3: Add voucher repository methods and grant service.
-  - Files: `diaverseapi/app/raids/infrastructure/repositories.py`, new `diaverseapi/app/raids/services/voucher_grant_service.py`.
-  - Methods: create/reuse grants by source unit, count available by location, list inventory grants, lock N available grants for consumption, mark grants consumed with run/participant/user-character refs.
-  - Lock selection must be deterministic: oldest available grants first by `created_at`, then `uuid`.
-  - Mirror immunity grant idempotency semantics for future support/shop grants.
-  - Logging requirements: DEBUG for grant lookup/reuse and available-count queries, INFO for successful grant batches and consumption batches, WARN for unsupported item/location or insufficient count, ERROR with context for DB failures. Keep source refs sanitized.
+Files:
 
-### Phase 2: Backend Raid Flow Integration
+- `app/cabinet/offers/crypton/schemas.py`
+- `app/cabinet/offers/crypton/exceptions.py`
+- `app/cabinet/offers/crypton/api.py`
+- `app/cabinet/offers/crypton/admin_api.py`
+- `app/cabinet/offers/crypton/service.py`
+- `tests/test_cabinet_crypton.py`
 
-- [x] Task 4: Add voucher inventory to raid state responses.
-  - Files: `diaverseapi/app/raids/services/state_service.py`, `diaverseapi/app/raids/schemas.py`, related route/state tests.
-  - Return grouped inventory per location with `available_count`, `required_per_pet`, `item_key`, title/icon metadata.
-  - Preserve existing immunity inventory response.
-  - Optionally mirror the selected location's available voucher count into location metadata if the current frontend flow benefits from location-local lookup.
-  - Logging requirements: DEBUG for computed voucher inventory counts, WARN if catalog location lacks a voucher definition, ERROR for repository failures.
+Work:
 
-- [x] Task 5: Gate `start_raid` for `mode_key=usdt` by voucher grants.
-  - Files: `diaverseapi/app/raids/services/command_service.py`, `diaverseapi/app/raids/services/payment_service.py` if run helper signatures change.
-  - Replace new direct-payment start behavior with voucher validation/consumption.
-  - Required flow: lock profile/idempotency, validate location/mode/pets, count selected pets, lock N available grants for request location, block if insufficient, create normal run, create participants, consume one grant per participant.
-  - Refactor run creation safely:
-    - Either introduce `RaidRunCreationResult(run, participants)` for internal voucher flow.
-    - Or add a second helper that exposes participants while keeping `_create_run` returning `RaidRun`.
-    - Preserve old paid-finalizer behavior for already-created payment orders.
-  - Return blocked code `insufficient_raid_voucher` with context `{location_key, required, available, required_per_pet}`.
-  - Keep run `mode_key = "usdt"` so reward calculations continue to use current catalog behavior.
-  - No voucher consumption may happen if run/participant creation fails.
-  - Logging requirements: INFO for premium raid voucher start and consumption success, WARN for insufficient vouchers with required/available/location, DEBUG for selected grants and participant pairing counts, ERROR for transaction failures.
+- Add optional `selected_evolution` to `CryptonRequestSubmitRequest`.
+- Add `selected_evolution`, `selected_evolution_label`, `is_character_offer`, and, where useful, `evolution_options` to `CryptonSelectedOfferSummaryRead` and `CryptonRequestDetailRead`.
+- Add a domain error such as `CryptonEvolutionValidationError` and map it to HTTP 422 in public and admin Crypton API error handling.
+- Add a focused service helper such as `_resolve_selected_character_evolution(...)` that detects `ShopSourceType.character`, reads allowed options from `shop_item.metadata_json`, and falls back to the authoritative character rarity rules if metadata is incomplete.
+- For character offers, normalize missing legacy selections to evolution 1, but reject explicit invalid selections.
+- Preserve existing non-character submit behavior unchanged.
 
-- [x] Task 6: Update raid lifecycle and account merge support.
-  - Files: `diaverseapi/app/security/usecases.py`, `diaverseapi/app/raids/tests/test_account_lifecycle.py`, `diaverseapi/tests/test_merge_account_coverage.py`.
-  - Include `raid_voucher_grants` in raid-owned child row counts.
-  - Transfer `RaidVoucherGrant.user_id` when `_merge_raid_state` transfers a loser raid profile to the winner.
-  - While touching the same raid child lists, verify existing `RaidImmunityEffect` and `RaidImmunityGrant` are not omitted from merge/lifecycle coverage.
-  - Vouchers should not block merge preflight unless a future pending-payment/table rule explicitly requires it.
-  - Logging requirements: INFO for transferred raid voucher counts during merge, WARN for merge conflicts or unexpected missing profile links, ERROR only for actual transfer failures.
+Logging requirements:
 
-- [x] Task 7: Add non-sellable fulfillment/catalog support for future grants.
-  - Files: `diaverseapi/app/cabinet/fulfillment/handlers.py`, `diaverseapi/app/cabinet/fulfillment/registry.py`, `diaverseapi/app/cabinet/item_catalog/types.py`, `aliases.py`, `providers.py`, `title_resolver.py` if required.
-  - Add `raid_voucher` item type and fulfillment handler that calls the voucher grant service.
-  - Add virtual support/reward catalog entries only if needed for staff/support grantability.
-  - Mark raid voucher catalog entries as `is_grantable=True`, `is_rewardable=True`, `is_sellable=False`.
-  - Do not add shop catalog rows, prices, category visibility, offer seeds, checkout flow, or storefront sale behavior.
-  - Logging requirements: DEBUG for fulfillment payload parsing, INFO for successful voucher grants, WARN for invalid quantity/location/item key, ERROR for grant service failures.
+- Log `INFO` when a Crypton request submit resolves character evolution metadata.
+- Log `DEBUG` for resolved allowed evolution options and selected value.
+- Log `WARN` for invalid, explicit out-of-range, or metadata-mismatched pet evolution data before raising validation errors.
 
-- [x] Task 8: Add and update backend tests.
-  - Files:
-    - New `diaverseapi/tests/test_raid_voucher_items.py` for domain/catalog/fulfillment/grant service tests.
-    - `diaverseapi/app/raids/tests/test_command_start.py` for start command behavior.
-    - `diaverseapi/app/raids/tests/test_raids_flow.py` for end-to-end command flow expectations.
-    - `diaverseapi/app/raids/tests/test_state_service.py` for state inventory.
-    - `diaverseapi/app/raids/tests/test_models.py` for SQLModel metadata/FK contracts.
-    - `diaverseapi/app/raids/tests/test_account_lifecycle.py` and `diaverseapi/tests/test_merge_account_coverage.py` for transfer coverage.
-  - Cover: grant idempotency, inventory counts, insufficient block, exact N vouchers for N pets, no partial consumption, consumed run/participant/user-character refs, idempotency replay without double consumption, no new payment order for voucher starts, and backward-compatible paid payment finalizer tests for existing orders.
-  - Replace existing USDT start expectations that assert `payment_required` for new starts with voucher-start expectations.
-  - Verification commands:
-    - `cd diaverseapi; poetry run pytest tests/test_raid_voucher_items.py -q`
-    - `cd diaverseapi; poetry run pytest tests/test_raid_immunity_items.py tests/test_raid_voucher_items.py -q`
-    - `cd diaverseapi; poetry run pytest app/raids/tests/test_command_start.py app/raids/tests/test_raids_flow.py app/raids/tests/test_state_service.py app/raids/tests/test_models.py app/raids/tests/test_account_lifecycle.py tests/test_merge_account_coverage.py -q`
-    - `cd diaverseapi; poetry run alembic upgrade <down_revision>:<new_revision> --sql`
-  - Logging requirements: assert important WARN/INFO paths where existing test logging helpers support it; avoid brittle checks on DEBUG-only lines.
+- [x] **2. Backend: Apply Pet Pricing Rule and Persist Evolution Snapshots**
 
-### Phase 3: Frontend Premium Voucher UI
+Repository: `diaverseapi`
 
-- [x] Task 9: Extend frontend raid types, command parsing, and i18n strings.
-  - Files: `diaweb/frontend/modules/raids/types.ts`, `diaweb/frontend/modules/raids/api.ts` if needed, `diaweb/frontend/modules/i18n/types.ts`, `diaweb/frontend/modules/i18n/dictionaries/ru.json`, `diaweb/frontend/modules/i18n/dictionaries/en.json`, raid test fixtures.
-  - Add voucher inventory response types and `insufficient_raid_voucher` command error mapping.
-  - Rename visible raid mode label from `USDT` to `Премиум` / `Premium`.
-  - Do not rename wallet/balance `usdtLabel`.
-  - Add copy for available vouchers, required vouchers, insufficient vouchers, one-voucher-per-pet wording, and buy-voucher CTA.
-  - Logging requirements: no render-loop logs; DEBUG only for command response parsing or unexpected missing inventory, WARN for unknown server error codes.
+Depends on: Task 1
 
-- [x] Task 10: Update premium dispatch UI and premium entry behavior.
-  - Files: `diaweb/frontend/modules/raids/components/RaidLocationStack.tsx`, `RaidSlotGrid.tsx`, `RaidDispatchStep.tsx`, `RaidConfirmDialog.tsx`, `RaidPetCard.tsx`, `RaidLocationBriefing.tsx`, `mechanicsDisplay.ts`, `featureFlags.ts`.
-  - In premium mode, show location-specific available voucher count.
-  - Required voucher count equals selected pet count; for current single-pet UI this is `1`, but keep the helper compatible with batch starts.
-  - Premium mode should be selectable so users can see the voucher requirement and CTA; disable send/start when available vouchers are less than required.
-  - Do not depend on XDV slot capacity to expose the premium entry. Premium/voucher mode is independent from XDV slots.
-  - Replace USDT price labels in dispatch card, pet card, confirm dialog, and shared mechanics display with voucher requirement labels.
-  - Show buy-voucher CTA pointing to the existing localized shop raids route, e.g. `/${lang}/shop/raids`, without implementing shop purchase behavior.
-  - Enable premium mode only after backend gated behavior is wired.
-  - Logging requirements: DEBUG for user action blocked by insufficient vouchers, INFO for premium start attempt, WARN for missing inventory in premium mode. Do not log selected pet names or sensitive user data.
+Files:
 
-- [x] Task 11: Handle raid command `status=blocked` as visible business feedback.
-  - Files: `diaweb/frontend/modules/raids/components/RaidLocationStack.tsx`, related raid UI tests.
-  - For `start_raid` responses with `status="blocked"`, keep the selected pet/sheet context intact and render a visible command notice from `result.errors`.
-  - Add specific formatting for `insufficient_raid_voucher`: required, available, and buy-voucher CTA.
-  - Keep success cleanup only for `status="completed"` or the relevant accepted success state.
-  - Preserve existing transport-error handling via `onError`.
-  - Logging requirements: INFO for blocked business result with code/status, WARN for unrecognized blocked response shape, DEBUG for notice rendering only in non-production.
+- `app/cabinet/offers/crypton/service.py`
+- `app/cabinet/offers/crypton/catalog_policy.py`
+- `tests/test_cabinet_crypton.py`
 
-- [x] Task 12: Add/update frontend tests and run type/lint checks.
-  - Files: focused Vitest tests under `diaweb/frontend/__tests__/modules/raids` and existing raid app/BFF fixtures that hardcode USDT copy.
-  - Cover: premium label, voucher count display, required count changes with selected pets, premium entry visible independently of XDV slot availability, disabled send on insufficient vouchers, CTA visibility, server `insufficient_raid_voucher` blocked response, selected pet not cleared after blocked response, and payment-required expectations removed from new premium start tests.
-  - Verification commands:
-    - `cd diaweb/frontend; npm run test -- --run __tests__/modules/raids`
-    - `cd diaweb/frontend; npm run test -- --run __tests__/app/api/cabinet/raids`
-    - `cd diaweb/frontend; npm run typecheck`
-    - `cd diaweb/frontend; npm run lint`
-  - Logging requirements: test any newly added client logging helpers at action boundaries only; avoid snapshots that depend on DEBUG text.
+Work:
 
-### Phase 4: Final Verification
+- Resolve character-offer status and selected evolution before calling `_validate_proposed_price`.
+- For character/pet offers, set `recommended_price_amount=None` and skip the proposed-price-above-market validation.
+- Persist selected evolution fields in request `metadata_json`, `item_snapshot_json`, and `pricing_snapshot_json`.
+- Keep `market_price_amount` as the original catalog market/reference amount for audit only; do not treat it as a hard cap for pet offers.
+- Keep regular non-pet recommended price and market-cap validation unchanged.
 
-- [x] Task 13: Cross-repo verification and cleanup.
-  - Confirm `diaverseapi` and `diaweb` git statuses only contain planned changes.
-  - Run targeted backend and frontend commands from tasks 8 and 12.
-  - Manually verify the core flow: premium location with 0 vouchers blocks and keeps UI feedback visible, with N vouchers and N pets starts and consumes N grants, replay does not consume again, and old paid-order finalizer tests still pass.
-  - Update docs only if the implementation changes public contracts beyond this plan.
-  - Run targeted GBrain sync for changed docs/source after meaningful changes.
-  - Logging requirements: review new logs for safe fields, correct levels, and no raw profile/user identifiers beyond established project conventions.
+Logging requirements:
 
-## Open Questions
+- Log `INFO` when character pet pricing is switched to manual review mode.
+- Log `DEBUG` with request id, offer id, `is_character_offer`, and selected evolution; do not log user-entered price beyond existing safe amount logs.
+- Log `WARN` if a character source cannot produce evolution metadata and the service falls back to evolution 1.
 
-- Exact voucher icon asset keys will be finalized after the three icons are uploaded.
-- The buy-voucher CTA should point to the existing shop raids route for navigation, but shop content and purchase behavior remain a separate task.
-- If support grants are not needed before shop implementation, Task 7 can be deferred; the core raid-gating flow does not depend on storefront sales.
+- [x] **3. Backend: Apply Evolution to Fulfillment Lines**
+
+Repository: `diaverseapi`
+
+Depends on: Task 2
+
+Files:
+
+- `app/cabinet/offers/crypton/fulfillment.py`
+- `app/cabinet/offers/crypton/service.py`
+- `tests/test_cabinet_crypton.py`
+
+Work:
+
+- Merge selected evolution into `options_json` only for fulfillment lines where `item_type == "character"`, preferably matching `item_ref` to the selected `shop_item.source_ref`.
+- Copy and merge configured `options_json` instead of mutating `CabShopItemFulfillmentLine.options_json`.
+- Preserve configured `options_json` for non-character bundle/static fulfillment lines.
+- Include selected evolution in batch metadata and request detail payloads where useful.
+- Ensure legacy requests without selected evolution still fulfill safely as evolution 1 or an existing configured character line value.
+
+Logging requirements:
+
+- Log `DEBUG` when selected evolution is merged into a fulfillment line.
+- Log `INFO` when a character fulfillment is prepared with selected evolution.
+- Log `WARN` if a character offer reaches fulfillment without resolvable evolution metadata.
+
+- [x] **4. Backend: Propagate Evolution to Web, Ops, Payment, and Telegram Payloads**
+
+Repository: `diaverseapi`
+
+Depends on: Task 2
+
+Files:
+
+- `app/cabinet/offers/crypton/schemas.py`
+- `app/cabinet/offers/crypton/service.py`
+- `tests/test_cabinet_crypton.py`
+
+Work:
+
+- Include selected evolution/evolution label in `_selected_offer_summary`, `_request_detail`, admin list/detail responses, and current request state.
+- Include selected evolution/evolution label in new-request ops alert metadata and summary.
+- Include selected evolution/evolution label in Crypton checkout/payment payload metadata.
+- Include selected evolution/evolution label in `_decision_telegram_payload` sent to `diaverse-auth-bot`.
+- Keep legacy and non-pet payloads clean by omitting empty evolution fields where the consumer should not show them.
+
+Logging requirements:
+
+- Log `DEBUG` when outgoing Crypton payloads include selected evolution.
+- Do not add sensitive user, price, or payment details beyond existing safe payload summaries.
+
+### Frontend Phase
+
+- [x] **5. Frontend: Extend Crypton API Types, Normalizers, and Exports**
+
+Repository: `diaweb`
+
+Depends on: Backend field names from Tasks 1, 2, and 4
+
+Files:
+
+- `frontend/modules/crypton/types.ts`
+- `frontend/modules/crypton/api.ts`
+- `frontend/modules/crypton/shopCatalogAdapter.ts`
+- `frontend/modules/staff-shop/shop-pet-evolution.ts`
+- `frontend/modules/crypton/index.ts`
+
+Work:
+
+- Add `selectedEvolution` to `CryptonRequestSubmitInput`.
+- Add selected evolution fields to `CryptonSelectedOfferSummary` and `CryptonRequestDetail`.
+- Normalize selected evolution fields from backend read models.
+- Reuse or extend existing pet-evolution helpers so they can read top-level metadata and nested Crypton metadata from `display`, `item`, and `offer`.
+- Export any new helper needed by `CryptonOfferBuilder` without leaking staff-only implementation details.
+- Keep non-character offers unchanged.
+
+Logging requirements:
+
+- Emit development-only warnings when character metadata is malformed or has no usable evolution options.
+- Avoid logging user-entered prices or sensitive request details.
+
+- [x] **6. Frontend: Forward Evolution Through BFF and API Boundary Tests**
+
+Repository: `diaweb`
+
+Depends on: Task 5
+
+Files:
+
+- `frontend/modules/crypton/api.ts`
+- `frontend/app/api/cabinet/offers/crypton/requests/route.ts`
+- `frontend/__tests__/app/api/cabinet/offers/crypton/route.test.ts`
+- `frontend/__tests__/app/api/cabinet/offers/crypton/proxy-utils.test.ts`
+
+Work:
+
+- Send `selected_evolution` in the submit payload only when a pet/character offer has an evolution selection.
+- Include `selected_evolution` in the BFF route's safe development diagnostic summary.
+- Add or update BFF tests to assert the submit JSON forwards `selected_evolution` unchanged.
+- Add or update API/normalizer test coverage for selected evolution fields if an existing test file is available; otherwise cover the behavior through modal submit and BFF route tests.
+
+Logging requirements:
+
+- Keep BFF diagnostic logging safe: log only boolean/number selection metadata, not raw user-entered prices beyond existing fields.
+- Continue warning on malformed JSON via `safeParseCryptonBody`.
+
+- [x] **7. Frontend: Add Evolution Selector to Crypton Offer Modal**
+
+Repository: `diaweb`
+
+Depends on: Task 5 and Task 6
+
+Files:
+
+- `frontend/modules/crypton/components/CryptonOfferBuilder.tsx`
+- `frontend/modules/crypton/components/cryptonOfferModal.module.css`
+- `frontend/modules/i18n/types.ts`
+- `frontend/modules/i18n/dictionaries/ru.json`
+- `frontend/modules/i18n/dictionaries/en.json`
+- `frontend/__tests__/modules/crypton/CryptonOfferBuilder.test.tsx`
+- `frontend/__tests__/modules/crypton/test-helpers.ts`
+
+Work:
+
+- Show an evolution selector when the selected catalog item is a pet/character offer.
+- Derive `selectedShopItem` from the same `mapCryptonOfferToShopCatalogItem` adapter output used for catalog cards.
+- Populate options from the selected pet's available evolution range.
+- Reset selected evolution to the pet-specific default when the selected offer changes.
+- Hide recommended price and recommended-price copy for pet/character offers.
+- Disable or hide the frontend "above market" validation for pet/character offers.
+- Submit selected evolution with the request.
+- Display selected evolution in the request status/detail area after submission and in immutable status panels.
+- Preserve existing units, price input, validation, and rendering for regular offers.
+
+Logging requirements:
+
+- Log `DEBUG` during local development when a pet offer selection changes.
+- Log `WARN` during local development if a selected pet offer lacks evolution options.
+
+- [x] **8. Frontend: Show Evolution in Staff Crypton Requests**
+
+Repository: `diaweb`
+
+Depends on: Task 5
+
+Files:
+
+- `frontend/modules/staff-shop/components/CryptonRequestsPanel.tsx`
+- `frontend/modules/staff-shop/crypton-admin-types.ts`
+- `frontend/modules/i18n/types.ts`
+- `frontend/modules/i18n/dictionaries/ru.json`
+- `frontend/modules/i18n/dictionaries/en.json`
+- `frontend/__tests__/modules/staff-shop/CryptonRequestsPanel.test.tsx`
+
+Work:
+
+- Add selected evolution fields to staff request types.
+- Show selected evolution near selected offer title/quantity in desktop list rows, mobile list cards, and detail view.
+- Read list evolution from `selected_offer`; read detail evolution from normalized fields, `metadata`, or `item_snapshot` fallback so list/detail cannot drift.
+- Ensure staff can see the requested evolution before approve, reject, or counter actions.
+- Avoid showing `"0"` as a counter-price placeholder when pet requests intentionally have no recommended price.
+- Keep existing display unchanged when the request is not a pet offer or has no evolution metadata.
+
+Logging requirements:
+
+- Avoid noisy runtime logging in staff UI.
+- Emit development-only warnings for character requests missing selected evolution if the backend identifies them as pet/character offers.
+
+### Telegram Phase
+
+- [x] **9. Telegram Auth Bot: Render Evolution in Crypton Captions**
+
+Repository: `diaverse-auth-bot`
+
+Depends on: Task 4
+
+Files:
+
+- `app/services/outbox_delivery.py`
+- `tests/test_outbox_delivery.py`
+
+Work:
+
+- Read selected evolution/evolution label from Crypton notification payloads.
+- Add an evolution line to Crypton status captions when the payload contains it, e.g. `Эволюция: E5`.
+- Do not render an empty evolution line for legacy or non-pet requests.
+- Preserve all existing caption fields and formatting.
+
+Logging requirements:
+
+- Do not add sensitive payload logging.
+- Preserve existing delivery logs and only add warning-level diagnostics if caption payload shape is invalid.
+
+### Verification Phase
+
+- [x] **10. Backend Verification Tests**
+
+Repository: `diaverseapi`
+
+Files:
+
+- `tests/test_cabinet_crypton.py`
+
+Work:
+
+- Test submit flow for a character offer with selected evolution.
+- Test invalid evolution rejection.
+- Test pet request has no recommended price and bypasses above-market rejection.
+- Test fulfillment line receives `options_json.evolution`.
+- Test decision Telegram payload includes selected evolution.
+- Test ops alert metadata/summary and payment payload include selected evolution for pet offers.
+- Test regular non-pet offers keep the old recommended price and market-cap validation.
+- Test public API maps invalid selected evolution to HTTP 422 with a stable reason code.
+
+Commands:
+
+```powershell
+cd C:\Users\Indigo\Desktop\diaverse\diaverseapi
+.\.venv\Scripts\python.exe -m pytest tests/test_cabinet_crypton.py -q
+.\.venv\Scripts\python.exe -m ruff check app/cabinet/offers/crypton tests/test_cabinet_crypton.py
+```
+
+Logging requirements:
+
+- Assert important log paths with `caplog` where practical, especially invalid evolution validation and fulfillment preparation.
+
+- [x] **11. Frontend and Auth Bot Verification Tests**
+
+Repositories: `diaweb`, `diaverse-auth-bot`
+
+Files:
+
+- `diaweb/frontend/__tests__/modules/crypton/CryptonOfferBuilder.test.tsx`
+- `diaweb/frontend/__tests__/modules/staff-shop/CryptonRequestsPanel.test.tsx`
+- `diaweb/frontend/__tests__/app/api/cabinet/offers/crypton/route.test.ts`
+- `diaweb/frontend/__tests__/app/api/cabinet/offers/crypton/proxy-utils.test.ts`
+- `diaverse-auth-bot/tests/test_outbox_delivery.py`
+
+Work:
+
+- Test the modal renders evolution options for pet offers.
+- Test selecting an evolution sends it in the submit payload.
+- Test recommended price is hidden for pet offers.
+- Test non-pet offers still show recommended price and old validation behavior.
+- Test staff panel displays selected evolution in list and detail views.
+- Test BFF submit route forwards `selected_evolution`.
+- Test Telegram caption includes evolution when present and omits it when absent.
+
+Commands:
+
+```powershell
+cd C:\Users\Indigo\Desktop\diaverse\diaweb\frontend
+npm test -- __tests__/modules/crypton/CryptonOfferBuilder.test.tsx __tests__/modules/staff-shop/CryptonRequestsPanel.test.tsx __tests__/app/api/cabinet/offers/crypton/route.test.ts __tests__/app/api/cabinet/offers/crypton/proxy-utils.test.ts
+npm run typecheck
+
+cd C:\Users\Indigo\Desktop\diaverse\diaverse-auth-bot
+python -m pytest tests/test_outbox_delivery.py -q
+```
+
+Logging requirements:
+
+- Cover development-warning paths only where the existing test setup can do it without brittle console assertions.
+
+## Full Verification Plan
+
+Run after implementation:
+
+```powershell
+cd C:\Users\Indigo\Desktop\diaverse\diaverseapi
+.\.venv\Scripts\python.exe -m pytest tests/test_cabinet_crypton.py -q
+.\.venv\Scripts\python.exe -m ruff check app/cabinet/offers/crypton tests/test_cabinet_crypton.py
+
+cd C:\Users\Indigo\Desktop\diaverse\diaweb\frontend
+npm test -- __tests__/modules/crypton/CryptonOfferBuilder.test.tsx __tests__/modules/staff-shop/CryptonRequestsPanel.test.tsx __tests__/app/api/cabinet/offers/crypton/route.test.ts __tests__/app/api/cabinet/offers/crypton/proxy-utils.test.ts
+npm run typecheck
+
+cd C:\Users\Indigo\Desktop\diaverse\diaverse-auth-bot
+python -m pytest tests/test_outbox_delivery.py -q
+```
+
+No Alembic migration is planned. If implementation unexpectedly requires schema changes, add a migration and run the PostgreSQL DDL safety check before verification is considered complete.
+
+After meaningful source changes, run targeted GBrain sync for affected repositories or the full workspace sync.
+
+## Suggested Commit Plan
+
+Commit per affected repository after tests pass:
+
+1. `diaverseapi`: `feat(api): support crypton pet evolution requests`
+2. `diaweb`: `feat(web): add crypton pet evolution selection`
+3. `diaverse-auth-bot`: `feat(auth-bot): show crypton pet evolution`
+
+Root workspace commit only if this plan or related root documentation is meant to be persisted separately.
+
+## Ready for Implementation
+
+Next command:
+
+```text
+$aif-implement
+```
