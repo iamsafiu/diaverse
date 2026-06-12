@@ -1,5 +1,5 @@
 param(
-    [string[]]$Repos = @('diaweb', 'diaverseapi', 'aibot', 'club10000-bot', 'diaverse-auth-bot')
+    [string[]]$Repos = @('diaweb', 'diaverse-mobile', 'diaverseapi', 'aibot', 'club10000-bot', 'diaverse-auth-bot')
 )
 
 $workspaceRoot = Split-Path -Parent $PSScriptRoot

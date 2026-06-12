@@ -12,6 +12,7 @@
 When `$aif-plan full` is invoked from `C:\Users\Indigo\Desktop\diaverse`, override the normal single-product-repo meaning of `full`. The workspace root is a lightweight coordination repository only. Treat `full` as a multi-repo workspace plan over these child repositories:
 
 - `diaweb` at `C:\Users\Indigo\Desktop\diaverse\diaweb`
+- `diaverse-mobile` at `C:\Users\Indigo\Desktop\diaverse\diaverse-mobile`
 - `diaverseapi` at `C:\Users\Indigo\Desktop\diaverse\diaverseapi`
 - `aibot` at `C:\Users\Indigo\Desktop\diaverse\aibot`
 - `club10000-bot` at `C:\Users\Indigo\Desktop\diaverse\club10000-bot`
@@ -41,6 +42,7 @@ Multi-repo full plan format:
 | Repository | Path | Affected | Branch | Git status | Role |
 | --- | --- | --- | --- | --- | --- |
 | diaweb | C:\Users\Indigo\Desktop\diaverse\diaweb | yes/no | feature/<slug> | clean/dirty | frontend |
+| diaverse-mobile | C:\Users\Indigo\Desktop\diaverse\diaverse-mobile | yes/no | feature/<slug> | clean/dirty | mobile frontend |
 | diaverseapi | C:\Users\Indigo\Desktop\diaverse\diaverseapi | yes/no | feature/<slug> | clean/dirty | backend |
 | aibot | C:\Users\Indigo\Desktop\diaverse\aibot | yes/no | feature/<slug> | clean/dirty | copywriting service |
 | club10000-bot | C:\Users\Indigo\Desktop\diaverse\club10000-bot | yes/no | feature/<slug> | clean/dirty | Club10000 bot |
@@ -48,12 +50,14 @@ Multi-repo full plan format:
 ## Tasks
 - [ ] [diaverseapi] Implement backend contract
 - [ ] [diaweb] Wire frontend/BFF integration
+- [ ] [diaverse-mobile] Wire mobile frontend integration, if affected
 - [ ] [aibot] Update internal service behavior, if affected
 - [ ] [club10000-bot] Update standalone bot behavior, if affected
 - [ ] [cross-repo] Verify the end-to-end flow
 
 ## Verification Plan
 - diaweb: <lint/test/build commands if applicable>
+- diaverse-mobile: <Expo/React Native lint/test/type/release checks if applicable>
 - diaverseapi: <pytest/alembic/type/lint commands if applicable>
 - aibot: <pytest/lint commands if applicable>
 - club10000-bot: <pytest/lint/docker commands if applicable>
@@ -61,6 +65,7 @@ Multi-repo full plan format:
 
 ## Commit Plan
 - diaweb: <conventional commit suggestion>
+- diaverse-mobile: <conventional commit suggestion>
 - diaverseapi: <conventional commit suggestion>
 - aibot: <conventional commit suggestion>
 - club10000-bot: <conventional commit suggestion>
@@ -69,7 +74,7 @@ Multi-repo full plan format:
 Helper commands available from the workspace root:
 
 - `powershell -ExecutionPolicy Bypass -File C:\Users\Indigo\Desktop\diaverse\scripts\aif-workspace-status.ps1`
-- `powershell -ExecutionPolicy Bypass -File C:\Users\Indigo\Desktop\diaverse\scripts\aif-workspace-branch.ps1 -Branch feature/<slug> -Repos diaweb,diaverseapi,club10000-bot -Create`
+- `powershell -ExecutionPolicy Bypass -File C:\Users\Indigo\Desktop\diaverse\scripts\aif-workspace-branch.ps1 -Branch feature/<slug> -Repos diaweb,diaverse-mobile,diaverseapi,club10000-bot -Create`
 
 ## PostgreSQL Migration Planning Guard
 

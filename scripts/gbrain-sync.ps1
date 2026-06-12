@@ -130,6 +130,7 @@ $Sources = @(
     [pscustomobject]@{ Id = 'diaverse-docs'; Path = (Join-Path $WorkspaceRoot 'docs'); Strategy = 'markdown'; Mode = 'import'; ExcludeDirs = @('daily'); ExcludeSlugPrefixes = @('daily/') },
     [pscustomobject]@{ Id = 'diaverse-aif'; Path = (Join-Path $WorkspaceRoot '.ai-factory'); Strategy = 'markdown'; Mode = 'import' },
     [pscustomobject]@{ Id = 'diaweb-code'; Path = (Join-Path $WorkspaceRoot 'diaweb'); Strategy = 'code'; Mode = 'sync' },
+    [pscustomobject]@{ Id = 'diaverse-mobile-code'; Path = (Join-Path $WorkspaceRoot 'diaverse-mobile'); Strategy = 'code'; Mode = 'sync' },
     [pscustomobject]@{ Id = 'diaverseapi-code'; Path = (Join-Path $WorkspaceRoot 'diaverseapi'); Strategy = 'code'; Mode = 'sync' },
     [pscustomobject]@{ Id = 'aibot-code'; Path = (Join-Path $WorkspaceRoot 'aibot'); Strategy = 'code'; Mode = 'sync' },
     [pscustomobject]@{ Id = 'club10000-bot-code'; Path = (Join-Path $WorkspaceRoot 'club10000-bot'); Strategy = 'code'; Mode = 'sync' },

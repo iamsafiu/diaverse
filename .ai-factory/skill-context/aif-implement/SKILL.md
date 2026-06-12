@@ -19,10 +19,10 @@ Implementation rules:
 - Read the owning repository `AGENTS.md` before editing files in that repository.
 - Use GBrain first for cross-repo navigation, then verify exact source files before edits.
 - Execute one task at a time and keep task checkboxes in the top-level plan synchronized.
-- Tasks should be tagged with repository ownership such as `[diaweb]`, `[diaverseapi]`, `[aibot]`, `[club10000-bot]`, or `[cross-repo]`.
+- Tasks should be tagged with repository ownership such as `[diaweb]`, `[diaverse-mobile]`, `[diaverseapi]`, `[aibot]`, `[club10000-bot]`, `[diaverse-auth-bot]`, or `[cross-repo]`.
 - A `[cross-repo]` task may edit multiple child repositories, but the final summary must list changes grouped per repository.
 - Run top-level `diaverse` git operations only for root-owned documentation, AI context, shared scripts, and workspace config. Never stage or commit child repository source trees from the root repo.
-- If the plan requires branch checks, use child-repo commands such as `git -C diaweb status --short`.
+- If the plan requires branch checks, use child-repo commands such as `git -C diaweb status --short` or `git -C diaverse-mobile status --short`.
 - After meaningful code or docs changes, run targeted GBrain sync or `scripts\gbrain-sync.ps1`.
 - If source code and GBrain disagree, trust source code and refresh the affected source.
 

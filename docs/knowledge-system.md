@@ -4,11 +4,11 @@
 
 ## Назначение
 
-Diaverse использует локальный GBrain как навигационный слой по документации, AI Factory context и коду пяти дочерних репозиториев. Он помогает быстро найти связанные документы, кодовые символы и возможные зоны влияния, но не является финальным источником правды.
+Diaverse использует локальный GBrain как навигационный слой по документации, AI Factory context и коду шести дочерних репозиториев. Он помогает быстро найти связанные документы, кодовые символы и возможные зоны влияния, но не является финальным источником правды.
 
 Финальная проверка всегда делается по:
 
-- source code в `diaweb`, `diaverseapi`, `aibot`, `club10000-bot`, `diaverse-auth-bot`;
+- source code в `diaweb`, `diaverse-mobile`, `diaverseapi`, `aibot`, `club10000-bot`, `diaverse-auth-bot`;
 - canonical docs в `docs/`;
 - текущему git status/diff.
 
@@ -28,6 +28,7 @@ Diaverse использует локальный GBrain как навигаци�
 | `diaverse-docs` | `docs/` | Корневая документация workspace |
 | `diaverse-aif` | `.ai-factory/` | AI Factory context, rules, plans, research |
 | `diaweb-code` | `diaweb/` | Frontend и BFF code lookup |
+| `diaverse-mobile-code` | `diaverse-mobile/` | Mobile Expo / React Native code lookup |
 | `diaverseapi-code` | `diaverseapi/` | Backend code lookup |
 | `aibot-code` | `aibot/` | Copywriting service code lookup |
 | `club10000-bot-code` | `club10000-bot/` | Standalone bot code lookup |
@@ -98,6 +99,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain.ps1 code-refs Telegram
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-sync.ps1 -SourceId diaverse-docs
 powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-sync.ps1 -SourceId diaweb-code
+powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-sync.ps1 -SourceId diaverse-mobile-code
 ```
 
 ## Troubleshooting

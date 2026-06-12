@@ -13,7 +13,7 @@ When `$aif-review` is invoked from `C:\Users\Indigo\Desktop\diaverse`, review ch
 Rules:
 
 - Do not review the top-level workspace as if it were one product repository.
-- Inspect `git -C diaweb status --short`, `git -C diaverseapi status --short`, `git -C aibot status --short`, and `git -C club10000-bot status --short` when those repos may be affected.
+- Inspect `git -C diaweb status --short`, `git -C diaverse-mobile status --short`, `git -C diaverseapi status --short`, `git -C aibot status --short`, `git -C club10000-bot status --short`, and `git -C diaverse-auth-bot status --short` when those repos may be affected.
 - Group findings by repository.
 - Use GBrain to understand cross-repo impact, then cite exact source files and lines for findings.
 - Prioritize behavioral regressions, broken contracts between repos, missing verification, security issues, and data-flow mismatches.

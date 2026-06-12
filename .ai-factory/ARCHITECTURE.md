@@ -1,10 +1,11 @@
-# Architecture: Shared Workspace Over Five Repositories
+# Architecture: Shared Workspace Over Six Repositories
 
 ## Overview
 
-Diaverse uses five separate repositories coordinated through a shared workspace root:
+Diaverse uses six separate repositories coordinated through a shared workspace root:
 
 - `diaweb` handles the browser-facing frontend and BFF routes
+- `diaverse-mobile` handles the Expo / React Native mobile frontend for iOS and Android
 - `diaverseapi` handles cabinet, auth, staff, and game backend domains
 - `aibot` handles internal copywriting workflows consumed by `diaweb`
 - `club10000-bot` handles the standalone Club10000 Telegram bot, Prodamus callbacks, and its restored bot-local database
@@ -24,7 +25,8 @@ diaverse/
 |-- .tools/gbrain/       # Local GBrain runtime and project brain state
 |-- docs/                # Cross-repo runbooks, task briefs, and daily work logs
 |-- scripts/             # Workspace maintenance, GBrain, and daily work scripts
-|-- diaweb/              # Frontend repo, ignored by root git
+|-- diaweb/              # Web frontend repo, ignored by root git
+|-- diaverse-mobile/     # Mobile frontend repo, ignored by root git
 |-- diaverseapi/         # Backend repo, ignored by root git
 |-- aibot/               # Copywriting service repo, ignored by root git
 |-- club10000-bot/       # Club10000 bot repo, ignored by root git
@@ -38,12 +40,27 @@ diaverse/
 ```text
 diaweb -> diaverseapi    # REST/BFF integration
 diaweb -> aibot          # internal JWT-backed BFF integration for copywriting
+diaverse-mobile -> diaverseapi   # mobile app API integration over shared backend contracts
 diaverseapi -> aibot     # signed club creative asset requests only
 aibot -> diaverseapi     # copywriting-clubbot signed club Telegram events/outbox only
 club10000-bot -> diaverseapi   # signed normalized Club10000 payment events only
 diaverse-auth-bot -> diaverseapi   # signed auth login-session and mobile-link approvals only
 workspace -> repos       # AI context only, no runtime dependency
 ```
+
+### Mobile App
+
+```text
+diaverse-mobile/app + expo-router screens
+        |
+        v
+diaverse-mobile/api/services/hooks/store
+        |
+        v
+diaverseapi shared auth, cabinet, game, payment, and user APIs
+```
+
+`diaverse-mobile` owns the mobile client runtime: Expo / React Native code, committed `ios/` and `android/` project files, EAS build/update configuration, mobile diagnostics, mobile analytics, mobile purchases, localization, and native integration contracts. `diaverseapi` remains the shared backend authority for mobile and web product data. `diaweb` remains the web frontend and same-origin BFF layer; mobile work must not assume `diaweb` is the backend source of truth unless a specific mobile-to-BFF dependency is documented in a feature plan.
 
 ### Auth Bot
 
@@ -106,7 +123,7 @@ source code           -> final authority when GBrain and code disagree
 ### Implementation
 
 - Implement cross-repo plans from the workspace root when the task may touch more than one repository
-- Edit product code only inside `diaweb`, `diaverseapi`, `aibot`, `club10000-bot`, or `diaverse-auth-bot`
+- Edit product code only inside `diaweb`, `diaverse-mobile`, `diaverseapi`, `aibot`, `club10000-bot`, or `diaverse-auth-bot`
 - Keep progress checkboxes in the top-level plan for workspace-run implementations
 - Commit product code inside each repository that owns changes
 - Commit top-level workspace files in the root repository only when the change is limited to documentation, AI context, shared scripts, or workspace config
@@ -128,23 +145,23 @@ diaverse/.ai-factory/plans/<branch-slug>.md
         |
         | owns one cross-repo plan
         v
-  +-----------+      +--------------+      +--------+      +-------------+
-  |  diaweb   |      | diaverseapi  |      | aibot  |      | club10000   |
-  | git repo  |      | git repo     |      | git    |      | git repo    |
-  +-----------+      +--------------+      +--------+      +-------------+
-       |                    |                  |                  |
-       v                    v                  v                  v
-  branch/status        branch/status       branch/status      branch/status
-  commit here          commit here         commit here        commit here
+  +-----------+      +------------------+      +--------------+
+  |  diaweb   |      | diaverse-mobile  |      | diaverseapi  |
+  | git repo  |      | git repo         |      | git repo     |
+  +-----------+      +------------------+      +--------------+
+       |                      |                       |
+       v                      v                       v
+  branch/status          branch/status           branch/status
+  commit here            commit here             commit here
 
-  +--------------------+
-  | diaverse-auth-bot  |
-  | git repo           |
-  +--------------------+
-           |
-           v
-   branch/status
-   commit here
+  +--------+      +-------------+      +--------------------+
+  | aibot  |      | club10000   |      | diaverse-auth-bot  |
+  | git    |      | git repo    |      | git repo           |
+  +--------+      +-------------+      +--------------------+
+       |                 |                       |
+       v                 v                       v
+  branch/status     branch/status           branch/status
+  commit here       commit here             commit here
 ```
 
 Rules:

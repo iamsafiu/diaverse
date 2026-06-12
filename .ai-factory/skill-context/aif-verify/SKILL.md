@@ -6,7 +6,7 @@ Rules:
 
 - Use the top-level plan in `diaverse\.ai-factory\PLAN.md` or `diaverse\.ai-factory\plans\*.md`.
 - Read the plan's repository matrix or infer affected repositories from completed tasks.
-- Check git status separately for `diaweb`, `diaverseapi`, `aibot`, and `club10000-bot`; never check or commit at the top-level workspace as if it were a product repository.
+- Check git status separately for `diaweb`, `diaverse-mobile`, `diaverseapi`, `aibot`, `club10000-bot`, and `diaverse-auth-bot`; never check or commit at the top-level workspace as if it were a product repository.
 - Verify implementation against source files in each affected repository.
 - Run only verification commands that are appropriate for the affected repositories and available in their project files.
 - Use GBrain to trace cross-repo dependencies when useful, then verify with raw source.

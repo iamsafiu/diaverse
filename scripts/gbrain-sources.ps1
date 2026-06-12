@@ -104,6 +104,7 @@ $Sources = @(
     [pscustomobject]@{ Id = 'diaverse-docs'; Path = (Join-Path $WorkspaceRoot 'docs'); Name = 'Diaverse Docs'; Federated = $true; Strategy = 'markdown' },
     [pscustomobject]@{ Id = 'diaverse-aif'; Path = (Join-Path $WorkspaceRoot '.ai-factory'); Name = 'Diaverse AI Factory'; Federated = $true; Strategy = 'markdown' },
     [pscustomobject]@{ Id = 'diaweb-code'; Path = (Join-Path $WorkspaceRoot 'diaweb'); Name = 'Diaweb Code'; Federated = $false; Strategy = 'code' },
+    [pscustomobject]@{ Id = 'diaverse-mobile-code'; Path = (Join-Path $WorkspaceRoot 'diaverse-mobile'); Name = 'Diaverse Mobile Code'; Federated = $false; Strategy = 'code' },
     [pscustomobject]@{ Id = 'diaverseapi-code'; Path = (Join-Path $WorkspaceRoot 'diaverseapi'); Name = 'Diaverse API Code'; Federated = $false; Strategy = 'code' },
     [pscustomobject]@{ Id = 'aibot-code'; Path = (Join-Path $WorkspaceRoot 'aibot'); Name = 'Aibot Code'; Federated = $false; Strategy = 'code' },
     [pscustomobject]@{ Id = 'club10000-bot-code'; Path = (Join-Path $WorkspaceRoot 'club10000-bot'); Name = 'Club10000 Bot Code'; Federated = $false; Strategy = 'code' },

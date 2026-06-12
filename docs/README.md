@@ -2,7 +2,7 @@
 
 > Единый вход в документацию workspace `diaverse`.
 
-Этот каталог хранит долгоживущую документацию для связанных репозиториев: `diaweb`, `diaverseapi`, `aibot`, `club10000-bot` и `diaverse-auth-bot`. Кодовая истина остается в дочерних репозиториях, а продуктовые контракты, cross-repo runbook'и, исследования, задачи и daily logs собираются здесь.
+Этот каталог хранит долгоживущую документацию для связанных репозиториев: `diaweb`, `diaverse-mobile`, `diaverseapi`, `aibot`, `club10000-bot` и `diaverse-auth-bot`. Кодовая истина остается в дочерних репозиториях, а продуктовые контракты, cross-repo runbook'и, исследования, задачи и daily logs собираются здесь.
 
 ## Быстрый Старт
 
@@ -62,6 +62,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 
 | Репозиторий | Примеры |
 | --- | --- |
+| `diaweb` | `diaweb/README.md`, frontend module docs when they only affect the web app |
+| `diaverse-mobile` | `diaverse-mobile/MOBILE_RELEASE.md`, `diaverse-mobile/docs/*` |
 | `diaverseapi` | `diaverseapi/docs/*`, `diaverseapi/app/exchange/*.md` |
 | `aibot` | `aibot/docs/web-copywriting-service.md`, `aibot/docs/ops-alerts.md` |
 | `club10000-bot` | `club10000-bot/docs/referral_system.md` |

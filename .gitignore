@@ -51,6 +51,7 @@ NUL
 
 # Child repositories are intentionally independent git repositories.
 diaweb/
+diaverse-mobile/
 diaverseapi/
 aibot/
 club10000-bot/

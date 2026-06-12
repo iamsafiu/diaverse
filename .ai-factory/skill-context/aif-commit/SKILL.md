@@ -5,7 +5,7 @@ When `$aif-commit` is invoked from `C:\Users\Indigo\Desktop\diaverse`, commit ch
 Rules:
 
 - Never stage or commit the top-level `diaverse` folder.
-- Inspect `git -C <repo> status --short` for `diaweb`, `diaverseapi`, `aibot`, and `club10000-bot`.
+- Inspect `git -C <repo> status --short` for `diaweb`, `diaverse-mobile`, `diaverseapi`, `aibot`, `club10000-bot`, and `diaverse-auth-bot`.
 - Only commit repositories that contain changes from the current top-level AIF plan.
 - Use separate conventional commits per child repository.
 - Scope commit messages by repository or domain, for example `feat(cabinet): ...` in `diaverseapi` and `feat(copywriting): ...` in `diaweb`.

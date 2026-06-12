@@ -14,7 +14,7 @@ Rules:
 
 - Use GBrain first to identify likely affected repositories.
 - Verify the exact bug path in source files before editing.
-- The fix may touch `diaweb`, `diaverseapi`, `aibot`, and `club10000-bot` in one pass when the bug crosses repo boundaries.
+- The fix may touch `diaweb`, `diaverse-mobile`, `diaverseapi`, `aibot`, `club10000-bot`, and `diaverse-auth-bot` in one pass when the bug crosses repo boundaries.
 - Read the owning repository `AGENTS.md` before editing files there.
 - Keep git operations per child repository and never against the top-level workspace for product code.
 - If the fix requires a plan, store the fix plan under top-level `diaverse\.ai-factory\FIX_PLAN.md`.
