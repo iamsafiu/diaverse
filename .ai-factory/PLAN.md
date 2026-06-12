@@ -104,45 +104,45 @@ GBrain был использован первым, но по новым запр
 
 ### 1. Backend: модель библиотеки и миграция
 
-- [ ] В `diaverseapi` добавить модели библиотеки:
+- [x] В `diaverseapi` добавить модели библиотеки:
   - `CabShopLibraryItem`;
   - при необходимости `CabShopLibraryFulfillmentLine`, если reuse текущих fulfillment lines делает связь неочевидной;
   - nullable `library_item_id` на `CabShopItem` для rollout/backfill.
-- [ ] Поля library item:
+- [x] Поля library item:
   - source/catalog identity: `source_type`, `source_ref`, `variant_key`;
   - `base_quantity`;
   - `base_price_amount`, `base_price_currency`;
   - active/visibility flags for admin selection;
   - sort/order metadata;
   - metadata JSON for catalog snapshot and UI hints.
-- [ ] Для `CabShopItem` сохранить legacy compatibility:
+- [x] Для `CabShopItem` сохранить legacy compatibility:
   - `price_xdv` остается обязательным и получает `0.000` для library-backed rows;
   - `price_xdv` не участвует в новом USDT pricing;
   - API responses продолжают отдавать поле, пока старые UI/tests его ожидают.
-- [ ] Для pets хранить evolution в variant/fulfillment options так, чтобы grant path использовал существующий `options_json.evolution`.
-- [ ] Добавить Alembic migration с короткими именами constraints/indexes, чтобы не упереться в PostgreSQL limit `63` bytes.
-- [ ] Если library models вынесены в новый файл, добавить явный import в `diaverseapi/migrations/env.py`, иначе `SQLModel.metadata` не увидит новые таблицы при autogenerate/checks.
-- [ ] Добавить индексы:
+- [x] Для pets хранить evolution в variant/fulfillment options так, чтобы grant path использовал существующий `options_json.evolution`.
+- [x] Добавить Alembic migration с короткими именами constraints/indexes, чтобы не упереться в PostgreSQL limit `63` bytes.
+- [x] Если library models вынесены в новый файл, добавить явный import в `diaverseapi/migrations/env.py`, иначе `SQLModel.metadata` не увидит новые таблицы при autogenerate/checks.
+- [x] Добавить индексы:
   - lookup по `source_type/source_ref/variant_key`;
   - lookup по `is_active`;
   - lookup по `CabShopItem.library_item_id`;
   - уникальность library natural key, учитывая `variant_key`.
-- [ ] Backfill:
+- [x] Backfill:
   - создать library rows из существующих shop items и их offer prices;
   - связать существующие `CabShopItem` с созданными library rows;
   - проставить `price_source=library_backfill` в metadata linked offers/items;
   - оставить legacy fallback для строк, где backfill невозможен;
   - сделать backfill идемпотентным по natural key.
-- [ ] Добавить единый helper price policy:
+- [x] Добавить единый helper price policy:
   - validate library price `> 0`;
   - derive storefront price;
   - apply min floor `1 USDT`;
   - return reason/flags, например `floor_applied`.
-- [ ] Обновить Alembic tests:
+- [x] Обновить Alembic tests:
   - `tests/test_alembic_graph.py` current head;
   - identifier length check для новой migration;
   - `alembic upgrade <down_revision>:<new_revision> --sql`.
-- [ ] Логирование:
+- [x] Логирование:
   - `INFO` для admin mutations/backfill counts;
   - `DEBUG` для derived price formula inputs/outputs;
   - `WARNING` для catalog mismatch, invalid evolution, legacy fallback.
@@ -151,33 +151,33 @@ GBrain был использован первым, но по новым запр
 
 ### 2. Backend: admin API библиотеки
 
-- [ ] Добавить schemas для library list/create/update:
+- [x] Добавить schemas для library list/create/update:
   - library item response с catalog metadata;
   - price/quantity fields;
   - pet evolution fields;
   - derived storefront preview fields.
-- [ ] Добавить service layer, предпочтительно отдельный `library_admin_service.py`, если `admin_service.py` уже слишком разросся.
-- [ ] Добавить endpoints под `/v1/admin/shop/library`:
+- [x] Добавить service layer, предпочтительно отдельный `library_admin_service.py`, если `admin_service.py` уже слишком разросся.
+- [x] Добавить endpoints под `/v1/admin/shop/library`:
   - list/search;
   - create from common catalog item;
   - update price/quantity/active metadata;
   - delete или soft-disable;
   - optional bulk generate pet evolution rows.
-- [ ] Подключить endpoints через существующий staff shop router и RBAC:
+- [x] Подключить endpoints через существующий staff shop router и RBAC:
   - read operations используют `require_staff_module_access("shop", "view")`;
   - write operations используют `require_staff_module_access("shop", "edit")`.
-- [ ] Ошибки API сделать стабильными:
+- [x] Ошибки API сделать стабильными:
   - not found -> `404`;
   - duplicate active library/listing -> `409`;
   - invalid evolution/price/quantity -> `422` или согласованный `400` с reason code;
   - linked item cannot be deleted -> `409`.
-- [ ] Validation:
+- [x] Validation:
   - source item должен существовать в item catalog;
   - character evolution должен попадать в allowed range for rarity;
   - non-character items не должны принимать evolution;
   - library price допускает `< 1`, но не допускает `0`/negative.
-- [ ] При изменении library price/quantity пересчитывать linked storefront offers.
-- [ ] Логирование:
+- [x] При изменении library price/quantity пересчитывать linked storefront offers.
+- [x] Логирование:
   - `INFO` для create/update/disable;
   - `DEBUG` для catalog resolution и price preview;
   - `WARNING` для отказов validation и попыток обновить linked/deleted entries.
@@ -186,33 +186,33 @@ GBrain был использован первым, но по новым запр
 
 ### 3. Backend: витрина только из библиотеки
 
-- [ ] Изменить create/update storefront item flow:
+- [x] Изменить create/update storefront item flow:
   - новые позиции создаются из `library_item_id`;
   - в request для новой витринной позиции больше нет ручной цены;
   - quantity остается editable;
   - section/category, sort, visibility остаются на уровне витрины.
-- [ ] Duplicate policy:
+- [x] Duplicate policy:
   - по умолчанию блокировать второй активный storefront listing для того же `library_item_id`;
   - для legacy rows без `library_item_id` оставить существующий unique key;
   - если понадобится duplicate listing, вводить явный `listing_variant_key`, а не обходить guard.
-- [ ] Purchase-limit policy:
+- [x] Purchase-limit policy:
   - оставить текущий per-`shop_item_id` учет покупок;
   - в metadata response отдать `library_item_id`, чтобы позже можно было перейти на per-library limit без разрыва контракта;
   - добавить warning при попытке создать duplicate active listing, потому что per-listing limits позволили бы повторную покупку.
-- [ ] Materialize default offer:
+- [x] Materialize default offer:
   - при создании/обновлении витринной позиции рассчитать effective price;
   - сохранить ее в `CabShopItemOffer`;
   - пометить metadata source, например `price_source=library`.
-- [ ] Checkout guard:
+- [x] Checkout guard:
   - если item связан с library, перед checkout проверить, что offer price не расходится с derived price;
   - при drift либо безопасно refresh до checkout, либо блокировать с понятным admin-facing log, но не silently продавать по stale price.
-- [ ] Сохранить backward compatibility:
+- [x] Сохранить backward compatibility:
   - legacy item без `library_item_id` обслуживать старым путем;
   - UI/API response должен явно показывать legacy flag.
-- [ ] Адаптировать `bulk_add`:
+- [x] Адаптировать `bulk_add`:
   - либо перевести в bulk add to library;
   - либо оставить только для legacy/internal path, скрыв из нового UI.
-- [ ] Логирование:
+- [x] Логирование:
   - `INFO` при создании витринной позиции из library;
   - `DEBUG` для пересчета offer;
   - `WARNING` при drift, missing library link, stale offer.
@@ -221,26 +221,26 @@ GBrain был использован первым, но по новым запр
 
 ### 4. Backend: bootstrap/sync, payment sessions и legacy guards
 
-- [ ] Защитить library-backed rows от `sync_cabinet_shop_storefront` cleanup:
+- [x] Защитить library-backed rows от `sync_cabinet_shop_storefront` cleanup:
   - library-backed `CabShopItem` и materialized default offers должны иметь metadata marker, совместимый с `ADMIN_MANAGED_METADATA_KEY`;
   - stale cleanup не должен деактивировать admin/library-managed rows как non-canonical seed rows;
   - `rebuild_all=True` должен иметь явно описанное поведение для library-backed rows.
-- [ ] Обновить `sync-preview`:
+- [x] Обновить `sync-preview`:
   - не предлагать как "missing" item, если он уже есть в библиотеке или витрине через library;
   - показать отдельный library preview, если это остается полезным для staff UX.
-- [ ] Pending checkout policy:
+- [x] Pending checkout policy:
   - `CabShopOrder.quoted_amount` и `CabinetPaymentSession` остаются snapshot;
   - library price updates не меняют уже созданные awaiting/paid sessions;
   - checkout drift guard применяется перед созданием нового order/session;
   - при изменении library price логировать количество linked active listings/offers, которые пересчитаны.
-- [ ] Provider/default offer compatibility:
+- [x] Provider/default offer compatibility:
   - не перетирать `special` и `category_deal` offer rows при library recalculation;
   - обновлять только default/catalog provider offer или explicitly library-sourced offer.
-- [ ] Tests:
+- [x] Tests:
   - `tests/test_cabinet_shop_bootstrap.py` на сохранение library/admin-managed rows;
   - service test на pending order quoted snapshot;
   - service test на duplicate active library listing guard.
-- [ ] Логирование:
+- [x] Логирование:
   - `INFO` для recalculation count;
   - `WARNING` для skipped pending orders, duplicate listing attempts, sync cleanup conflicts.
 
@@ -248,27 +248,27 @@ GBrain был использован первым, но по новым запр
 
 ### 5. Backend: зависимые shop systems и price snapshots
 
-- [ ] Проверить и адаптировать:
+- [x] Проверить и адаптировать:
   - category deals;
   - specials;
   - bundle savings;
   - promo offer selection;
   - shop analytics/facts;
   - Crypton/admin offer summaries, если они показывают base price.
-- [ ] Price snapshot policy:
+- [x] Price snapshot policy:
   - `normal/base price` для category deals и specials берется из materialized storefront price;
   - discounted/special price применяется поверх storefront effective price, а не поверх raw library price;
   - min `1 USDT` витрины нельзя обойти через deal/special offer;
   - existing active deal/special snapshots не переписываются задним числом без explicit regenerate/update action.
-- [ ] Specials legacy fields:
+- [x] Specials legacy fields:
   - `normal_price_xdv` и `offer_price_xdv` остаются compatibility-полями;
   - новые USDT fields (`normal_price_amount`, `offer_price_amount`) являются source of truth для оплаты;
   - frontend/admin payloads не должны заставлять staff вводить XDV для library-backed offers.
-- [ ] Убрать `bundle_savings.py` как primary source для pet evolution standalone prices:
+- [x] Убрать `bundle_savings.py` как primary source для pet evolution standalone prices:
   - брать library-derived или materialized storefront price;
   - оставить fallback только с явным warning и тестом.
-- [ ] Убедиться, что discounts применяются поверх effective storefront price, а не поверх raw library price ниже `1 USDT`.
-- [ ] Логирование:
+- [x] Убедиться, что discounts применяются поверх effective storefront price, а не поверх raw library price ниже `1 USDT`.
+- [x] Логирование:
   - `DEBUG` для selected price source;
   - `WARNING` для fallback на legacy price.
 
@@ -276,59 +276,59 @@ GBrain был использован первым, но по новым запр
 
 ### 6. Frontend: staff API client и типы
 
-- [ ] В `diaweb` расширить `staff-shop` types:
+- [x] В `diaweb` расширить `staff-shop` types:
   - `ShopLibraryItem`;
   - create/update payloads;
   - pet evolution price row;
   - derived price preview;
   - legacy/storefront link fields.
-- [ ] Добавить frontend fields для backend compatibility:
+- [x] Добавить frontend fields для backend compatibility:
   - `library_item_id`;
   - `price_source`;
   - `floor_applied`;
   - `legacy_price_xdv` только как deprecated/read-only field.
-- [ ] Добавить methods в `shop-admin-api.ts`:
+- [x] Добавить methods в `shop-admin-api.ts`:
   - list library;
   - create/update/disable library item;
   - generate/update evolution rows;
   - create storefront item from library.
-- [ ] Добавить cache keys/invalidation:
+- [x] Добавить cache keys/invalidation:
   - `["staff-shop", "library"]`;
   - `["staff-shop", "items"]`;
   - public `[SHOP_QUERY_KEY]`;
   - `[SHOP_SPECIALS_QUERY_KEY]`;
   - staff specials shop-items cache.
-- [ ] Обновить error mapping:
+- [x] Обновить error mapping:
   - invalid evolution;
   - price must be positive;
   - storefront price floor applied;
   - linked item cannot be deleted.
-- [ ] Логирование:
+- [x] Логирование:
   - только safe dev logging для unexpected API shape/errors, без tokens/user secrets.
 
 Ожидаемый результат: frontend получает typed contract для библиотеки и не протаскивает manual price в новый store flow.
 
 ### 7. Frontend: tab "Библиотека"
 
-- [ ] В `ShopAdminPage.tsx` добавить workspace tab `library`.
-- [ ] Переименовать текущий `Общий раздел` в `Магазин`, если это не ломает локализацию/тесты.
-- [ ] Создать `ShopLibraryTable`/`ShopLibraryEditor` или аналогичные компоненты в существующем стиле staff shop.
-- [ ] UI behavior:
+- [x] В `ShopAdminPage.tsx` добавить workspace tab `library`.
+- [x] Переименовать текущий `Общий раздел` в `Магазин`, если это не ломает локализацию/тесты.
+- [x] Создать `ShopLibraryTable`/`ShopLibraryEditor` или аналогичные компоненты в существующем стиле staff shop.
+- [x] UI behavior:
   - добавление из общего item catalog;
   - ввод base quantity;
   - ввод base price, допускающий `< 1`;
   - active/disabled state;
   - для character item - выбор evolution и/или генерация evolution rows.
-- [ ] Для item catalog picker:
+- [x] Для item catalog picker:
   - reuse existing `ItemCatalogPicker`/`StaffItemCatalogPicker`;
   - не фильтровать только `is_sellable`, если item `is_grantable` и staff задает цену вручную;
   - показывать sellability/grantability warning вместо скрытия подходящих для библиотеки items.
-- [ ] Pet evolution UI:
+- [x] Pet evolution UI:
   - показать allowed evolution range из catalog metadata;
   - default prices считать `* 1.5`;
   - дать ручной override каждой evolution price;
   - не перетирать overridden rows при повторном автосчете без подтвержденного действия.
-- [ ] Visual:
+- [x] Visual:
   - использовать текущие таблицы, dialogs, controls из `staff-shop`;
   - не делать отдельную "лендинг" страницу;
   - price/quantity controls должны быть плотными и рабочими.
@@ -337,30 +337,30 @@ GBrain был использован первым, но по новым запр
 
 ### 8. Frontend: магазин из библиотеки
 
-- [ ] Переделать `ShopListingEditor` для нового flow:
+- [x] Переделать `ShopListingEditor` для нового flow:
   - выбрать library item;
   - выбрать category/section;
   - указать quantity;
   - price input убрать для library-backed items;
   - derived price показать read-only.
-- [ ] Разрезать legacy/new editor path:
+- [x] Разрезать legacy/new editor path:
   - legacy rows без `library_item_id` могут открываться старым editor;
   - library-backed rows используют новый read-only price flow;
   - table inline `BasePriceEditor` скрыть или сделать read-only для library-backed rows.
-- [ ] Для price floor:
+- [x] Для price floor:
   - если применен min `1 USDT`, показать короткий read-only hint;
   - не давать администратору сохранить цену ниже floor через UI.
-- [ ] Для legacy rows:
+- [x] Для legacy rows:
   - либо оставить старый editor с explicit legacy marker;
   - либо сделать read-only price + migration prompt, если backend поддерживает только просмотр.
-- [ ] Обновить `ShopBulkAddDialog`:
+- [x] Обновить `ShopBulkAddDialog`:
   - новый bulk add должен работать через library;
   - старый `default_price_amount` не должен использоваться в новом path.
-- [ ] Обновить `ShopBulkEditDialog`:
+- [x] Обновить `ShopBulkEditDialog`:
   - для library-backed rows убрать массовое редактирование цены;
   - quantity/visibility/sort остаются доступными;
   - если выбран смешанный набор legacy + library-backed, явно отключить price field или разделить operation.
-- [ ] Добавить loading/empty/error states:
+- [x] Добавить loading/empty/error states:
   - empty library;
   - disabled library item;
   - no eligible category;
@@ -370,13 +370,13 @@ GBrain был использован первым, но по новым запр
 
 ### 9. Frontend: публичный shop compatibility
 
-- [ ] Проверить user-facing shop types и cards:
+- [x] Проверить user-facing shop types и cards:
   - existing offer price должен продолжить отображаться без изменений;
   - optional library metadata не должен ломать старые responses;
   - pet evolution badge/metadata не должны конфликтовать с текущими bundle badges.
-- [ ] Не менять публичный UX без необходимости.
-- [ ] Если response получает `floor_applied`/`price_source`, использовать это только в staff/admin view, не показывать покупателю внутренние детали.
-- [ ] Проверить BFF routes под `diaweb/frontend/app/api/cabinet/shop/*`:
+- [x] Не менять публичный UX без необходимости.
+- [x] Если response получает `floor_applied`/`price_source`, использовать это только в staff/admin view, не показывать покупателю внутренние детали.
+- [x] Проверить BFF routes под `diaweb/frontend/app/api/cabinet/shop/*`:
   - public storefront и checkout должны продолжить проксировать существующие responses;
   - internal library metadata не должна утекать в buyer-facing UI, если она не нужна карточкам.
 
@@ -384,7 +384,7 @@ GBrain был использован первым, но по новым запр
 
 ### 10. Тесты
 
-- [ ] Backend unit/service tests:
+- [x] Backend unit/service tests:
   - library price `< 1` accepted;
   - library price `0`/negative rejected;
   - storefront derived price floors to `1 USDT`;
@@ -399,12 +399,12 @@ GBrain был использован первым, но по новым запр
   - bootstrap sync does not deactivate library/admin-managed rows;
   - Alembic graph has one head and identifiers fit PostgreSQL limit;
   - legacy item remains supported.
-- [ ] Backend integration/API tests:
+- [x] Backend integration/API tests:
   - create/list/update/disable library item;
   - create storefront listing from library;
   - stable HTTP status/reason codes for duplicate, invalid price, invalid evolution and linked delete;
   - existing shop catalog endpoint still returns compatible payload.
-- [ ] Frontend tests:
+- [x] Frontend tests:
   - library tab renders;
   - adding catalog item to library;
   - pet evolution rows and manual override;
@@ -414,7 +414,7 @@ GBrain был использован первым, но по новым запр
   - bulk edit cannot change price for library-backed rows;
   - library mutations invalidate library/items/public shop caches;
   - legacy item handling.
-- [ ] Add test names close to behavior, not implementation detail.
+- [x] Add test names close to behavior, not implementation detail.
 
 Ожидаемый результат: риск изменения checkout/pricing закрыт focused regression tests.
 
