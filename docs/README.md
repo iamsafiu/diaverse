@@ -28,7 +28,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | [Architecture](architecture/copywriting-web-architecture.md) | Cross-repo архитектура, file maps, ключевые потоки |
 | [Features](features/factory.md) | Живые документы по factory, auth, RBAC, shop, Advent, pets, analytics |
 | [Runbooks](runbooks/copywriting-production-runtime.md) | Deploy, nginx, VPS, production/runtime операции |
-| [Temporary Factory/Raids Staff Gate](runbooks/temporary-factory-raids-staff-gate.md) | Временный frontend-only доступ к Factory/Raids только для staff и инструкция отката |
+| [Temporary Factory/Raids Staff Gate](runbooks/temporary-factory-raids-staff-gate.md) | Исторический runbook отключенного frontend-only ограничения Factory для staff/tester |
 | [Research](research/shop/shop-research.md) | Исследования, старые варианты, discovery notes |
 | [Logs](logs/shop-network.md) | Исторические технические логи и расследования |
 | [Tasks](tasks/) | Task briefs и рабочие заметки |
