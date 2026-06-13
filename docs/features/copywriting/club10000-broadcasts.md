@@ -25,7 +25,8 @@ Club10000 broadcast - staff-инструмент внутри вкладки cop
 - Test send recipient is configured by `COPYWRITING_CLUB_BROADCAST_TEST_TG_USER_ID`.
 - Mass send is immediate only in the MVP: no scheduling, no drafts, no editing after queueing.
 - Required permission for send/test is `copywriting.club.broadcast:send`.
-- Ordinary copywriting staff do not receive `copywriting.club.broadcast:send` automatically.
+- Staff users receive `copywriting.club.broadcast:send` through the `copywriting` staff module edit grant.
+- The base `employee` role alone does not grant Club10000 broadcast send access.
 - Campaign creation returns after enqueue; browser requests must never wait for all Telegram sends.
 
 ## Segments
@@ -134,8 +135,8 @@ Deploy order:
 
 Smoke sequence:
 
-1. Confirm a staff user without `copywriting.club.broadcast:send` cannot test-send or create a Club10000 campaign.
-2. Confirm a sender with `copywriting.club.broadcast:send` can open the Club tab and switch to Broadcasts.
+1. Confirm a staff user with copywriting view-only access cannot test-send or create a Club10000 campaign.
+2. Confirm a staff user with copywriting edit access can open the Club tab, switch to Broadcasts, test-send, and create a campaign after confirmation.
 3. Select each segment and verify the preview count returns without exposing payment, phone, email, or subscription data.
 4. Upload a small approved image and enter short text.
 5. Send the test broadcast to the configured test Telegram ID.
