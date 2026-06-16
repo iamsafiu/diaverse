@@ -101,6 +101,13 @@ PRODAMUS_CLUB10000_REFERRAL_SUBSCRIPTION_ID=
 CADDY_NETWORK=iamgradov-site_default
 DIAVERSE_API_BASE_URL=
 DIAVERSE_CLUB10000_SECRET=
+CLUB_INVITE_LINK=
+DIAVERSE_OUTBOX_ENABLED=true
+DIAVERSE_OUTBOX_POLL_SECONDS=15
+DIAVERSE_OUTBOX_BATCH_SIZE=20
+DIAVERSE_OUTBOX_MAX_ATTEMPTS=8
+DIAVERSE_OUTBOX_INITIAL_BACKOFF_SECONDS=60
+DIAVERSE_OUTBOX_MAX_BACKOFF_SECONDS=3600
 CLUB_LOCAL_RECOVERY_FALLBACK_ENABLED=true
 ```
 
@@ -114,6 +121,53 @@ or redacted token hashes before starting the container.
 2. Configure Telegram chat id, topic/thread ids, invite TTL, join cutoff, fallback admin membership, pair notice templates, leaderboard image settings, and `aibot_target_profile`.
 3. Run settings validation. The validation must show Telegram chat configuration and aibot service auth as configured before production use.
 4. Grant staff permissions through RBAC: `club:view`, `club:edit`, `club.alerts:update`, and `club.settings:manage`.
+
+## Paid Activation And Onboarding
+
+The primary Club10000 activation path starts before the user enters the private
+group:
+
+1. `club10000-bot` receives a successful Prodamus payment and queues the signed
+   Diaverse payment bridge event.
+2. `diaverseapi` records the payment state, creates or resolves the club
+   membership, mints a one-use onboarding activation token, and returns
+   `activation_url`, `activation_token_id`, and `activation_expires_at` in the
+   bridge response.
+3. `club10000-bot` sends the paid user a private Telegram message with two
+   buttons: activate the club cabinet and enter the private group. The bot stores
+   delivery metadata on the outbox payload so retries do not send duplicate
+   activation messages.
+4. The user opens `/club?activation=...`, authorizes by Telegram or email, and
+   the first authenticated user who claims a valid unused link becomes the linked
+   club user for that membership.
+5. Completing onboarding is the activation signal for the cabinet experience.
+   Reopening an already claimed link is idempotent only for the same Diaverse
+   user; another authenticated user receives a controlled conflict/error state.
+
+Staff can create an invitation for non-payment access in `/staff/club` with the
+`Создать приглашение` button. It creates an `invitation` membership/manual access
+record and shows a copyable onboarding activation link. No recipient form is
+required in this MVP.
+
+Default group welcome messages no longer create activation links. A legacy custom
+`telegram_welcome_message_template` that explicitly contains `{activation_url}`
+still gets a member-specific activation URL for backward compatibility, but this
+must not be the normal paid onboarding path.
+
+If a user cannot access onboarding, check:
+
+- `club10000-bot` outbox delivery metadata: whether the Diaverse bridge response
+  had an activation token id and whether the private Telegram message was sent.
+- `diaverseapi` activation token row by token id, not by raw token value: status,
+  expiry, membership id, and claimed user id.
+- The browser redirect path: unauthenticated `/club?activation=...` requests
+  must redirect to `/login?redirect=/club?...` and preserve the query until the
+  claim call completes.
+- Whether `CABINET_PUBLIC_BASE_URL`, `DIAVERSE_API_BASE_URL`,
+  `DIAVERSE_CLUB10000_SECRET`, `DIAVERSE_OUTBOX_ENABLED`, and `CLUB_INVITE_LINK`
+  are configured in the relevant runtime.
+- Logs must never include the raw activation token, full activation URL, signed
+  headers, bot tokens, or private invite links.
 
 ## Buddy Pairing
 
@@ -179,9 +233,10 @@ Operational invariant:
 Settings templates:
 
 - `telegram_welcome_message_template` supports `{club_title}`, `{name}`,
-  `{username}`, `{first_name}`, `{last_name}`, and `{activation_url}`. The
-  activation URL is member-specific and must be used only in the welcome notice,
-  not in shared pair notices.
+  `{username}`, `{first_name}`, `{last_name}`, and legacy `{activation_url}`.
+  Default welcome messages do not create activation links; custom templates that
+  explicitly contain `{activation_url}` keep backward-compatible member-specific
+  activation URLs and must not be used for shared pair notices.
 - `telegram_pair_assigned_message_template` supports
   `{club_title}`, `{member_name}`, `{partner_name}`, `{pair_names}`,
   `{group_code}`, and `{is_fallback}`.
