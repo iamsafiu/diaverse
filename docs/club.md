@@ -178,6 +178,10 @@ Operational invariant:
 
 Settings templates:
 
+- `telegram_welcome_message_template` supports `{club_title}`, `{name}`,
+  `{username}`, `{first_name}`, `{last_name}`, and `{activation_url}`. The
+  activation URL is member-specific and must be used only in the welcome notice,
+  not in shared pair notices.
 - `telegram_pair_assigned_message_template` supports
   `{club_title}`, `{member_name}`, `{partner_name}`, `{pair_names}`,
   `{group_code}`, and `{is_fallback}`.
@@ -609,6 +613,25 @@ Invitation path:
 4. When the member is confirmed in chat, backend activation runs, the member enters normal leaderboards and buddy pairing, and existing outbox commands queue the welcome and pair notices.
 
 The public checkout/join UX is intentionally deferred until product details are confirmed.
+
+Cabinet member activation:
+
+1. `diaverseapi` generates a member-specific opaque activation URL for the
+   Telegram welcome message. Raw activation tokens are never stored; only token
+   hashes are persisted.
+2. The URL opens `diaweb` at `/{locale}/club?activation=<token>`. The cabinet
+   auth redirect must preserve the full query string so Telegram login returns
+   to the same activation URL.
+3. The web BFF proxies onboarding calls through `/api/cabinet/club/*` to
+   `/v1/cabinet/club/*` with cabinet cookies and `x-platform: cabinet`.
+4. The `/club` cabinet route is auth-only and renders in fullscreen mode without
+   the standard cabinet topbar, footer, or bottom nav while onboarding is active.
+5. Onboarding progress is stored on `ClubMembership.metadata_json["onboarding"]`
+   for this MVP. The route can claim activation, fetch state, save progress, and
+   complete into a simple club hub.
+6. `referral_enabled=false` is intentional for this launch. The UI may show a
+   deferred cashback/referral placeholder, but it must not generate a personal
+   referral link, cashback balance, Decardium reward, or referral bot flow.
 
 ## Outbox Contract
 
