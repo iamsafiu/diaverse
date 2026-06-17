@@ -1,3 +1,9 @@
+Note for Club checkout: the shop club banner does not use this Tribute API
+runbook. In the club banner flow, Tribute is configured only by
+`NEXT_PUBLIC_CLUB_TRIBUTE_URL` and opens as an external link. It does not create
+a backend payment session, callback, reconciliation event, onboarding link, or
+private group link in this slice.
+
 Коротко: без аккаунта Tribute можно безопасно деплоить код только с выключенными флагами. Реальный
   checkout не запустить, пока не получим merchant/shop account, API key и не подтвердим версию Shop API.
 

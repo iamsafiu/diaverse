@@ -14,6 +14,12 @@
 
 ```env
 CLUB_ACTIVE_PROGRAM_CODE=main
+CLUB_CHECKOUT_FIRST_MONTH_PRICE_RUB=890
+CLUB_CHECKOUT_RENEWAL_MONTH_PRICE_RUB=1390
+CLUB_CHECKOUT_ACCESS_PERIOD_DAYS=30
+CLUB_CHECKOUT_ZION_FIRST_MONTH_PRICE_USDT=
+CLUB_CHECKOUT_ZION_RENEWAL_MONTH_PRICE_USDT=
+CLUB_PRIVATE_GROUP_INVITE_URL=
 CLUBBOT_INTERNAL_SECRET=
 CLUBBOT_SIGNATURE_TOLERANCE_SECONDS=300
 CLUB_TG_OUTBOX_BATCH_SIZE=50
@@ -40,6 +46,38 @@ CLUB_AIBOT_PAIRING_ROLLOVER_PUBLISH_PATH=/internal/club/leaderboards/pairing-rol
 CLUB_AIBOT_LEADERBOARD_STATUS_PATH=/internal/club/leaderboards/assets/{asset_id}
 CLUB_AIBOT_LEADERBOARD_PREFLIGHT_PATH=/internal/club/leaderboards/preflight
 ```
+
+Club web checkout uses `890 RUB` for the first month, `1390 RUB` for renewal
+display, and a 30-day access period. `CLUB_PRIVATE_GROUP_INVITE_URL` is
+backend-only and is returned to the cabinet only after a paid and finalized
+club checkout. Zion is hidden for club checkout unless both
+`CLUB_CHECKOUT_ZION_FIRST_MONTH_PRICE_USDT` and
+`CLUB_CHECKOUT_ZION_RENEWAL_MONTH_PRICE_USDT` are configured.
+
+Direct web checkout providers also require the generic cabinet payment flags and
+provider credentials in `diaverseapi`:
+
+```env
+CABINET_GENERIC_PAYMENTS_ENABLED=true
+CABINET_PAYMENTS_PAY1TIME_ENABLED=true
+CABINET_PAYMENTS_ZION_VISIBLE=true
+CABINET_PAYMENTS_ZION_ENABLED=true
+PAY1TIME_TOKEN=
+PAY1TIME_CALLBACK_URL=
+ZION_API_TOKEN=
+ZION_SHOP_ID=
+ZION_CALLBACK_RELAY_TOKEN=
+```
+
+`diaweb/frontend`:
+
+```env
+NEXT_PUBLIC_CLUB_TRIBUTE_URL=https://t.me/tribute/app?startapp=sXG5
+```
+
+The club banner Tribute option is an external link only. It does not use the
+backend Tribute API, does not create a `CabinetPaymentSession`, and must not be
+treated as backend-confirmed payment.
 
 `copywriting-clubbot` runtime, deployed from `aibot` code on a foreign bot server:
 
@@ -154,6 +192,53 @@ Default group welcome messages no longer create activation links. A legacy custo
 still gets a member-specific activation URL for backward compatibility, but this
 must not be the normal paid onboarding path.
 
+Web store banner checkout:
+
+1. A cabinet user opens the shop home page and clicks the club banner buy
+   button.
+2. `diaweb` opens a purchase modal with three options: Tribute, Zion, and
+   Pay1Time.
+3. Tribute opens `NEXT_PUBLIC_CLUB_TRIBUTE_URL` directly. This is link-only in
+   the club banner slice: no backend checkout, no callback, no reconciliation,
+   and no onboarding/private-group links can be inferred from the click.
+4. Zion and Pay1Time call `/api/cabinet/club/payment-capabilities`, then
+   `/api/cabinet/club/checkout`, which proxy to
+   `/v1/cabinet/club/payment-capabilities` and `/v1/cabinet/club/checkout`.
+5. `diaverseapi` creates a generic `club` payment session with
+   `domain_code=club` and a program source reference, then returns a public
+   checkout reference and hosted checkout URL.
+6. The cabinet payment page opens the hosted checkout and polls
+   `/api/cabinet/club/checkout/{public_checkout_reference}`.
+7. Only after the payment is `paid` and finalization is `completed`, the status
+   response may include `activation_url`, `activation_token_id`,
+   `activation_expires_at`, and `group_invite_url`.
+8. The UI then shows two actions: onboarding through the activation URL and
+   joining the closed group through the private invite URL.
+
+If a backend-confirmed payment is paid but onboarding or group links are
+missing, check:
+
+- The checkout status response by `public_checkout_reference`: `payment_status`,
+  `finalization_status`, `provider_code`, and whether `access` is present.
+- `CabinetPaymentSession` by payment session id: `domain_code=club`,
+  `source_ref`, provider code, public checkout reference, finalization state,
+  and metadata keys for `membership_id` and `activation_token_id`.
+- `ClubMembership` and `ClubPaymentContract` by membership id: paid source,
+  provider, `access_starts_at`, and `access_expires_at`.
+- `club_activation_tokens` by `activation_token_id`, not by raw token value:
+  status, expiry, membership id, and claimed user id.
+- `CLUB_PRIVATE_GROUP_INVITE_URL`, `CABINET_PUBLIC_BASE_URL`, the active
+  program code, and the provider capability flags/credentials.
+- For Zion specifically, both USDT club price settings must be configured or
+  the provider is intentionally disabled for club checkout.
+
+Safe log keys for support are provider code, public checkout reference, payment
+session id, activation token id, membership id, user id, program id, and
+request id. Logs, public docs, screenshots, and support messages must never
+include raw activation URLs, activation query tokens, private invite URLs,
+callback signatures, API keys, bot tokens, provider secrets, signed headers, or
+raw provider payloads.
+
 If a user cannot access onboarding, check:
 
 - `club10000-bot` outbox delivery metadata: whether the Diaverse bridge response
@@ -167,7 +252,8 @@ If a user cannot access onboarding, check:
   `DIAVERSE_CLUB10000_SECRET`, `DIAVERSE_OUTBOX_ENABLED`, and `CLUB_INVITE_LINK`
   are configured in the relevant runtime.
 - Logs must never include the raw activation token, full activation URL, signed
-  headers, bot tokens, or private invite links.
+  headers, bot tokens, private invite links, provider signatures, API keys, or
+  raw provider payloads.
 
 ## Buddy Pairing
 
@@ -654,11 +740,22 @@ Manual/staff path:
 
 Paid path:
 
-1. Prodamus initial paid callback finalizes a `club` payment session.
-2. `diaverseapi` creates or reuses a `paid_pending_join` membership and payment contract.
-3. Staff or future product flow generates an invite/join path.
-4. `copywriting-clubbot` sends join/member events to `diaverseapi`.
-5. Once numeric Telegram identity is known, membership activates and buddy pairing runs.
+1. The shop club banner opens the cabinet purchase modal.
+2. Tribute is an external link-only option and cannot create backend-confirmed
+   club access in this slice.
+3. Zion and Pay1Time create a backend `club` payment session through the
+   cabinet club checkout API.
+4. A paid and finalized payment creates or reuses a `paid_pending_join`
+   membership and payment contract, then exposes an onboarding activation URL
+   and the private group invite URL in the checkout status response.
+5. The user completes cabinet onboarding through the activation URL and joins
+   the closed Telegram group through the invite URL.
+6. `copywriting-clubbot` sends join/member events to `diaverseapi`.
+7. Once numeric Telegram identity is known, membership activates and buddy
+   pairing runs.
+
+Club10000 Prodamus callbacks still use the standalone bot bridge path described
+above. They are separate from the shop banner checkout.
 
 Invitation path:
 
@@ -666,8 +763,6 @@ Invitation path:
 2. `copywriting-clubbot` forwards the join request or chat-member update with `invite_link` metadata.
 3. `diaverseapi` records the membership as `source=invitation`; no-link joins stay review-only.
 4. When the member is confirmed in chat, backend activation runs, the member enters normal leaderboards and buddy pairing, and existing outbox commands queue the welcome and pair notices.
-
-The public checkout/join UX is intentionally deferred until product details are confirmed.
 
 Cabinet member activation:
 
