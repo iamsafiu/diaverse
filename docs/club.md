@@ -17,8 +17,8 @@ CLUB_ACTIVE_PROGRAM_CODE=main
 CLUB_CHECKOUT_FIRST_MONTH_PRICE_RUB=890
 CLUB_CHECKOUT_RENEWAL_MONTH_PRICE_RUB=1390
 CLUB_CHECKOUT_ACCESS_PERIOD_DAYS=30
-CLUB_CHECKOUT_ZION_FIRST_MONTH_PRICE_USDT=
-CLUB_CHECKOUT_ZION_RENEWAL_MONTH_PRICE_USDT=
+CLUB_CHECKOUT_ZION_FIRST_MONTH_PRICE_USDT=13
+CLUB_CHECKOUT_ZION_RENEWAL_MONTH_PRICE_USDT=20
 CLUB_PRIVATE_GROUP_INVITE_URL=
 CLUBBOT_INTERNAL_SECRET=
 CLUBBOT_SIGNATURE_TOLERANCE_SECONDS=300
@@ -48,8 +48,9 @@ CLUB_AIBOT_LEADERBOARD_PREFLIGHT_PATH=/internal/club/leaderboards/preflight
 ```
 
 Club web checkout uses `890 RUB` for the first month, `1390 RUB` for renewal
-display, and a 30-day access period. `CLUB_PRIVATE_GROUP_INVITE_URL` is
-backend-only and is returned to the cabinet only after a paid and finalized
+display, and a 30-day access period. Zion uses rounded-up USDT prices:
+`13 USDT` for the first month and `20 USDT` for renewal. `CLUB_PRIVATE_GROUP_INVITE_URL`
+is backend-only and is returned to the cabinet only after a paid and finalized
 club checkout. Zion is hidden for club checkout unless both
 `CLUB_CHECKOUT_ZION_FIRST_MONTH_PRICE_USDT` and
 `CLUB_CHECKOUT_ZION_RENEWAL_MONTH_PRICE_USDT` are configured.
