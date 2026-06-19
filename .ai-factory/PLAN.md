@@ -1,354 +1,256 @@
-# Implementation Plan: Club Store Banner Payment Modal
+# Implementation Plan: Club Pair Missions And Pair Feed
 
-Branch: none
-Created: 2026-06-17
-Mode: fast plan, local workspace update only
+Branch: none (fast mode; use current child-repo branches before implementation)
+Created: 2026-06-19
 
 ## Settings
 
-- Testing: yes, targeted backend and frontend tests are required because this changes paid access.
-- Logging: verbose for payment, checkout, finalization, and client state transitions; never log raw activation tokens, full activation URLs, private group invite URLs, callback signatures, or provider secrets.
-- Docs: yes, update the club/payment runbook after implementation and run targeted GBrain sync.
-- Branching: no branch creation in fast mode.
-- Remote actions: none planned.
+- Testing: yes. Cover backend mission eligibility/claim idempotency, feed event deduplication, hub payload normalization, BFF proxying, and Buddy screen rendering.
+- Logging: standard. Use INFO for successful claims/actions/feed event creation, DEBUG for computed mission/feed state and blocked reasons, WARN for expected unavailable states, ERROR only for unexpected persistence/reward failures.
+- Docs: no. Treat documentation as warn-only unless implementation changes public club API contracts or operations runbooks.
+- Roadmap Linkage: none. `.ai-factory/ROADMAP.md` has no applicable active milestone for this club feature.
 
 ## Workspace Mode
 
 - Mode: multi-repo fast
 - Workspace root: `C:\Users\Indigo\Desktop\diaverse`
-- Knowledge: local GBrain `diaverse-docs` plus raw source verification
+- Knowledge: local GBrain was attempted first; `diaverseapi-code` search timed out and `diaweb-code` returned no results, so exact planning is based on raw source verification.
 - Primary affected repositories: `diaverseapi`, `diaweb`
+- Explicitly out of scope: mobile app, aibot, club10000-bot, Telegram bot changes, realtime push, pair mini-chat, referral mechanics, and redesigning the supplied Buddy layout.
 
 ## Repository Matrix
 
-| Repository | Path | Affected | Branch | Git status | Role |
+| Repository | Path | Affected | Current branch | Current status | Role |
 | --- | --- | --- | --- | --- | --- |
-| `diaweb` | `C:\Users\Indigo\Desktop\diaverse\diaweb` | yes | current | clean | shop banner, BFF routes, club payment UI |
-| `diaverseapi` | `C:\Users\Indigo\Desktop\diaverse\diaverseapi` | yes | current | clean | club checkout API, payment finalization, providers |
-| `diaverse` root | `C:\Users\Indigo\Desktop\diaverse` | yes | current | dirty with unrelated docs/patches | plan/docs only |
-| `club10000-bot` | `C:\Users\Indigo\Desktop\diaverse\club10000-bot` | no | current | dirty with unrelated referral/env changes | existing paid activation reference only |
-| `diaverse-mobile` | `C:\Users\Indigo\Desktop\diaverse\diaverse-mobile` | no | current | clean | out of scope |
-| `aibot` | `C:\Users\Indigo\Desktop\diaverse\aibot` | no | current | dirty unrelated `docker-compose.prod.yml` | out of scope |
-| `diaverse-auth-bot` | `C:\Users\Indigo\Desktop\diaverse\diaverse-auth-bot` | no | current | clean | out of scope |
+| `diaverseapi` | `C:\Users\Indigo\Desktop\diaverse\diaverseapi` | yes | `dev` | clean at planning | club source of truth, missions, feed, rewards |
+| `diaweb` | `C:\Users\Indigo\Desktop\diaverse\diaweb` | yes | `dev` | dirty with existing Buddy frontend work | BFF routes, hub types, Buddy UI wiring |
+| `diaverse` root | `C:\Users\Indigo\Desktop\diaverse` | yes | current | plan file only | coordination |
+| `diaverse-mobile` | `C:\Users\Indigo\Desktop\diaverse\diaverse-mobile` | no | unchanged | not checked | out of scope |
+| `aibot` | `C:\Users\Indigo\Desktop\diaverse\aibot` | no | unchanged | not checked | out of scope |
+| `club10000-bot` | `C:\Users\Indigo\Desktop\diaverse\club10000-bot` | no | unchanged | not checked | out of scope |
+| `diaverse-auth-bot` | `C:\Users\Indigo\Desktop\diaverse\diaverse-auth-bot` | no | unchanged | not checked | out of scope |
 
 ## Research Context
 
-Source: `.ai-factory/RESEARCH.md` Active Summary.
+Source: current exploration and raw source verification.
 
-- Current Active Summary topic is Advent calendar revenue analysis, not this club checkout task.
-- Applicability: not used as requirements input for this plan.
-- Current-session sources used instead:
-  - GBrain `diaverse-docs` page `club`
-  - GBrain `diaverse-docs` page `payments/tribute-runbook`
-  - `diaweb/frontend/modules/shop/components/ShopClubBanner.tsx`
-  - `diaweb/frontend/modules/shop/components/ShopPaymentModal.tsx`
-  - `diaverseapi/app/cabinet/payments/registry.py`
-  - `diaverseapi/app/cabinet/payments/service.py`
-  - `diaverseapi/app/club/payment_finalizer.py`
-  - `diaverseapi/app/club/payments.py`
-  - `diaverseapi/app/club/service.py`
+Goal:
+- Make the Club Buddy screen show real pair missions and pair feed from backend state.
+- Keep personal daily missions separate from pair missions.
+- Keep `diaverseapi` as the source of truth for rewards, claims, event identity, and feed history.
 
-## Goal
+Current implementation facts:
+- `diaverseapi/app/club/schemas.py` already exposes `ClubHubRead`, `ClubHubMissionRead`, `ClubBuddyActionResponse`, and daily mission claim responses.
+- `diaverseapi/app/club/models.py` already has `ClubBuddyInteraction` for boost/motivation and `ClubDailyMissionClaim` for personal daily mission rewards.
+- `diaverseapi/app/club/service.py` already computes hub state, today steps, buddy sync percent, streak, pair rank, daily missions, and buddy action availability.
+- Boost/motivation are already limited by 10,000 sender steps and one use per pair/day.
+- Motivation already creates cabinet notifications.
+- `diaweb/frontend/modules/club-onboarding/components/ClubBuddyMobile.tsx` already has visual blocks for joint missions and pair feed, but these are currently static/local calculations.
 
-Clicking the club banner buy button in the shop opens a modal with three payment choices:
+Decisions:
+- Add explicit `pair_missions` and `pair_feed` fields to `ClubHubRead`; do not overload existing personal `missions`.
+- Add backend pair mission claim persistence scoped by `group_id`, `membership_id`, `local_date`, and `mission_key`.
+- Add a small pair feed event ledger with idempotency keys instead of generating frontend-only fake feed items.
+- Rewards for pair missions are claimed per member. A pair can complete a mission together, but each user receives their own XDV claim once.
+- MVP feed should not log every step update. It should record only meaningful milestones and interactions.
 
-- Tribute
-- Zion
-- Pay1Time
-
-Zion and Pay1Time use direct backend checkout and status polling. Tribute remains an external link-only path: no Tribute API, provider adapter, callback, or reconciliation in this slice.
-
-After successful backend-confirmed payment, the web flow must show:
-
-- the existing club onboarding activation URL
-- the private closed-group join link
-
-The links must be returned by backend only after a paid and finalized club payment. The frontend must not hardcode the private group invite link or infer payment success from a Tribute external-link click.
-
-## Key Decisions
-
-1. Do not reuse `/v1/cabinet/shop/checkout` for this feature. Shop checkout creates `CabShopOrder` and grants shop items; club access belongs to `diaverseapi/app/club`.
-2. Add cabinet club checkout endpoints under the existing authenticated club cabinet API surface.
-3. Use generic cabinet payments with `domain_code="club"` and `source_ref="program_code:<active_program_code>"` or `program:<uuid>`.
-4. Add `club` support to Zion and Pay1Time provider registrations.
-5. Keep Tribute as an external link-only option in the modal. Do not add Tribute backend API integration.
-6. Keep `club10000-bot` out of this implementation. Its Prodamus bridge already proves the post-payment activation pattern, but the shop banner web checkout is owned by `diaweb` + `diaverseapi`.
-
-## Confirmed Business Inputs
-
-- Club checkout first month price: `890 RUB`.
-- Club checkout renewal/second month price: `1390 RUB`.
-- Access period: `1 month`.
-- Tribute mode: external link only, no backend Tribute API/callback/reconciliation.
-
-## Open Inputs Before Live Enablement
-
-- Backend-owned private group invite URL setting or program metadata key.
-- Exact Tribute external URL source if the existing hardcoded Telegram Tribute URL should move to env/config.
+Open questions:
+- Whether pair mission rewards should always be per-user or sometimes shared/team-only. MVP uses per-user rewards because the current fulfillment system grants to a user.
+- Whether step milestone feed events should be materialized during hub reads or by a later scheduled/background reconciliation. MVP can use an idempotent hub materializer if no existing worker is available.
 
 ## Commit Plan
 
-- **Commit 1** (`diaverseapi`, after tasks 1-4): `feat: add club checkout payment flow`
-- **Commit 2** (`diaverseapi`, after task 5): `test: cover club checkout finalization`
-- **Commit 3** (`diaweb`, after tasks 6-8): `feat: add club banner payment modal`
-- **Commit 4** (`diaverse` root, after task 9): `docs: update club checkout runbook`
+- **Commit 1** (`diaverseapi`, after tasks 1-3): `feat: add club pair mission persistence`
+- **Commit 2** (`diaverseapi`, after tasks 4-5): `feat: expose club pair missions and feed`
+- **Commit 3** (`diaweb`, after tasks 6-7): `feat: wire club buddy pair feed`
 
 ## Tasks
 
-### Phase 1: Backend Checkout Contract
+### Phase 1: Backend Persistence And Contracts
 
-- [x] Task 1: `diaverseapi` - add club checkout configuration and response contracts.
-
-  Deliverable:
-  - Add schemas for club payment capabilities, checkout request, checkout status, and post-payment access payload.
-  - Define backend-only config for club checkout price, currency, period days, and private group invite URL, preferring explicit settings or active-program metadata over frontend constants.
-  - Encode the confirmed pricing model: first month `890 RUB`, renewal/second month `1390 RUB`, access period `1 month`.
-  - Ensure response fields for `activation_url`, `activation_token_id`, `activation_expires_at`, and `group_invite_url` are nullable and hidden until paid/finalized.
-
-  Files:
-  - `diaverseapi/app/club/payment_schemas.py`
-  - `diaverseapi/app/club/checkout.py` (new service module, if cleaner than expanding `service.py`)
-  - `diaverseapi/app/core/settings.py`
-  - `diaverseapi/.env.example`
-
-  Logging:
-  - `INFO` when club checkout config is resolved for a program.
-  - `WARN` when price, period, base URL, or group invite config is missing.
-  - `DEBUG` for sanitized program ids and source refs only.
-  - Do not log private group invite URLs or activation URLs.
-
-  Dependencies:
-  - None.
-
-- [x] Task 2: `diaverseapi` - add authenticated club checkout API endpoints.
+- [x] Task 1: `diaverseapi` - add pair mission and pair feed schema/model contracts.
 
   Deliverable:
-  - Add `GET /v1/cabinet/club/payment-capabilities`.
-  - Add `POST /v1/cabinet/club/checkout`.
-  - Add `GET /v1/cabinet/club/checkout/{public_checkout_reference}`.
-  - Require authenticated cabinet user; no guest club checkout for this iteration.
-  - Create generic payment sessions through `CabinetPaymentsService.create_checkout_session` with `domain_code="club"`.
-  - On status fetch, reconcile provider status when appropriate and return access links only after `payment_status=paid` and `finalization_status=completed`.
+  - Add backend read schemas in `diaverseapi/app/club/schemas.py`:
+    - `ClubPairMissionRead`
+    - `ClubPairFeedItemRead`
+    - `ClubPairMissionClaimRequest`
+    - `ClubPairMissionClaimResponse`
+  - Extend `ClubHubRead` with `pair_missions: list[ClubPairMissionRead]` and `pair_feed: list[ClubPairFeedItemRead]`.
+  - Add SQLModel tables in `diaverseapi/app/club/models.py`:
+    - `ClubPairMissionClaim`
+    - `ClubPairFeedEvent`
+  - Add enum values/classes in `diaverseapi/app/club/enums.py` if needed for mission claim status and feed event type.
+  - Keep payload names snake_case in backend and plan camelCase normalization in `diaweb`.
 
-  Files:
-  - `diaverseapi/app/club/cabinet_api.py`
-  - `diaverseapi/app/club/checkout.py`
-  - `diaverseapi/app/club/dependencies.py`
-  - `diaverseapi/app/cabinet/payments/contracts.py` only if shared contracts need a small extension
+  LOGGING REQUIREMENTS:
+  - DEBUG when serializing pair mission/feed payload sizes in hub service.
+  - WARN if a feed event payload is malformed or references a missing pair member.
+  - ERROR only for unexpected DB model/persistence failures.
 
-  Logging:
-  - `INFO` on capability lookup, checkout creation, and status fetch with user id, program id, provider code, and public checkout reference.
-  - `WARN` for unavailable providers, ownership mismatch, missing checkout, and config blockers.
-  - `ERROR` for unexpected provider/session reconciliation failures.
-  - Never log raw activation token, full activation URL, private group invite URL, callback signatures, or provider payload secrets.
+  Dependencies: none.
 
-  Dependencies:
-  - Depends on Task 1.
-
-- [x] Task 3: `diaverseapi` - register direct backend providers for club.
+- [x] Task 2: `diaverseapi` - create Alembic migration for pair mission claims and feed events.
 
   Deliverable:
-  - Add `club` to Pay1Time and Zion provider `domain_codes`.
-  - Keep Tribute out of `CabinetPaymentProviderCode` and generic payment provider registry for this slice.
-  - Ensure `GET /v1/cabinet/club/payment-capabilities` returns direct backend methods only: Pay1Time and Zion when configured/enabled.
-  - Leave the external Tribute option to frontend modal handling instead of backend payment capabilities.
+  - Add a new revision under `diaverseapi/migrations/versions/`.
+  - Create `club_pair_mission_claims` with short explicit constraint/index names:
+    - unique idempotency key
+    - unique `(group_id, membership_id, local_date, mission_key)`
+    - indexes by `membership_id/local_date`, `group_id/local_date`, and fulfillment batch
+  - Create `club_pair_feed_events` with short explicit constraint/index names:
+    - unique idempotency key
+    - indexes by `group_id/occurred_at`, `target_membership_id/occurred_at`, `local_date`
+  - Update `diaverseapi/tests/test_alembic_graph.py` for the new revision and identifier guard expectations.
 
-  Files:
-  - `diaverseapi/app/cabinet/payments/enums.py`
-  - `diaverseapi/app/cabinet/payments/registry.py`
-  - `diaverseapi/app/core/features.py`
-  - `diaverseapi/app/core/settings.py`
-  - `diaverseapi/.env.example`
+  LOGGING REQUIREMENTS:
+  - No runtime logging in migration.
+  - Add migration comments/docstrings explaining table ownership and idempotency keys.
 
-  Logging:
-  - `INFO` when club provider capabilities are resolved.
-  - `WARN` when Pay1Time or Zion is requested but unavailable for `club`.
-  - `ERROR` for provider capability/configuration mismatches.
-  - Do not log provider secrets or hosted checkout URLs beyond sanitized references.
+  Dependencies: task 1.
 
-  Dependencies:
-  - Depends on Task 1 for domain-specific pricing metadata.
-
-- [x] Task 4: `diaverseapi` - finalize generic club payments into membership, activation link, and group access payload.
+- [x] Task 3: `diaverseapi` - add repository helpers for pair claims, feed events, and pair-day facts.
 
   Deliverable:
-  - Update `ClubPaymentFinalizer` so a paid generic club payment creates or reuses the correct `ClubMembership` and `ClubPaymentContract`.
-  - Stop hardcoding Prodamus as the provider for generic club sessions; map `payment_session.provider_code` to the club payment provider/event metadata.
-  - Generate or reuse an onboarding activation link through `ClubService.create_activation_link`.
-  - Persist safe activation metadata on `CabinetPaymentSession.metadata_json`, including token id and membership id, not raw token value.
-  - Ensure duplicate callback/status polling does not create duplicate memberships, contracts, or user-visible activation links where reuse is expected.
-  - Expose private group link only through the club checkout status response after finalization succeeds.
+  - Extend `diaverseapi/app/club/repositories.py` with helpers to:
+    - add/get pair mission claim by idempotency key
+    - get pair mission claim by unique day key
+    - list current user's pair mission claims for a day
+    - add/list pair feed events by group and by current membership visibility
+    - list buddy interactions for the current group/day, including both directions
+  - Reuse existing `ClubBuddyInteraction` data for boost/motivation mission eligibility instead of duplicating interaction state.
+  - Keep repository methods small and composable for service-level orchestration.
 
-  Files:
-  - `diaverseapi/app/club/payment_finalizer.py`
-  - `diaverseapi/app/club/payments.py`
-  - `diaverseapi/app/club/service.py`
-  - `diaverseapi/app/club/repositories.py` if lookup/reuse helpers are needed
-  - `diaverseapi/app/club/payment_schemas.py`
+  LOGGING REQUIREMENTS:
+  - DEBUG for query result counts and date/group scopes.
+  - WARN when expected pair context is absent for a repository-driven operation.
+  - Do not log user secrets, raw notification details, or full JSON payloads.
 
-  Logging:
-  - `INFO` when payment finalization creates/reuses membership, records contract, and creates/reuses activation token.
-  - `WARN` for duplicate finalization, missing program, missing group link after paid status, and activation generation failure.
-  - `ERROR` for unexpected finalizer exceptions before marking session failed/review-required.
-  - Do not log raw activation URL, raw activation token, private invite URL, or signed provider payloads.
+  Dependencies: tasks 1-2.
 
-  Dependencies:
-  - Depends on Tasks 1-3.
+### Phase 2: Backend Mission Engine And Feed
 
-### Phase 2: Backend Tests
-
-- [x] Task 5: `diaverseapi` - add targeted tests for club checkout, providers, and finalization.
+- [x] Task 4: `diaverseapi` - implement pair mission definitions, eligibility, progress, and claim endpoint.
 
   Deliverable:
-  - Cover payment capabilities for `club` with Pay1Time and Zion feature-flag states.
-  - Cover authenticated checkout creation and status ownership.
-  - Cover paid finalization creating membership, contract, activation token id, and gated post-payment links.
-  - Cover unpaid/failed/review statuses not exposing onboarding or group links.
-  - Cover idempotent duplicate callback/status polling.
-  - Assert the flow does not create `CabShopOrder` or shop grants.
+  - Add pair mission definitions in `diaverseapi/app/club/service.py` using the existing daily mission style.
+  - MVP mission set:
+    - `both_10k`: both pair members reached 10,000 steps today, reward 150 XDV per claimant.
+    - `pair_20000`: pair combined steps reached 20,000 today, reward 120 XDV per claimant.
+    - `motivation_after_goal`: claimant sent motivation after 10,000 steps, reward 75 XDV.
+    - `boost_after_goal`: claimant sent boost after 10,000 steps, reward 100 XDV.
+    - `pair_3_day_streak`: both members reached 10,000 steps for 3 consecutive days, reward 250 XDV per claimant.
+  - Always include `both_10k`; rotate or include 2-3 additional pair missions based on `program.code + local_date`.
+  - Add service method `claim_pair_mission_for_user` with idempotent fulfillment through the existing fulfillment service.
+  - Add API route in `diaverseapi/app/club/cabinet_api.py`: `POST /v1/cabinet/club/pair-missions/{mission_key}/claim`.
 
-  Files:
-  - `diaverseapi/tests/test_club_payments.py`
-  - `diaverseapi/tests/test_club_cabinet_api.py`
-  - `diaverseapi/tests/test_club_checkout.py` (new)
-  - `diaverseapi/tests/test_cabinet_payment_registry.py` or equivalent existing provider-registry test
-  - no Tribute provider tests in this slice because Tribute is external link-only
+  LOGGING REQUIREMENTS:
+  - INFO on successful pair mission claim with membership id, group id, mission key, reward, and fulfillment batch id.
+  - DEBUG for computed eligibility, progress current/goal, selected rotating missions, and idempotency replay.
+  - WARN for blocked claims with reason codes such as `no_active_buddy`, `mission_incomplete`, `already_claimed`, `sender_below_goal`, `target_not_linked`.
+  - ERROR for unexpected fulfillment or persistence failures with non-secret context.
 
-  Logging:
-  - Use test log capture where useful to ensure raw activation URLs, private invite URLs, and provider secrets are not emitted.
-  - Keep provider payload fixtures redacted and synthetic.
+  Dependencies: tasks 1-3.
 
-  Dependencies:
-  - Depends on Tasks 1-4.
-
-### Phase 3: Frontend Integration
-
-- [x] Task 6: `diaweb` - add club checkout BFF routes, API client, and hooks.
+- [x] Task 5: `diaverseapi` - implement pair feed materialization and hub integration.
 
   Deliverable:
-  - Add same-origin BFF routes for club payment capabilities, checkout creation, and checkout status.
-  - Forward cabinet cookies, `Accept-Language`, `X-TimeZone`, and `x-platform: cabinet` following existing club/shop BFF patterns.
-  - Add frontend types and normalizers for club checkout result, provider capabilities, access links, and errors.
-  - Add hooks for capabilities, checkout mutation, and status polling.
-  - Create club checkout idempotency keys client-side.
+  - Add a feed writer/materializer in `diaverseapi/app/club/service.py` or a focused helper module under `diaverseapi/app/club/`.
+  - Persist idempotent feed events for:
+    - `buddy_assigned`
+    - `member_goal_completed`
+    - `pair_goal_completed`
+    - `boost_sent`
+    - `boost_received`
+    - `motivation_sent`
+    - `motivation_received`
+    - `pair_mission_completed`
+    - `pair_mission_claimed`
+    - `pair_streak_extended`
+    - `pair_rank_top_entry` only for top-10/top-3 changes if rank data is reliable enough
+  - Integrate feed event creation into explicit write flows first: boost, motivation, pair mission claim.
+  - For step/pair milestones, either:
+    - materialize idempotently during hub build with deterministic keys, or
+    - derive read-only feed items from current state if side effects during GET are rejected during implementation.
+  - Extend `get_hub_for_user` to return `pair_missions` and latest `pair_feed` items.
 
-  Files:
-  - `diaweb/frontend/app/api/cabinet/club/_utils.ts`
-  - `diaweb/frontend/app/api/cabinet/club/payment-capabilities/route.ts` (new)
-  - `diaweb/frontend/app/api/cabinet/club/checkout/route.ts` (new)
-  - `diaweb/frontend/app/api/cabinet/club/checkout/[publicCheckoutReference]/route.ts` (new)
-  - `diaweb/frontend/modules/club-purchase/api.ts` (new)
-  - `diaweb/frontend/modules/club-purchase/types.ts` (new)
-  - `diaweb/frontend/modules/club-purchase/hooks/*.ts` (new)
+  LOGGING REQUIREMENTS:
+  - INFO when new feed events are inserted, grouped by event type and idempotency key.
+  - DEBUG when feed events are skipped because they already exist.
+  - WARN when a feed event cannot be created due to missing group/member/user linkage.
+  - ERROR for unexpected feed persistence failures.
 
-  Logging:
-  - `console.debug` in development for request start/success with provider code and public reference only.
-  - `console.warn` for controlled API failures with status/code.
-  - Never log activation URLs, activation query tokens, private group invite URLs, or full provider redirect URLs.
+  Dependencies: task 4.
 
-  Dependencies:
-  - Depends on backend contract from Tasks 1-2.
+### Phase 3: Diaweb BFF And UI Wiring
 
-- [x] Task 7: `diaweb` - replace banner CTA with a three-method payment modal and club payment status page.
-
-  Deliverable:
-  - Replace the hardcoded Tribute anchor in `ShopClubBanner` with a club purchase modal.
-  - Show three choices: external Tribute link, backend Zion checkout, and backend Pay1Time checkout.
-  - Initialize backend checkout after Zion/Pay1Time selection and route to a club payment status page.
-  - Open the configured Tribute URL directly for the Tribute choice; do not route Tribute through backend payment status.
-  - Reuse shared payment helpers for hosted checkout popup/open-link behavior where possible.
-  - On successful paid/finalized status, show two actions:
-    - `Пройти онбординг` linking to backend `activation_url`
-    - `Вступить в закрытую группу` linking to backend `group_invite_url`
-  - Enable the shop club banner if product wants this flow live on shop home.
-  - Keep modal focus trap, escape close, mobile layout, and no-layout-shift behavior.
-
-  Files:
-  - `diaweb/frontend/modules/shop/components/ShopClubBanner.tsx`
-  - `diaweb/frontend/modules/shop/components/shopClubBanner.module.css`
-  - `diaweb/frontend/modules/shop/components/ShopHomePage.tsx`
-  - `diaweb/frontend/modules/club-purchase/components/ClubPurchaseModal.tsx` (new)
-  - `diaweb/frontend/modules/club-purchase/components/ClubPaymentPage.tsx` (new)
-  - `diaweb/frontend/app/[lang]/(cabinet)/club/payment/page.tsx` (new or nearest existing route convention)
-  - `diaweb/frontend/modules/i18n` dictionaries for shop/club payment labels
-
-  Logging:
-  - Development-only `console.debug` for modal open, provider selected, checkout initialized, and status view state.
-  - `console.warn` for popup blocked, missing checkout reference, or controlled payment error.
-  - Do not log onboarding activation URLs, raw activation query tokens, private group invite URLs, or full provider redirect URLs.
-
-  Dependencies:
-  - Depends on Task 6 and backend status response from Tasks 2-4.
-
-- [x] Task 8: `diaweb` - add frontend tests for modal, BFF, and success links.
+- [x] Task 6: `diaweb` - add frontend API types, normalizers, and BFF route for pair mission claims.
 
   Deliverable:
-  - Cover banner click opening the modal.
-  - Cover the three payment choices rendering: external Tribute link plus backend Zion/Pay1Time methods.
-  - Cover Zion/Pay1Time selection calling club checkout with idempotency key.
-  - Cover Tribute selection opening the configured external URL without calling club checkout.
-  - Cover payment status page opening hosted checkout and then showing onboarding/group actions only after paid/finalized status.
-  - Cover no activation/group links on pending, failed, expired, or review-required states.
-  - Cover focus/escape behavior enough to protect the existing modal UX.
+  - Extend `diaweb/frontend/modules/club-onboarding/types.ts` with:
+    - `ClubPairMission`
+    - `ClubPairFeedItem`
+    - `ClubPairMissionClaimResponse`
+    - `pairMissions` and `pairFeed` on `ClubHubState`
+  - Extend `diaweb/frontend/modules/club-onboarding/api.ts` with payload normalizers for `pair_missions` and `pair_feed`.
+  - Add `claimClubPairMission`.
+  - Add BFF route `diaweb/frontend/app/api/cabinet/club/pair-missions/[missionKey]/claim/route.ts` that proxies to the new backend endpoint using existing club BFF patterns.
+  - Keep backwards-compatible fallbacks when backend fields are absent.
 
-  Files:
-  - `diaweb/frontend/__tests__/modules/shop/ShopClubBanner.test.tsx` or existing nearby test convention
-  - `diaweb/frontend/__tests__/modules/club-purchase/*.test.tsx` (new)
-  - `diaweb/frontend/__tests__/app/api/cabinet/club/*.test.ts` (new if BFF route tests exist)
+  LOGGING REQUIREMENTS:
+  - DEBUG behind existing club debug controls for normalized pair mission/feed counts.
+  - WARN only for failed BFF claim responses or malformed payloads.
+  - Do not log raw auth/session headers.
 
-  Logging:
-  - Ensure tests and mocks do not print raw activation tokens, private group invite URLs, or full redirect URLs.
-  - Prefer synthetic placeholders such as `https://example.test/club?activation=redacted`.
+  Dependencies: task 5.
 
-  Dependencies:
-  - Depends on Tasks 6-7.
-
-### Phase 4: Docs And Rollout
-
-- [x] Task 9: root docs - update operator docs and sync local knowledge.
+- [x] Task 7: `diaweb` - wire real pair missions and pair feed into the Buddy mobile screen without redesigning layout.
 
   Deliverable:
-  - Update the club runbook with the new web banner checkout flow.
-  - Document required env/settings for price, period, provider flags, external Tribute URL, and group invite link.
-  - Document support checks for "paid but no onboarding/group links".
-  - Document that Tribute is external link-only in this slice and must not be treated as backend-confirmed payment.
-  - Run targeted GBrain sync after code/docs changes.
+  - Update `diaweb/frontend/modules/club-onboarding/components/ClubBuddyMobile.tsx`.
+  - Replace hardcoded joint mission rows with `hubState.pairMissions`.
+  - Replace hardcoded feed rows with `hubState.pairFeed`.
+  - Preserve the supplied visual layout and existing assets/classes.
+  - Add click handling for claimable pair missions with the same smooth claimed/check animation pattern as daily missions.
+  - Keep sensible fallback rows only for local dev/no-backend states.
 
-  Files:
-  - `docs/club.md`
-  - `docs/runbooks/` or `docs/tasks/club/` if a focused rollout note is clearer
-  - `.ai-factory/PLAN.md` progress checkboxes during implementation
+  LOGGING REQUIREMENTS:
+  - DEBUG for user interactions: pair mission click, blocked claim, successful claim, feed item click if interactive.
+  - WARN for failed claim requests with reason code and mission key.
+  - No noisy render logs in production unless existing debug flag is enabled.
 
-  Logging:
-  - Docs must list safe log keys to inspect: provider code, public checkout reference, payment session id, activation token id, membership id.
-  - Docs must explicitly forbid publishing or logging raw activation URL, private invite URL, callback signatures, API keys, bot tokens, and provider payload secrets.
+  Dependencies: task 6.
 
-  Dependencies:
-  - Depends on Tasks 1-8.
+### Phase 4: Verification
+
+- [x] Task 8: verify backend, frontend, migration safety, and regression coverage.
+
+  Deliverable:
+  - Add/extend backend tests in `diaverseapi/tests/` for:
+    - pair mission eligibility and rotation
+    - pair claim idempotency
+    - reward fulfillment idempotency
+    - feed event deduplication
+    - hub payload includes pair missions/feed for active completed onboarding
+    - no access/onboarding required/no buddy blocked states
+  - Add/extend frontend tests in `diaweb/frontend/__tests__/modules/club-onboarding/` for:
+    - hub normalization with pair fields
+    - Buddy screen renders backend pair missions/feed
+    - pair mission claim calls the BFF and updates UI state
+  - Run targeted verification commands listed below.
+
+  LOGGING REQUIREMENTS:
+  - Tests should assert important reason codes where practical.
+  - Do not snapshot volatile timestamps without normalization.
+
+  Dependencies: tasks 1-7.
 
 ## Verification Plan
 
-- `cd diaverseapi; .\.venv\Scripts\python.exe -m pytest tests/test_club_payments.py tests/test_club_cabinet_api.py tests/test_club_checkout.py tests/test_cabinet_payment_registry.py`
-- If any Alembic migration is added: `cd diaverseapi; .\.venv\Scripts\python.exe -m alembic upgrade <down_revision>:<new_revision> --sql`
-- `cd diaweb\frontend; npm run lint`
-- `cd diaweb\frontend; npm run typecheck`
-- `cd diaweb\frontend; npm test -- __tests__/modules/shop __tests__/modules/club-purchase __tests__/app/api/cabinet/club`
-- Manual smoke after implementation: open shop, click club banner, select each enabled provider, verify status page states, and confirm paid/finalized response reveals onboarding and group actions only after backend success.
-- Knowledge sync after meaningful code/docs changes: `powershell -ExecutionPolicy Bypass -File C:\Users\Indigo\Desktop\diaverse\scripts\gbrain-sync.ps1`
-
-## Risks And Mitigations
-
-- Tribute is external link-only and cannot produce backend-confirmed success links. Mitigation: route only Zion/Pay1Time through backend status and do not treat a Tribute click as proof of payment.
-- Private group link leakage before payment would expose club access. Mitigation: backend-only setting, returned only after paid/finalized status.
-- Generic club finalizer currently records Prodamus-style club events. Mitigation: map generic provider codes explicitly and test Pay1Time/Zion paths.
-- Duplicate callbacks/status polling could create duplicate activation links. Mitigation: idempotency keys, session metadata reuse, and duplicate finalization tests.
-- Missing price/period config can create inconsistent memberships. Mitigation: hard backend config validation and controlled 503/422 errors before checkout creation.
-- Existing dirty work in root, `club10000-bot`, and `aibot` is unrelated. Mitigation: ignore those files unless implementation scope changes.
-
-## Out Of Scope
-
-- Mobile checkout.
-- Referral flow.
-- Changing Club10000 bot Prodamus callbacks.
-- Manual support reconciliation UI beyond docs/log guidance.
-- Treating a Tribute link click as proof of payment.
+- `diaverseapi`: run targeted pytest for club service/API coverage and alembic graph tests.
+- `diaverseapi`: run Alembic SQL DDL compilation for the new revision, shaped like `.\.venv\Scripts\python.exe -m alembic upgrade <down_revision>:<new_revision> --sql`, to catch PostgreSQL identifier length issues.
+- `diaverseapi`: run any existing formatting/lint/type commands used by the repo if available and reasonably scoped.
+- `diaweb/frontend`: run targeted Vitest files for `ClubBuddyMobile`, `ClubHubMobile`, `ClubOnboardingClient`, and API normalizers if covered.
+- `diaweb/frontend`: run `npm run typecheck`.
+- `diaweb/frontend`: run targeted eslint for changed club onboarding files if the repo supports it.
+- Knowledge: after implementation is complete and code/docs materially change, run targeted GBrain sync if the local GBrain lock/search issue is resolved.
