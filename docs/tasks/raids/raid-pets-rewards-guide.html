@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Рейдовые петы: бонусы, ресурсы и шкатулки</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 13mm 11mm;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: #151515;
+      background: #fff;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      line-height: 1.1;
+    }
+
+    h2 {
+      margin: 18px 0 7px;
+      padding-top: 4px;
+      font-size: 16px;
+      border-top: 1px solid #b8b8b8;
+    }
+
+    h3 {
+      margin: 12px 0 6px;
+      font-size: 13px;
+    }
+
+    p {
+      margin: 5px 0;
+    }
+
+    .meta {
+      color: #555;
+      font-size: 10px;
+      margin-bottom: 12px;
+    }
+
+    .note {
+      padding: 7px 8px;
+      border: 1px solid #cfcfcf;
+      background: #f6f7f8;
+      margin: 8px 0 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 7px 0 12px;
+      page-break-inside: auto;
+    }
+
+    tr {
+      page-break-inside: avoid;
+      page-break-after: auto;
+    }
+
+    th,
+    td {
+      border: 1px solid #c9c9c9;
+      padding: 4px 5px;
+      vertical-align: top;
+    }
+
+    th {
+      background: #eceff1;
+      font-weight: 700;
+      text-align: left;
+    }
+
+    td.num,
+    th.num {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .compact th,
+    .compact td {
+      padding: 3px 4px;
+      font-size: 10px;
+    }
+
+    .nowrap {
+      white-space: nowrap;
+    }
+
+    .page-break {
+      break-before: page;
+    }
+  </style>
+</head>
+<body>
+  <h1>Рейдовые петы: бонусы, ресурсы и шкатулки</h1>
+  <div class="meta">Diaverse raids, актуально для dev-кода на 24.06.2026</div>
+
+  <div class="note">
+    <p><strong>Главное правило:</strong> рейдовый пет работает только в своей локации и усиливает только назначенную сущность.</p>
+    <p><strong>Pet-only ресурсы:</strong> патроны, шестеренки, галаклей, XP-капсулы, кирпичи, ДНК-капсулы и желуди не лежат в общей награде локаций. Их приносит только соответствующий ресурсный пет.</p>
+    <p><strong>Формула ресурсов:</strong> итог = округление(base roll * множитель стрика * бонус пета). Округление идет по правилу ROUND_HALF_UP.</p>
+    <p><strong>Формула шкатулок:</strong> итоговый шанс = базовый шанс * множитель режима * бонус пета * множитель стрика. Шанс выше 100% превращается в гарантированные шкатулки + шанс еще одной.</p>
+  </div>
+
+  <h2>1. Что умеет каждый рейдовый пет</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Локация</th>
+        <th>Пет</th>
+        <th>Эффект</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Ржавые Пустоши</td><td>Сурикат</td><td>Приносит патроны.</td></tr>
+      <tr><td>Ржавые Пустоши</td><td>Тушканчик</td><td>Увеличивает шансы шкатулок и не застревает в ловушках Пустошей.</td></tr>
+      <tr><td>Ржавые Пустоши</td><td>Носорог</td><td>Дает скидку на XDV-вход; на 70 уровне вход в Пустоши бесплатный.</td></tr>
+      <tr><td>Оазис</td><td>Осьминог</td><td>Приносит шестеренки.</td></tr>
+      <tr><td>Оазис</td><td>Гиена</td><td>Приносит галаклей.</td></tr>
+      <tr><td>Оазис</td><td>Капибара</td><td>Увеличивает шансы шкатулок и не застревает в ловушках Оазиса.</td></tr>
+      <tr><td>Оазис</td><td>Бегемот</td><td>Дает скидку на XDV-вход; на 70 уровне вход в Оазис бесплатный.</td></tr>
+      <tr><td>Радиоактивная Пещера</td><td>Свинка</td><td>Приносит XP-капсулы.</td></tr>
+      <tr><td>Радиоактивная Пещера</td><td>Бобер</td><td>Приносит кирпичи.</td></tr>
+      <tr><td>Радиоактивная Пещера</td><td>Крыса</td><td>Приносит ДНК-капсулы.</td></tr>
+      <tr><td>Радиоактивная Пещера</td><td>Бородавочник</td><td>Приносит радиоактивные желуди.</td></tr>
+      <tr><td>Радиоактивная Пещера</td><td>Барсук</td><td>Увеличивает шансы шкатулок и не застревает в ловушках Пещеры.</td></tr>
+      <tr><td>Радиоактивная Пещера</td><td>Слон</td><td>Дает скидку на XDV-вход; на 70 уровне вход в Пещеру бесплатный.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>2. Уровневый бонус</h2>
+  <table class="compact">
+    <thead>
+      <tr>
+        <th>Уровень</th>
+        <th class="num">Множитель награды</th>
+        <th class="num">Скидка боевого пета</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td class="num">x1.00</td><td class="num">0%</td></tr>
+      <tr><td>10</td><td class="num">x1.01</td><td class="num">1%</td></tr>
+      <tr><td>20</td><td class="num">x1.04</td><td class="num">4%</td></tr>
+      <tr><td>30</td><td class="num">x1.10</td><td class="num">10%</td></tr>
+      <tr><td>40</td><td class="num">x1.21</td><td class="num">21%</td></tr>
+      <tr><td>50</td><td class="num">x1.38</td><td class="num">38%</td></tr>
+      <tr><td>60</td><td class="num">x1.62</td><td class="num">62%</td></tr>
+      <tr><td>70</td><td class="num">x2.00</td><td class="num">100%</td></tr>
+      <tr><td>80</td><td class="num">x2.50</td><td class="num">100% cap</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3. Ресурсы без стрика</h2>
+  <p>Диапазоны ниже показывают, сколько ресурса получится после бонуса пета, если стрик равен 0%.</p>
+  <table class="compact">
+    <thead>
+      <tr>
+        <th>Пет / ресурс</th>
+        <th class="num">Ур. 1</th>
+        <th class="num">Ур. 10</th>
+        <th class="num">Ур. 20</th>
+        <th class="num">Ур. 30</th>
+        <th class="num">Ур. 40</th>
+        <th class="num">Ур. 50</th>
+        <th class="num">Ур. 60</th>
+        <th class="num">Ур. 70</th>
+        <th class="num">Ур. 80</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Сурикат: патроны</td><td class="num">9-18</td><td class="num">9-18</td><td class="num">9-19</td><td class="num">10-20</td><td class="num">11-22</td><td class="num">12-25</td><td class="num">15-29</td><td class="num">18-36</td><td class="num">23-45</td></tr>
+      <tr><td>Осьминог: шестеренки</td><td class="num">1-2</td><td class="num">1-2</td><td class="num">1-2</td><td class="num">1-2</td><td class="num">1-2</td><td class="num">1-3</td><td class="num">2-3</td><td class="num">2-4</td><td class="num">3-5</td></tr>
+      <tr><td>Гиена: галаклей</td><td class="num">6-12</td><td class="num">6-12</td><td class="num">6-12</td><td class="num">7-13</td><td class="num">7-15</td><td class="num">8-17</td><td class="num">10-19</td><td class="num">12-24</td><td class="num">15-30</td></tr>
+      <tr><td>Свинка: XP-капсулы</td><td class="num">1-2</td><td class="num">1-2</td><td class="num">1-2</td><td class="num">1-2</td><td class="num">1-2</td><td class="num">1-3</td><td class="num">2-3</td><td class="num">2-4</td><td class="num">3-5</td></tr>
+      <tr><td>Бобер: кирпичи</td><td class="num">50-100</td><td class="num">51-101</td><td class="num">52-104</td><td class="num">55-110</td><td class="num">61-121</td><td class="num">69-138</td><td class="num">81-162</td><td class="num">100-200</td><td class="num">125-250</td></tr>
+      <tr><td>Крыса: ДНК-капсулы</td><td class="num">1-2</td><td class="num">1-2</td><td class="num">1-2</td><td class="num">1-2</td><td class="num">1-2</td><td class="num">1-3</td><td class="num">2-3</td><td class="num">2-4</td><td class="num">3-5</td></tr>
+      <tr><td>Бородавочник: желуди</td><td class="num">8-16</td><td class="num">8-16</td><td class="num">8-17</td><td class="num">9-18</td><td class="num">10-19</td><td class="num">11-22</td><td class="num">13-26</td><td class="num">16-32</td><td class="num">20-40</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4. Ресурсы на 80 уровне с максимальным стриком</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Пет / ресурс</th>
+        <th class="num">Макс. стрик локации</th>
+        <th class="num">Итоговый диапазон</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Сурикат: патроны</td><td class="num">+70%</td><td class="num">38-77</td></tr>
+      <tr><td>Осьминог: шестеренки</td><td class="num">+50%</td><td class="num">4-8</td></tr>
+      <tr><td>Гиена: галаклей</td><td class="num">+50%</td><td class="num">23-45</td></tr>
+      <tr><td>Свинка: XP-капсулы</td><td class="num">+30%</td><td class="num">3-7</td></tr>
+      <tr><td>Бобер: кирпичи</td><td class="num">+30%</td><td class="num">163-325</td></tr>
+      <tr><td>Крыса: ДНК-капсулы</td><td class="num">+30%</td><td class="num">3-7</td></tr>
+      <tr><td>Бородавочник: желуди</td><td class="num">+30%</td><td class="num">26-52</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="page-break">5. Шкатулки: Basic XDV, без стрика</h2>
+  <p>Тушканчик, Капибара и Барсук увеличивают шансы шкатулок в своей локации. Они же дают иммунитет от ловушек этой локации.</p>
+  <table class="compact">
+    <thead>
+      <tr>
+        <th>Пет / шкатулка</th>
+        <th class="num">Ур. 1</th>
+        <th class="num">Ур. 10</th>
+        <th class="num">Ур. 20</th>
+        <th class="num">Ур. 30</th>
+        <th class="num">Ур. 40</th>
+        <th class="num">Ур. 50</th>
+        <th class="num">Ур. 60</th>
+        <th class="num">Ур. 70</th>
+        <th class="num">Ур. 80</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Тушканчик: простая</td><td class="num">40%</td><td class="num">40.4%</td><td class="num">41.6%</td><td class="num">44%</td><td class="num">48.4%</td><td class="num">55.2%</td><td class="num">64.8%</td><td class="num">80%</td><td class="num">100%</td></tr>
+      <tr><td>Тушканчик: необычная</td><td class="num">20%</td><td class="num">20.2%</td><td class="num">20.8%</td><td class="num">22%</td><td class="num">24.2%</td><td class="num">27.6%</td><td class="num">32.4%</td><td class="num">40%</td><td class="num">50%</td></tr>
+      <tr><td>Тушканчик: редкая</td><td class="num">5%</td><td class="num">5.05%</td><td class="num">5.2%</td><td class="num">5.5%</td><td class="num">6.05%</td><td class="num">6.9%</td><td class="num">8.1%</td><td class="num">10%</td><td class="num">12.5%</td></tr>
+      <tr><td>Капибара: простая</td><td class="num">60%</td><td class="num">60.6%</td><td class="num">62.4%</td><td class="num">66%</td><td class="num">72.6%</td><td class="num">82.8%</td><td class="num">97.2%</td><td class="num">120%</td><td class="num">150%</td></tr>
+      <tr><td>Капибара: необычная</td><td class="num">40%</td><td class="num">40.4%</td><td class="num">41.6%</td><td class="num">44%</td><td class="num">48.4%</td><td class="num">55.2%</td><td class="num">64.8%</td><td class="num">80%</td><td class="num">100%</td></tr>
+      <tr><td>Капибара: редкая</td><td class="num">20%</td><td class="num">20.2%</td><td class="num">20.8%</td><td class="num">22%</td><td class="num">24.2%</td><td class="num">27.6%</td><td class="num">32.4%</td><td class="num">40%</td><td class="num">50%</td></tr>
+      <tr><td>Капибара: эпическая</td><td class="num">10%</td><td class="num">10.1%</td><td class="num">10.4%</td><td class="num">11%</td><td class="num">12.1%</td><td class="num">13.8%</td><td class="num">16.2%</td><td class="num">20%</td><td class="num">25%</td></tr>
+      <tr><td>Барсук: простая</td><td class="num">80%</td><td class="num">80.8%</td><td class="num">83.2%</td><td class="num">88%</td><td class="num">96.8%</td><td class="num">110.4%</td><td class="num">129.6%</td><td class="num">160%</td><td class="num">200%</td></tr>
+      <tr><td>Барсук: необычная</td><td class="num">70%</td><td class="num">70.7%</td><td class="num">72.8%</td><td class="num">77%</td><td class="num">84.7%</td><td class="num">96.6%</td><td class="num">113.4%</td><td class="num">140%</td><td class="num">175%</td></tr>
+      <tr><td>Барсук: редкая</td><td class="num">50%</td><td class="num">50.5%</td><td class="num">52%</td><td class="num">55%</td><td class="num">60.5%</td><td class="num">69%</td><td class="num">81%</td><td class="num">100%</td><td class="num">125%</td></tr>
+      <tr><td>Барсук: эпическая</td><td class="num">30%</td><td class="num">30.3%</td><td class="num">31.2%</td><td class="num">33%</td><td class="num">36.3%</td><td class="num">41.4%</td><td class="num">48.6%</td><td class="num">60%</td><td class="num">75%</td></tr>
+      <tr><td>Барсук: легендарная</td><td class="num">1%</td><td class="num">1.01%</td><td class="num">1.04%</td><td class="num">1.1%</td><td class="num">1.21%</td><td class="num">1.38%</td><td class="num">1.62%</td><td class="num">2%</td><td class="num">2.5%</td></tr>
+    </tbody>
+  </table>
+
+  <h2>6. Шкатулки на 80 уровне</h2>
+  <h3>Basic XDV, без стрика</h3>
+  <table class="compact">
+    <thead><tr><th>Пет</th><th>Шкатулка</th><th class="num">Итог</th></tr></thead>
+    <tbody>
+      <tr><td>Тушканчик</td><td>простая</td><td class="num">1 гарант.</td></tr>
+      <tr><td>Тушканчик</td><td>необычная</td><td class="num">50%</td></tr>
+      <tr><td>Тушканчик</td><td>редкая</td><td class="num">12.5%</td></tr>
+      <tr><td>Капибара</td><td>простая</td><td class="num">1 гарант. + 50%</td></tr>
+      <tr><td>Капибара</td><td>необычная</td><td class="num">1 гарант.</td></tr>
+      <tr><td>Капибара</td><td>редкая</td><td class="num">50%</td></tr>
+      <tr><td>Капибара</td><td>эпическая</td><td class="num">25%</td></tr>
+      <tr><td>Барсук</td><td>простая</td><td class="num">2 гарант.</td></tr>
+      <tr><td>Барсук</td><td>необычная</td><td class="num">1 гарант. + 75%</td></tr>
+      <tr><td>Барсук</td><td>редкая</td><td class="num">1 гарант. + 25%</td></tr>
+      <tr><td>Барсук</td><td>эпическая</td><td class="num">75%</td></tr>
+      <tr><td>Барсук</td><td>легендарная</td><td class="num">2.5%</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Basic XDV, максимальный стрик</h3>
+  <table class="compact">
+    <thead><tr><th>Пет</th><th>Шкатулка</th><th class="num">Итог</th></tr></thead>
+    <tbody>
+      <tr><td>Тушканчик</td><td>простая</td><td class="num">1 гарант. + 70%</td></tr>
+      <tr><td>Тушканчик</td><td>необычная</td><td class="num">85%</td></tr>
+      <tr><td>Тушканчик</td><td>редкая</td><td class="num">21.25%</td></tr>
+      <tr><td>Капибара</td><td>простая</td><td class="num">2 гарант. + 25%</td></tr>
+      <tr><td>Капибара</td><td>необычная</td><td class="num">1 гарант. + 50%</td></tr>
+      <tr><td>Капибара</td><td>редкая</td><td class="num">75%</td></tr>
+      <tr><td>Капибара</td><td>эпическая</td><td class="num">37.5%</td></tr>
+      <tr><td>Барсук</td><td>простая</td><td class="num">2 гарант. + 60%</td></tr>
+      <tr><td>Барсук</td><td>необычная</td><td class="num">2 гарант. + 27.5%</td></tr>
+      <tr><td>Барсук</td><td>редкая</td><td class="num">1 гарант. + 62.5%</td></tr>
+      <tr><td>Барсук</td><td>эпическая</td><td class="num">97.5%</td></tr>
+      <tr><td>Барсук</td><td>легендарная</td><td class="num">3.25%</td></tr>
+    </tbody>
+  </table>
+
+  <h2>7. Режимы на 80 уровне, без стрика</h2>
+  <table class="compact">
+    <thead>
+      <tr>
+        <th>Пет / шкатулка</th>
+        <th class="num">Basic XDV</th>
+        <th class="num">Подписка XDV</th>
+        <th class="num">USDT</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Тушканчик: простая</td><td class="num">1 гарант.</td><td class="num">1 гарант. + 20%</td><td class="num">4 гарант.</td></tr>
+      <tr><td>Тушканчик: необычная</td><td class="num">50%</td><td class="num">60%</td><td class="num">2 гарант.</td></tr>
+      <tr><td>Тушканчик: редкая</td><td class="num">12.5%</td><td class="num">15%</td><td class="num">50%</td></tr>
+      <tr><td>Капибара: простая</td><td class="num">1 гарант. + 50%</td><td class="num">1 гарант. + 80%</td><td class="num">6 гарант.</td></tr>
+      <tr><td>Капибара: необычная</td><td class="num">1 гарант.</td><td class="num">1 гарант. + 20%</td><td class="num">4 гарант.</td></tr>
+      <tr><td>Капибара: редкая</td><td class="num">50%</td><td class="num">60%</td><td class="num">2 гарант.</td></tr>
+      <tr><td>Капибара: эпическая</td><td class="num">25%</td><td class="num">30%</td><td class="num">1 гарант.</td></tr>
+      <tr><td>Барсук: простая</td><td class="num">2 гарант.</td><td class="num">2 гарант. + 40%</td><td class="num">8 гарант.</td></tr>
+      <tr><td>Барсук: необычная</td><td class="num">1 гарант. + 75%</td><td class="num">2 гарант. + 10%</td><td class="num">7 гарант.</td></tr>
+      <tr><td>Барсук: редкая</td><td class="num">1 гарант. + 25%</td><td class="num">1 гарант. + 50%</td><td class="num">5 гарант.</td></tr>
+      <tr><td>Барсук: эпическая</td><td class="num">75%</td><td class="num">90%</td><td class="num">3 гарант.</td></tr>
+      <tr><td>Барсук: легендарная</td><td class="num">2.5%</td><td class="num">3%</td><td class="num">10%</td></tr>
+    </tbody>
+  </table>
+
+  <h2>8. Боевые петы и XDV-вход</h2>
+  <p>Носорог, Бегемот и Слон не увеличивают ресурсы и шкатулки. Они уменьшают только XDV-цену входа в свою локацию. На 70+ уровне цена уже равна 0, поэтому скидка цены ограничена 100%. USDT-рейды и ваучеры не становятся бесплатными.</p>
+  <table class="compact">
+    <thead>
+      <tr>
+        <th>Пет</th>
+        <th>Локация</th>
+        <th class="num">Ур. 1</th>
+        <th class="num">Ур. 10</th>
+        <th class="num">Ур. 20</th>
+        <th class="num">Ур. 30</th>
+        <th class="num">Ур. 40</th>
+        <th class="num">Ур. 50</th>
+        <th class="num">Ур. 60</th>
+        <th class="num">Ур. 70</th>
+        <th class="num">Ур. 80</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Носорог</td><td>Пустоши</td><td class="num">0%</td><td class="num">1%</td><td class="num">4%</td><td class="num">10%</td><td class="num">21%</td><td class="num">38%</td><td class="num">62%</td><td class="num">100%</td><td class="num">100%</td></tr>
+      <tr><td>Бегемот</td><td>Оазис</td><td class="num">0%</td><td class="num">1%</td><td class="num">4%</td><td class="num">10%</td><td class="num">21%</td><td class="num">38%</td><td class="num">62%</td><td class="num">100%</td><td class="num">100%</td></tr>
+      <tr><td>Слон</td><td>Пещера</td><td class="num">0%</td><td class="num">1%</td><td class="num">4%</td><td class="num">10%</td><td class="num">21%</td><td class="num">38%</td><td class="num">62%</td><td class="num">100%</td><td class="num">100%</td></tr>
+    </tbody>
+  </table>
+</body>
+</html>
