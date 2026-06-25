@@ -2,12 +2,13 @@
 
 > Coordination repository for Diaverse documentation, AI context, local knowledge tooling, and shared workspace scripts.
 
-This repository does not contain the product source code. The runtime code stays in six independent child repositories:
+This repository does not contain the product source code. The runtime code stays in seven independent child repositories:
 
 - `diaweb` - Next.js web frontend and same-origin BFF layer.
 - `diaverse-mobile` - Expo / React Native mobile frontend for iOS and Android.
 - `diaverseapi` - FastAPI backend for auth, cabinet, payments, RBAC, and staff domains.
 - `aibot` - internal copywriting service used by `diaweb` staff tooling.
+- `diaverse-content` - standalone content factory for public learn pages, drafts, revisions, slugs, and content SEO fragments.
 - `club10000-bot` - standalone Club10000 Telegram bot.
 - `diaverse-auth-bot` - thin Telegram transport adapter for web login and mobile Telegram linking.
 
@@ -30,6 +31,7 @@ diaweb/
 diaverse-mobile/
 diaverseapi/
 aibot/
+diaverse-content/
 club10000-bot/
 diaverse-auth-bot/
 ```

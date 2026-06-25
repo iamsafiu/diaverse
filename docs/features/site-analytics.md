@@ -13,6 +13,9 @@ The staff analytics dashboard exposes this data in the `Сайт` tab next to `�
 - The beacon includes `x-platform: cabinet` so optional backend auth can hydrate the cabinet user from cookies when present.
 - The tracker does not use the shared `apiClient`, so analytics collection never triggers auth refreshes or redirects.
 - Staff/admin routes are excluded in the frontend and still rejected by the backend.
+- `diaverse-content` public learn pages mount a separate consent-gated tracker under `/ru/learn/*`.
+- The content tracker sends browser beacons only to its own `/api/analytics/site-visit` proxy; that server route forwards sanitized visits to `diaverseapi /v1/analytics/site/visit` without browser cookies.
+- Content staff/admin/internal/import routes are excluded before the beacon is sent and are still rejected by the content proxy.
 
 ## Privacy
 
@@ -20,6 +23,7 @@ The staff analytics dashboard exposes this data in the `Сайт` tab next to `�
 - `diaverseapi` stores HMAC hashes for `visitor:<id>` and authenticated `user:<uuid>` visitor keys.
 - Stored paths and referrers intentionally omit query strings and hashes.
 - Cookies, Telegram init data, auth tokens, and raw visitor ids must not be logged.
+- `diaverse-content` reuses the browser consent storage key `diaweb:privacy-consent:v1`; no content analytics runs before accepted consent.
 
 ## Metrics
 
@@ -28,6 +32,52 @@ The staff analytics dashboard exposes this data in the `Сайт` tab next to `�
 - Site MAU: distinct site visitor keys over the backend canonical 30-day window.
 - Date attribution is owned by the backend. Client timezone is captured only as metadata.
 - No historical backfill exists; metrics start from the tracker deployment date.
+
+## Executive KPI Summary
+
+The `Сайт` tab also requests a finance-sensitive executive summary from `GET /v1/analytics/site/executive`.
+The endpoint is protected by backend `superadmin` role access, not by ordinary `analytics:view`, because it exposes revenue, payer, ARPPU, and LTV data. The frontend must treat a `403` from this endpoint as a superadmin-only notice while keeping the non-financial site analytics visible.
+
+The response includes metric values, periods, definitions, and warnings in one payload. Backend date attribution is canonical:
+
+- `report_date` defaults to the backend current date.
+- `yesterday` is `report_date - 1 day`.
+- MTD is the first day of `report_date` month through `report_date`, inclusive.
+- MAU is the 30-calendar-day site activity window ending at `report_date`.
+- Previous MAU is the immediately preceding 30-calendar-day site activity window.
+- Retention and LTV use the selected registration cohort. Defaults are the latest 90-day cohort ending yesterday.
+- LTV horizon defaults to 90 days after registration. Partial cohorts are returned with warnings.
+
+### Executive Metric Definitions
+
+| Metric | Definition | Period / Formula |
+| --- | --- | --- |
+| Active user | Distinct website visitor in `site_daily_visits`, deduplicated by backend visitor/user hash. | Selected site activity period |
+| Payer | Distinct `payer_key` from successful real-money Advent, Shop, or Crypton payments. | Selected payment period |
+| Gross revenue | Sum of successful real-money payment amounts before fees, refunds, and cost of goods. | Payment confirmation date |
+| Net revenue | Revenue after refunds and payment fees. | Not available until a source for refunds/fees exists |
+| Revenue Yesterday | Gross revenue from successful real-money payments yesterday. | `sum(successful_payment.amount)` for `yesterday` |
+| Revenue MTD | Gross revenue from successful real-money payments from month start through `report_date`. | `sum(successful_payment.amount)` for MTD |
+| Net Profit MTD | Profit after fees, refunds, and costs. | Returned as `unavailable` until fee/cost/refund source exists |
+| DAU yesterday | Distinct active website visitors yesterday. | `yesterday` |
+| MAU | Distinct active website visitors in the current 30-day window. | `mau_from` through `mau_to` |
+| Net MAU Growth | Current MAU growth relative to previous MAU. | `(current_mau - previous_mau) / previous_mau * 100` |
+| D1 / D7 / D30 / D60 / D90 | Registration-cohort product retention using existing backend activity sources. | Existing retention windows around day N |
+| Unique payers | Distinct `payer_key` with successful real-money payment. | MTD |
+| Conversion to payer | Share of active site visitors MTD that became payers MTD. | `unique_payers_mtd / active_users_mtd * 100` |
+| ARPPU | Average gross revenue per unique payer. | `revenue_mtd / unique_payers_mtd` |
+| LTV | Average gross revenue per registered cohort user within the selected horizon after registration. | `cohort_revenue_within_horizon / cohort_size` |
+
+### Payer Identity
+
+Real-money payment facts normalize payer identity into `payer_key`:
+
+- `user:<uuid>` when an authenticated backend user is known.
+- `tg:<id>` when only a Telegram user id is available.
+- `guest:<id>` for guest payment sessions.
+- `payment:<id>` as the final fallback when no stable actor identity is available.
+
+The executive endpoint returns a warning when MTD unique payers include payment-scoped fallback keys, because those can overcount repeat buyers.
 
 ## Segments
 

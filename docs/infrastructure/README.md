@@ -23,6 +23,7 @@ Use this section for stable topology facts. Use [runbooks](../runbooks/copywriti
 | `diaweb` | [services/diaweb.md](services/diaweb.md) |
 | `diaverseapi` | [services/diaverseapi.md](services/diaverseapi.md) |
 | `aibot` | [services/aibot.md](services/aibot.md) |
+| `diaverse-content` | [Content Factory Architecture](../architecture/content-factory.md), [foreign server runbook](../runbooks/content-factory-foreign-server.md) |
 | `club10000-bot` | [services/club10000-bot.md](services/club10000-bot.md) |
 | Reverse proxies | [services/reverse-proxy.md](services/reverse-proxy.md) |
 

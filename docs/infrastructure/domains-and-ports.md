@@ -16,6 +16,10 @@
 | `api3.diaverse.app` | `diaverse-prod` | Traefik | `diaverse-api-1:8000` | production API alternate route |
 | `n8n.diaverse.app` | `diaverse-prod` | Traefik | `diaverse-n8n-1:5678` | workflow automation |
 | `dev.diaverse.app` | `diaverse-dev` | Traefik | `diaweb-dev:3000` | development frontend |
+| `diaverse.app/ru/learn/*` | `diaverse-prod` edge + overseas content server | Traefik/path proxy | HTTPS content upstream | content factory public pages on the main domain |
+| `diaverse.app/_diaverse-content/_next/*` | `diaverse-prod` edge + overseas content server | Traefik/path proxy | HTTPS content upstream | isolated content factory Next assets |
+| `dev.diaverse.app/ru/learn/*` | `diaverse-dev` edge + overseas/staging content server | Traefik/path proxy | HTTPS content upstream | staging content factory public pages |
+| `dev.diaverse.app/_diaverse-content/_next/*` | `diaverse-dev` edge + overseas/staging content server | Traefik/path proxy | HTTPS content upstream | isolated staging content factory Next assets |
 | `api.dev.diaverse.app` | `diaverse-dev` | Traefik | `diaverse-api-1:8000` | development API |
 | `api2.dev.diaverse.app` | `diaverse-dev` | Traefik | `diaverse-api-1:8000` | development API alternate route |
 | `gitlab.diaverse.app` | `diaverse-dev` | Traefik | `gitlab:80` | self-managed GitLab web UI |

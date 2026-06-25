@@ -14,7 +14,9 @@ if (-not (Test-Path -LiteralPath $docsPath)) {
 
 $markdownFiles = Get-ChildItem -LiteralPath $docsPath -Recurse -File -Filter "*.md" |
     Where-Object {
-        $_.FullName -notmatch "\\docs\\daily\\\d{4}-\d{2}-\d{2}-"
+        $_.FullName -notmatch "\\docs\\daily\\d{4}-\d{2}-\d{2}-" -and
+        $_.FullName -notmatch "\\node_modules\\" -and
+        $_.FullName -notmatch "\\\.npm-cache\\"
     }
 
 $errors = New-Object System.Collections.Generic.List[string]
@@ -27,8 +29,17 @@ function Get-RelativePath([string]$BasePath, [string]$TargetPath) {
     return [System.Uri]::UnescapeDataString($baseUri.MakeRelativeUri($targetUri).ToString()).Replace("/", [System.IO.Path]::DirectorySeparatorChar)
 }
 
+function Remove-CodeFences([string]$Text) {
+    return [regex]::Replace($Text, '(?s)```.*?```', "")
+}
+
+function Test-InvalidPathChars([string]$PathValue) {
+    return $PathValue.IndexOfAny([System.IO.Path]::GetInvalidPathChars()) -ge 0
+}
+
 foreach ($file in $markdownFiles) {
     $text = Get-Content -LiteralPath $file.FullName -Raw
+    $linkText = Remove-CodeFences -Text $text
     $relativeFile = Get-RelativePath $workspace $file.FullName
 
     if ($text -notmatch "(?m)^#\s+\S") {
@@ -52,7 +63,7 @@ foreach ($file in $markdownFiles) {
         }
     }
 
-    $linkMatches = [regex]::Matches($text, '(?<!\!)\[[^\]]+\]\(([^)]+)\)')
+    $linkMatches = [regex]::Matches($linkText, '(?<!\!)\[[^\]]+\]\(([^)]+)\)')
     foreach ($match in $linkMatches) {
         $target = $match.Groups[1].Value.Trim()
         if ([string]::IsNullOrWhiteSpace($target)) {
@@ -73,9 +84,27 @@ foreach ($file in $markdownFiles) {
             continue
         }
 
-        $candidate = Join-Path $file.DirectoryName ([System.Uri]::UnescapeDataString($targetWithoutAnchor))
+        try {
+            $decodedTarget = [System.Uri]::UnescapeDataString($targetWithoutAnchor)
+        } catch {
+            $warnings.Add("Malformed local link in $relativeFile -> $target (invalid URI escape)")
+            continue
+        }
+
+        if (Test-InvalidPathChars -PathValue $decodedTarget) {
+            $warnings.Add("Malformed local link in $relativeFile -> $target (invalid path characters)")
+            continue
+        }
+
+        try {
+            $candidate = Join-Path $file.DirectoryName $decodedTarget
+        } catch {
+            $warnings.Add("Malformed local link in $relativeFile -> $target (cannot resolve path)")
+            continue
+        }
+
         $checkedLinks += 1
-        if (-not (Test-Path -LiteralPath $candidate)) {
+        if (-not (Test-Path -LiteralPath $candidate -ErrorAction SilentlyContinue)) {
             $errors.Add("Broken local link in $relativeFile -> $target")
         }
     }

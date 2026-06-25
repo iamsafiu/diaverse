@@ -1,13 +1,14 @@
-# Architecture: Shared Workspace Over Six Repositories
+# Architecture: Shared Workspace Over Seven Repositories
 
 ## Overview
 
-Diaverse uses six separate repositories coordinated through a shared workspace root:
+Diaverse uses seven separate repositories coordinated through a shared workspace root:
 
 - `diaweb` handles the browser-facing frontend and BFF routes
 - `diaverse-mobile` handles the Expo / React Native mobile frontend for iOS and Android
 - `diaverseapi` handles cabinet, auth, staff, and game backend domains
 - `aibot` handles internal copywriting workflows consumed by `diaweb`
+- `diaverse-content` handles the standalone content factory for public learn pages, drafts, revisions, slugs, content search, and content SEO fragments
 - `club10000-bot` handles the standalone Club10000 Telegram bot, Prodamus callbacks, and its restored bot-local database
 - `diaverse-auth-bot` handles Telegram transport for Diaverse browser login and mobile Telegram linking
 
@@ -29,6 +30,7 @@ diaverse/
 |-- diaverse-mobile/     # Mobile frontend repo, ignored by root git
 |-- diaverseapi/         # Backend repo, ignored by root git
 |-- aibot/               # Copywriting service repo, ignored by root git
+|-- diaverse-content/    # Content factory repo, ignored by root git
 |-- club10000-bot/       # Club10000 bot repo, ignored by root git
 `-- diaverse-auth-bot/   # Auth bot repo, ignored by root git
 ```
@@ -43,6 +45,8 @@ diaweb -> aibot          # internal JWT-backed BFF integration for copywriting
 diaverse-mobile -> diaverseapi   # mobile app API integration over shared backend contracts
 diaverseapi -> aibot     # signed club creative asset requests only
 aibot -> diaverseapi     # copywriting-clubbot signed club Telegram events/outbox only
+diaweb -> diaverse-content  # internal JWT-backed BFF integration for content staff workflows
+aibot -> diaverse-content   # optional disabled draft import bridge only after content contracts stabilize
 club10000-bot -> diaverseapi   # signed normalized Club10000 payment events only
 diaverse-auth-bot -> diaverseapi   # signed auth login-session and mobile-link approvals only
 workspace -> repos       # AI context only, no runtime dependency
@@ -88,6 +92,19 @@ aibot                        -> Telegram Bot API using bot_profile=club only for
 
 The Diaverse club domain state belongs to `diaverseapi`. `aibot` generates and publishes creative assets but never owns membership, roster, payment, pair, or leaderboard truth. `copywriting-clubbot` in `aibot/app/clubbot` owns Telegram system/member lifecycle runtime actions on the foreign bot server, while `diaverseapi/app/club` owns the persisted state and outbox. `club10000-bot` owns the separate Club10000 bot-local state required for funnels, reminders, referrals, historical payment attempts, and Prodamus callback handling; it mirrors only normalized payment status into `diaverseapi`. Leaderboard content can be sent by the existing Premium userbot. Club operational notes live in `docs/club.md`.
 
+### Content Factory
+
+```text
+public browser -> diaverse.app/ru/learn/* -> diaverse-content public renderer
+staff browser  -> diaweb /staff/content -> diaweb BFF -> diaverse-content internal API
+diaverseapi    -> staff identity, RBAC, analytics storage
+aibot          -> optional draft import bridge, disabled until contract approval
+```
+
+`diaverse-content` owns public learn content state, drafts, revisions, slug history, content search, and content SEO fragments. It must not own Diaverse product/game/club truth and must not write to the Diaverse backend database. Public routes should stay on the main domain under `/ru/learn/*`; staff browser entrypoints stay in `diaweb`, and staff permission truth stays in `diaverseapi`.
+
+Detailed routing, admin boundary, SEO ownership, analytics, draft import, deployment, and rollback rules live in `docs/architecture/content-factory.md`.
+
 ### Cabinet Notifications
 
 ```text
@@ -123,7 +140,7 @@ source code           -> final authority when GBrain and code disagree
 ### Implementation
 
 - Implement cross-repo plans from the workspace root when the task may touch more than one repository
-- Edit product code only inside `diaweb`, `diaverse-mobile`, `diaverseapi`, `aibot`, `club10000-bot`, or `diaverse-auth-bot`
+- Edit product code only inside `diaweb`, `diaverse-mobile`, `diaverseapi`, `aibot`, `diaverse-content`, `club10000-bot`, or `diaverse-auth-bot`
 - Keep progress checkboxes in the top-level plan for workspace-run implementations
 - Commit product code inside each repository that owns changes
 - Commit top-level workspace files in the root repository only when the change is limited to documentation, AI context, shared scripts, or workspace config
@@ -154,14 +171,14 @@ diaverse/.ai-factory/plans/<branch-slug>.md
   branch/status          branch/status           branch/status
   commit here            commit here             commit here
 
-  +--------+      +-------------+      +--------------------+
-  | aibot  |      | club10000   |      | diaverse-auth-bot  |
-  | git    |      | git repo    |      | git repo           |
-  +--------+      +-------------+      +--------------------+
-       |                 |                       |
-       v                 v                       v
-  branch/status     branch/status           branch/status
-  commit here       commit here             commit here
+  +--------+      +------------------+      +-------------+      +--------------------+
+  | aibot  |      | diaverse-content|      | club10000   |      | diaverse-auth-bot  |
+  | git    |      | git repo        |      | git repo    |      | git repo           |
+  +--------+      +------------------+      +-------------+      +--------------------+
+       |                   |                   |                       |
+       v                   v                   v                       v
+  branch/status       branch/status       branch/status           branch/status
+  commit here         commit here         commit here             commit here
 ```
 
 Rules:
