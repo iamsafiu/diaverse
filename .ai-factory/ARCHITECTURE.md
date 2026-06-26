@@ -1,14 +1,15 @@
-# Architecture: Shared Workspace Over Seven Repositories
+# Architecture: Shared Workspace Over Eight Repositories
 
 ## Overview
 
-Diaverse uses seven separate repositories coordinated through a shared workspace root:
+Diaverse uses eight separate repositories coordinated through a shared workspace root:
 
 - `diaweb` handles the browser-facing frontend and BFF routes
 - `diaverse-mobile` handles the Expo / React Native mobile frontend for iOS and Android
 - `diaverseapi` handles cabinet, auth, staff, and game backend domains
 - `aibot` handles internal copywriting workflows consumed by `diaweb`
-- `diaverse-content` handles the standalone content factory for public learn pages, drafts, revisions, slugs, content search, and content SEO fragments
+- `diaverse-content` handles the standalone content factory for public learn pages, drafts, revisions, slugs, content search, content SEO fragments, first-party content metrics, and manual Codex-operated draft generation
+- `diaverse-ai-cofounder` is an archived/R&D reference repo retained for historical prompts, strategy notes, and rollback context; it is not an active runtime dependency
 - `club10000-bot` handles the standalone Club10000 Telegram bot, Prodamus callbacks, and its restored bot-local database
 - `diaverse-auth-bot` handles Telegram transport for Diaverse browser login and mobile Telegram linking
 
@@ -31,6 +32,7 @@ diaverse/
 |-- diaverseapi/         # Backend repo, ignored by root git
 |-- aibot/               # Copywriting service repo, ignored by root git
 |-- diaverse-content/    # Content factory repo, ignored by root git
+|-- diaverse-ai-cofounder/ # AI Cofounder runtime repo, ignored by root git
 |-- club10000-bot/       # Club10000 bot repo, ignored by root git
 `-- diaverse-auth-bot/   # Auth bot repo, ignored by root git
 ```
@@ -47,6 +49,8 @@ diaverseapi -> aibot     # signed club creative asset requests only
 aibot -> diaverseapi     # copywriting-clubbot signed club Telegram events/outbox only
 diaweb -> diaverse-content  # internal JWT-backed BFF integration for content staff workflows
 aibot -> diaverse-content   # optional disabled draft import bridge only after content contracts stabilize
+local Codex session -> diaverse-content # manual content analysis, metrics export, draft-only imports
+diaverse-ai-cofounder -> workspace/docs only # archived historical reference, no active runtime dependency
 club10000-bot -> diaverseapi   # signed normalized Club10000 payment events only
 diaverse-auth-bot -> diaverseapi   # signed auth login-session and mobile-link approvals only
 workspace -> repos       # AI context only, no runtime dependency
@@ -99,11 +103,22 @@ public browser -> diaverse.app/ru/learn/* -> diaverse-content public renderer
 staff browser  -> diaweb /staff/content -> diaweb BFF -> diaverse-content internal API
 diaverseapi    -> staff identity, RBAC, analytics storage
 aibot          -> optional draft import bridge, disabled until contract approval
+local Codex    -> metrics/context export -> draft-only import -> human review
 ```
 
-`diaverse-content` owns public learn content state, drafts, revisions, slug history, content search, and content SEO fragments. It must not own Diaverse product/game/club truth and must not write to the Diaverse backend database. Public routes should stay on the main domain under `/ru/learn/*`; staff browser entrypoints stay in `diaweb`, and staff permission truth stays in `diaverseapi`.
+`diaverse-content` owns public learn content state, drafts, revisions, slug history, content search, content SEO fragments, content performance summaries, and the manual Codex operator workflow. It must not own Diaverse product/game/club truth and must not write to the Diaverse backend database. Public routes should stay on the main domain under `/ru/learn/*`; staff browser entrypoints stay in `diaweb`, and staff permission truth stays in `diaverseapi`.
 
 Detailed routing, admin boundary, SEO ownership, analytics, draft import, deployment, and rollback rules live in `docs/architecture/content-factory.md`.
+
+### Archived AI Cofounder
+
+```text
+diaverse-ai-cofounder -> historical prompts, org context, strategy notes, and rollback reference
+local Codex session   -> diaverse-content content-operator context
+diaverse-content      -> draft-only imports and human publication workflow
+```
+
+`diaverse-ai-cofounder` is no longer an active operations runtime. The content workflow now uses local Codex sessions as a manual operator over `diaverse-content` metrics, strategy files, and draft import APIs. The archived repo should not run schedules, Telegram reports, autonomous shell/code automation, or production draft orchestration unless a new plan explicitly reactivates it.
 
 ### Cabinet Notifications
 
@@ -171,14 +186,14 @@ diaverse/.ai-factory/plans/<branch-slug>.md
   branch/status          branch/status           branch/status
   commit here            commit here             commit here
 
-  +--------+      +------------------+      +-------------+      +--------------------+
-  | aibot  |      | diaverse-content|      | club10000   |      | diaverse-auth-bot  |
-  | git    |      | git repo        |      | git repo    |      | git repo           |
-  +--------+      +------------------+      +-------------+      +--------------------+
-       |                   |                   |                       |
-       v                   v                   v                       v
-  branch/status       branch/status       branch/status           branch/status
-  commit here         commit here         commit here             commit here
+  +--------+      +------------------+      +-----------------------+      +-------------+      +--------------------+
+  | aibot  |      | diaverse-content|      | diaverse-ai-cofounder |      | club10000   |      | diaverse-auth-bot  |
+  | git    |      | git repo        |      | git repo              |      | git repo    |      | git repo           |
+  +--------+      +------------------+      +-----------------------+      +-------------+      +--------------------+
+       |                   |                          |                         |                       |
+       v                   v                          v                         v                       v
+  branch/status       branch/status              branch/status             branch/status           branch/status
+  commit here         commit here                commit here               commit here             commit here
 ```
 
 Rules:

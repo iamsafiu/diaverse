@@ -1,6 +1,7 @@
-# Implementation Plan: Diaverse AI Cofounder Server Runtime
+# Implementation Plan: Content Factory Codex Operator And AI Cofounder Retirement
 
-Created: 2026-06-25
+Branch: none
+Created: 2026-06-26
 Mode: fast plan, no branch creation
 
 ## Settings
@@ -13,395 +14,347 @@ Mode: fast plan, no branch creation
 
 ## Goal
 
-Deploy a Diaverse-specific AI Cofounder on a foreign server as a safe operational layer that can:
+Move Diaverse content operations to a simpler model:
 
-- understand the Diaverse product, repositories, architecture, content factory, and approved business context
-- read selected product, analytics, finance, and content-performance data through safe interfaces
-- generate SEO/content strategy and article drafts for club/game directions
-- send Telegram reports and approval requests
-- import content only as drafts, never auto-publish
+- `diaverse-content` is the only active runtime for public content, drafts, metrics,
+  article review, and publication.
+- Local Codex sessions act as the AI operator. The user periodically connects to the
+  server, starts Codex, asks it to analyze metrics, generate topics/articles, and
+  import draft-only content.
+- The server does not need an LLM API key, Claude CLI OAuth, autonomous schedules,
+  Telegram AI Cofounder reporting, or an always-on AI Cofounder bridge.
+- `diaverse-ai-cofounder` is retired from the critical path after its useful content
+  strategy, topic matrix, prompts, and safety rules are migrated into `diaverse-content`.
 
-Non-goals:
+## Requirements Snapshot
 
-- do not make AI Cofounder the source of truth for product code or business data
-- do not give it broad production DB credentials
-- do not expose the 3D bridge publicly
-- do not run unrestricted `claude -p` / shell automation against production directories
-- do not publish articles or change production code without human approval and GitLab review
+- Keep article generation draft-only. Generated content must never publish
+  automatically.
+- Preserve the two content streams:
+  - `club`: Club 10000 SEO and paid club funnel.
+  - `game`: cold acquisition positioning Diaverse as an MMO-RPG step tracker.
+- AI remains an internal production tool, not a public topic cluster.
+- Codex must be able to consume content metrics, topic matrix, editorial rules, and
+  draft import contracts from inside `diaverse-content`.
+- Existing content import and analytics behavior must continue to work.
+- AI Cofounder server runtime should be stopped/disabled safely, not destructively
+  deleted before the migration is verified.
 
-## Workspace Mode
+## Reconnaissance Notes
 
-This is a cross-repo Diaverse plan from the root workspace:
-
-- root `diaverse` owns coordination docs, context, and deployment runbooks
-- new child repo `diaverse-ai-cofounder` should own the Diaverse AI Cofounder runtime
-- implementation code stays inside affected child repositories
-- root repo must not track child repo source files
-
-## Research Context
-
-- Read-only GBrain search for existing AI Cofounder/content-factory context returned no matching canonical page.
-- Source inspection found `C:\Users\Indigo\Desktop\ai-cofaunder` is an unpacked AI-Cofounder v1.1.0 starter, not a git repo.
-- The starter is macOS-first: Keychain via `keytar`, launchd scheduling, local Claude Code setup, Telegram, SQLite/Prisma, Hono, Electron/React/three bridge.
-- Server deployment requires a Linux adapter layer for secrets, scheduling, and runtime safety.
-- Diaverse already has the safer content-write path: `aibot` -> `diaverse-content` internal draft import, with no auto-publish.
+- The foreign server was rebooted by the user and SSH access was reachable during
+  planning with hostname `discontent`.
+- `diaverse-content` already has:
+  - public learn routes under `src/app/ru/learn/*`
+  - admin guide editor under `src/app/admin/guides/*`
+  - per-guide analytics under `src/app/admin/guides/[id]/analytics`
+  - internal draft import route at `src/app/internal/v1/imports/drafts/route.ts`
+  - import parser at `src/lib/internal/imports.ts`
+  - metrics helpers under `src/lib/analytics/*`
+  - anti-AI text checks under `src/lib/guides/anti-ai-check.ts`
+- The current import contract accepts `source_service = aibot | ai-cofounder`.
+  The new model should add a neutral source such as `codex` or
+  `content-operator`, while keeping `ai-cofounder` as legacy compatibility only
+  until old imports are no longer needed.
+- `diaverse-ai-cofounder` already contains reusable source material:
+  - `projects/diaverse/content-playbook.md`
+  - `projects/diaverse/topic-matrix.ru.md`
+  - `org/*.md`
+  - `agents/diaverse-content-strategist/*`
+  - `agents/diaverse-article-drafter/*`
+  - `skills/article-writing/references/*`
 
 ## Affected Repositories
 
-- `diaverse`: docs, workspace registration, deployment runbooks
-- `diaverse-ai-cofounder`: new private child repo created from the `ai-cofaunder` baseline
-- `diaverseapi`: safe read-only analytics/finance/product context endpoints or views
-- `diaverse-content`: content draft import/read integration hardening if needed
-- `aibot`: draft generation/publish bridge integration if needed
-- `diaweb`: staff review/SEO readiness integration and production promotion gates if needed
-- `diaverse-mobile`: not affected
-- `club10000-bot`: not affected
-- `diaverse-auth-bot`: not affected
+- `diaverse-content`: primary owner for Codex operator context, metrics exports,
+  draft import tooling, dashboard improvements, tests, and docs.
+- `diaverse-ai-cofounder`: source-only during migration; then archive/retire runtime
+  docs and stop server services.
+- root `diaverse`: update workspace AI context/docs so AI Cofounder is no longer
+  described as an active runtime dependency.
+- `diaweb`, `diaverseapi`, `aibot`, `diaverse-mobile`, `club10000-bot`,
+  `diaverse-auth-bot`: not expected to change in this phase.
 
 ## Architecture Decisions
 
-1. Create a separate private repo named `diaverse-ai-cofounder`.
-   - Do not work directly in `C:\Users\Indigo\Desktop\ai-cofaunder`.
-   - Preserve upstream license and keep the original starter as a reference copy.
+1. Use `diaverse-content` as the active content control plane.
+2. Use Codex as a manual operator, not a persistent server daemon.
+3. Do not require `ANTHROPIC_API_KEY` or Claude CLI auth on the content server.
+4. Keep generated drafts reviewable in `/admin/guides/*`.
+5. Store content strategy and operator instructions close to the content engine,
+   not in a retired AI Cofounder runtime.
+6. Keep AI Cofounder GitLab history as an archive first; only delete later if the
+   user explicitly confirms after successful content runs.
 
-2. Treat AI Cofounder as an ops/content orchestrator, not as a privileged backend.
-   - It reads curated context and safe metrics.
-   - It writes content drafts through existing APIs.
-   - It reports decisions to Telegram and staff UI.
+## Phase 1 - Freeze AI Cofounder Runtime Safely
 
-3. Add Linux support instead of relying on macOS-only runtime pieces.
-   - Secrets: env/file/Docker secrets provider for Linux, Keychain provider for macOS.
-   - Scheduling: systemd timers or container cron on Linux, launchd only on macOS.
-   - Bridge: bind to localhost/private network only.
-
-4. Use least privilege for all data access.
-   - Prefer backend/service APIs or read-only database roles/views.
-   - No broad production DSNs.
-   - No write access to product databases.
-   - No raw secrets in prompts, logs, docs, Telegram, or generated articles.
-
-5. Disable dangerous unattended target execution on server by default.
-   - Server runtime must not run arbitrary `targetCwd` jobs with `bypassPermissions`.
-   - Code-writing agents belong in local/MR workflows, not in production cron.
-
-6. Keep human approval mandatory.
-   - Articles enter draft status only.
-   - Publishing, code changes, payment/finance actions, and production deployment remain human-approved.
-
-## Phase 1 - Repository And Safety Baseline
-
-- [x] Task 1: Create `diaverse-ai-cofounder` repo from the starter baseline
+- [x] Task 1: Inspect the rebooted foreign server and stop only AI Cofounder runtime services
   - Files/repos:
-    - new `diaverse-ai-cofounder/`
-    - root `AGENTS.md`
-    - root `README.md` or docs navigation if needed
+    - operational target: existing AI Cofounder deployment directory on the foreign server
+    - optional docs update: `diaverse-ai-cofounder/infrastructure/foreign-server/README.md`
   - Deliverable:
-    - private GitLab project connected to local child repo
-    - baseline committed without secrets or generated local state
-    - original `C:\Users\Indigo\Desktop\ai-cofaunder` left untouched
+    - confirm SSH access and current service/container state after reboot
+    - stop AI Cofounder containers/systemd units/unfinished builds if present
+    - disable AI Cofounder autostart/schedules if configured
+    - preserve releases, env files, volumes, logs, and GitLab repo history
+    - do not touch `diaverse-content` services during this task
   - Logging:
-    - installation/setup logs may mention file names and versions only
-    - never log license token, API keys, Telegram tokens, DB DSNs, or SSH material
+    - log only service names, statuses, container names, command outcomes, and timestamps
+    - do not log secrets, env values, private keys, tokens, raw SSH commands with key paths,
+      or full server inventory
   - Dependencies:
-    - GitLab project exists
+    - none
 
-- [x] Task 2: Add Diaverse repo-local operating rules
+- [x] Task 2: Mark AI Cofounder as retired from the active architecture
   - Files/repos:
-    - `diaverse-ai-cofounder/AGENTS.md`
-    - `diaverse-ai-cofounder/README.md`
-    - `diaverse-ai-cofounder/SECURITY.md`
-    - `diaverse-ai-cofounder/.env.example`
+    - root `.ai-factory/DESCRIPTION.md`
+    - root `.ai-factory/ARCHITECTURE.md`
+    - possible root docs under `docs/architecture/` if a content factory doc exists
+    - optional `diaverse-ai-cofounder/ARCHIVED.md`
   - Deliverable:
-    - clear boundaries for data access, content draft flow, Telegram approval, server deployment, and forbidden operations
-    - explicit distinction between upstream engine layer and Diaverse user layer
+    - update architecture wording from active AI Cofounder runtime to archived/R&D source
+    - state that content operations now run through `diaverse-content` plus manual Codex sessions
+    - remove AI Cofounder from active dependency diagrams and active server runbooks
+    - keep a note that the repo is retained only for historical reference until explicit deletion
   - Logging:
-    - document redaction rules and safe run-log format
+    - no runtime logs; commit/diff summary may mention changed files only
+    - do not include server addresses, keys, env values, or private infrastructure details
   - Dependencies:
     - Task 1
 
-- [x] Task 3: Add Linux-compatible secret providers
-  - Files/repos:
-    - `diaverse-ai-cofounder/src/secrets/*`
-    - `diaverse-ai-cofounder/src/telegram/secrets.ts`
-    - `diaverse-ai-cofounder/src/tools/project-db/index.ts`
-    - `diaverse-ai-cofounder/tests/*`
-  - Deliverable:
-    - provider interface: `keychain`, `env`, `file`, and optional Docker secrets
-    - macOS keeps existing Keychain behavior
-    - Linux can run from environment or mounted secret files
-    - secret lookup errors reference logical secret names only
-  - Logging:
-    - log provider type and missing key names only
-    - never log resolved secret values
-  - Dependencies:
-    - Task 1
+## Phase 2 - Move Content Brain Into diaverse-content
 
-- [x] Task 4: Add Linux scheduling support
+- [x] Task 3: Create Codex operator context inside `diaverse-content`
   - Files/repos:
-    - `diaverse-ai-cofounder/infrastructure/systemd/*`
-    - `diaverse-ai-cofounder/scripts/install-routines-systemd.ts` or shell-free npm script equivalent
-    - `diaverse-ai-cofounder/docs/server-scheduling.md`
+    - new `diaverse-content/content-operator/README.md`
+    - new `diaverse-content/content-operator/codex-runbook.md`
+    - new `diaverse-content/content-operator/content-playbook.ru.md`
+    - new `diaverse-content/content-operator/topic-matrix.ru.md`
+    - new `diaverse-content/content-operator/claim-safety.md`
+    - new `diaverse-content/content-operator/draft-output-contract.md`
   - Deliverable:
-    - systemd service/timer templates that call existing routine runner
-    - launchd remains available only for macOS
-    - bridge schedule apply is disabled or clearly unsupported on Linux until a safe systemd adapter exists
+    - migrate the useful Club 10000 and MMO-RPG step tracker strategy from AI Cofounder
+    - define the exact Codex workflow: analyze metrics -> choose topics -> write drafts
+      -> validate/import draft-only -> human review -> publish manually
+    - include CTA rules, forbidden claims, public AI-topic ban, and draft-only requirements
+    - make the files self-contained so a future Codex session can start from this repo
+      without reading `diaverse-ai-cofounder`
   - Logging:
-    - routine start/end logs include routine id, duration, status, and trace id
-  - Dependencies:
-    - Task 3
-
-- [x] Task 5: Guard unsafe unattended execution
-  - Files/repos:
-    - `diaverse-ai-cofounder/src/routines/runtime.ts`
-    - `diaverse-ai-cofounder/bridge/server.ts`
-    - `diaverse-ai-cofounder/config/*`
-    - `diaverse-ai-cofounder/tests/*`
-  - Deliverable:
-    - default `AI_COFUNDER_ALLOW_UNATTENDED_TARGETS=false`
-    - server runtime denies `targetProject`/`targetCwd` execution unless explicitly enabled in a non-production profile
-    - no `bypassPermissions` execution path for production routines
-    - bridge binds to `127.0.0.1` by default and has an explicit exposure warning
-  - Logging:
-    - denied execution logs include routine id and reason, not prompt content with sensitive data
-  - Dependencies:
-    - Task 3
-
-## Phase 2 - Diaverse Knowledge And Data Layer
-
-- [x] Task 6: Create Diaverse user layer
-  - Files/repos:
-    - `diaverse-ai-cofounder/org/*`
-    - `diaverse-ai-cofounder/ai-clone/*`
-    - `diaverse-ai-cofounder/projects/diaverse/*`
-    - `diaverse-ai-cofounder/agents/*`
-  - Deliverable:
-    - company profile, product map, audience assumptions, repository map, content taxonomy, and decision rules
-    - agents separated by responsibility: content strategist, article drafter, metrics analyst, finance analyst, product researcher
-    - context excludes secrets, raw credentials, private tokens, and unapproved personal data
-  - Logging:
-    - agent runs log source document ids and generated artifact ids
+    - no runtime logs; generated docs must avoid secrets, private metrics, hidden formulas,
+      antifraud details, and unannounced roadmap
   - Dependencies:
     - Task 2
 
-- [x] Task 7: Add safe analytics and finance read interfaces
+- [x] Task 4: Add a neutral Codex/content-operator draft source to the import contract
   - Files/repos:
-    - `diaverseapi/app/analytics/*`
-    - `diaverseapi/app/cabinet/finance/*`
-    - `diaverseapi/app/core/*` or internal auth module if needed
-    - `diaverse-ai-cofounder/src/tools/diaverse-api/*`
+    - `diaverse-content/src/lib/internal/imports.ts`
+    - `diaverse-content/tests/content-imports.test.ts`
+    - optional `diaverse-content/content-operator/draft-output-contract.md`
   - Deliverable:
-    - service-authenticated read endpoints or read-only views for approved metrics
-    - endpoints return aggregated/sanitized data, not broad table dumps
-    - finance data is minimized to operational summaries needed for reports
+    - accept `source_service = codex` or `content-operator` for new manual Codex imports
+    - keep `ai-cofounder` accepted only as legacy compatibility, if needed
+    - keep `status=draft` and reject `auto_publish` exactly as today
+    - update tests to cover the new source service and preserve old idempotency behavior
   - Logging:
-    - backend audit logs include service principal, endpoint, status, and row/aggregate count
-    - no raw payment payloads or PII in AI logs
+    - import logs must remain structured and minimal: request id, actor id, source service,
+      draft id, version, import id, guide id, area, locale, status
+    - do not log full article bodies, prompts, tokens, secrets, or raw source metadata values
   - Dependencies:
-    - Task 6
-  - Migration guard:
-    - if DB schema changes are required, inspect existing Alembic history first and add reversible migrations only after model/schema alignment is confirmed
+    - Task 3
 
-- [x] Task 8: Add content factory read integration
+## Phase 3 - Add Codex-Friendly Metrics And Generation Tooling
+
+- [x] Task 5: Add a content performance service and internal JSON export for Codex
   - Files/repos:
-    - `diaverse-content/src/app/internal/*`
-    - `diaverse-ai-cofounder/src/tools/content-factory/*`
+    - new `diaverse-content/src/lib/analytics/content-performance.ts`
+    - new `diaverse-content/src/app/internal/v1/analytics/content-performance/route.ts`
+    - possible updates to `diaverse-content/src/lib/internal/auth.ts`
+    - new or updated tests under `diaverse-content/tests/`
   - Deliverable:
-    - AI Cofounder can read content catalog, draft status, SEO metadata, and performance-ready identifiers through internal APIs
-    - no direct content DB write path
-    - service token scopes distinguish `content:read` and `content:create`
+    - provide article-level and stream-level metrics for Codex analysis
+    - include area, locale, slug, title, status, published date, guide type, target keyword,
+      views, CTA clicks, feedback counts, H1 stats, draft import source, and topic ids
+    - support filters for `area`, `locale`, `days`, `status`, and `limit`
+    - return empty optional sections safely where Search Console/revenue adapters are not wired yet
   - Logging:
-    - content API logs route, scope, status, and content id only
+    - log internal export access at INFO with route, actor, request id, filters, row count,
+      and duration
+    - log validation failures at WARN
+    - do not log reader identifiers, raw cookies, authorization headers, env values, or
+      full article content
   - Dependencies:
-    - Task 7 can run in parallel if API scopes are already defined
+    - Task 4
 
-- [x] Task 9: Add draft-only content production path
+- [x] Task 6: Add CLI scripts for local/server Codex content runs
   - Files/repos:
-    - `diaverse-ai-cofounder/agents/content-*`
-    - `diaverse-ai-cofounder/skills/*` if local skills are added
-    - `aibot/app/application/use_cases/*`
-    - `aibot/app/infrastructure/*`
-    - `diaverse-content/src/app/internal/v1/imports/drafts/route.ts`
+    - new `diaverse-content/scripts/content-operator-context.ts`
+    - new `diaverse-content/scripts/content-operator-import.ts`
+    - update `diaverse-content/package.json`
+    - new tests or fixtures under `diaverse-content/tests/`
   - Deliverable:
-    - content agents produce structured article briefs and drafts for `club` and `game`
-    - draft import uses existing no-auto-publish path
-    - generated drafts carry source links, target area, guide type, difficulty, and review notes
+    - add `pnpm content:operator:context` to export a compact metrics + rules + topic
+      context pack for a Codex session
+    - add `pnpm content:operator:import` to validate and import generated draft payloads
+      through the existing internal draft import contract
+    - write generated run artifacts to a gitignored local directory such as
+      `.content-runs/<run-id>/`
+    - avoid any dependency on server-side LLM API keys
   - Logging:
-    - log draft id, topic, target area, and import status
-    - do not log full article text if it may contain private context
+    - CLI logs should include run id, filters, output paths, imported draft ids, guide ids,
+      skipped duplicates, and high-level errors
+    - do not print full article bodies by default; allow an explicit preview flag if needed
+    - do not log tokens, internal JWTs, cookies, or env values
   - Dependencies:
-    - Tasks 6 and 8
+    - Tasks 3-5
 
-- [x] Task 10: Wire Telegram human gate and staff review loop
+- [x] Task 7: Add a content operations dashboard for stream-level decisions
   - Files/repos:
-    - `diaverse-ai-cofounder/src/pipelines/human-gate.ts`
-    - `diaverse-ai-cofounder/agents/*`
-    - `diaweb/frontend/app/staff/content/*` if production review gaps remain
-    - `diaweb/frontend/app/api/staff/content/*`
+    - new `diaverse-content/src/app/admin/content-ops/page.tsx`
+    - possible new `diaverse-content/src/app/admin/content-ops/ContentOpsView.tsx`
+    - reuse `diaverse-content/src/lib/analytics/content-performance.ts`
   - Deliverable:
-    - Telegram approval messages for strategy summaries and draft batches
-    - staff review remains the actual publishing surface
-    - approval/rejection/edit decisions are persisted in the AI Cofounder run journal
+    - show Club 10000 and game stream health in one admin page
+    - surface articles with low CTA rate, high views/no CTA, stale published date,
+      missing topic/CTA metadata, and draft backlog
+    - show clear next-action labels: update, expand cluster, improve CTA, keep, archive
+    - link each row to existing guide edit and per-guide analytics pages
   - Logging:
-    - Telegram message ids and decision ids only
-    - no token, chat secret, or private payload values
+    - no client logs in normal operation
+    - server-side data load may log route, filters, row count, and duration at INFO
+    - do not log raw article bodies, private user data, or sensitive headers
   - Dependencies:
-    - Task 9
+    - Task 5
 
-## Phase 3 - Production Deployment And Operations
+## Phase 4 - Guardrails, Docs, And Verification
 
-- [x] Task 11: Containerize and deploy to the foreign server
+- [x] Task 8: Add validation for Codex-generated content payloads and strategy files
   - Files/repos:
-    - `diaverse-ai-cofounder/Dockerfile`
-    - `diaverse-ai-cofounder/compose.yml`
-    - `diaverse-ai-cofounder/infrastructure/foreign-server/*`
-    - root `docs/runbooks/ai-cofounder-foreign-server.md`
+    - new `diaverse-content/src/lib/content-operator/validate-draft.ts`
+    - new `diaverse-content/tests/content-operator.test.ts`
+    - possible updates to `diaverse-content/src/lib/guides/anti-ai-check.ts`
   - Deliverable:
-    - service runs as an unprivileged user
-    - persistent volume for SQLite/journal state
-    - secrets mounted through environment or secret files
-    - bridge/API is localhost-only or VPN-only
-    - no Docker socket mount
-    - no production SSH key material inside the container
+    - validate required fields before import: source service, draft id, title, slug,
+      area, locale, target keyword, CTA, markdown hash, topic ids, and source metadata
+    - block auto-publish, forbidden claims, public AI-topic framing, hidden mechanics,
+      internal formulas, and investment/medical guarantees
+    - fail fast with actionable validation messages for Codex to repair the draft
   - Logging:
-    - stdout structured logs suitable for Docker/systemd journal
-    - healthcheck logs only service status and dependency readiness
+    - validator logs only rule ids and failed field names
+    - do not log full draft text unless an explicit local debug flag is set
   - Dependencies:
-    - Tasks 3, 4, 5
+    - Tasks 3, 4, and 6
 
-- [x] Task 12: Add observability, budgets, and failure controls
+- [x] Task 9: Document the new manual Codex operating flow
   - Files/repos:
-    - `diaverse-ai-cofounder/src/observability/*`
-    - `diaverse-ai-cofounder/src/routines/*`
-    - `diaverse-ai-cofounder/config/budgets.yml`
-    - `diaverse-ai-cofounder/docs/operations.md`
+    - `diaverse-content/README.md`
+    - `diaverse-content/content-operator/codex-runbook.md`
+    - root architecture docs from Task 2, if needed
   - Deliverable:
-    - per-agent run journal with status, duration, model spend estimate, artifact links, and approval state
-    - daily/weekly budget caps for LLM calls
-    - retry/backoff and circuit-breaker behavior for external APIs
-    - alert to Telegram when a routine fails repeatedly or hits spend limits
+    - document how the user connects to the server, starts Codex, exports metrics,
+      asks for analysis, generates drafts, imports drafts, and reviews in admin
+    - document required env vars for content imports/analytics only
+    - explicitly state that no LLM API key is required on the server for this model
+    - document rollback: stop using Codex scripts, keep existing admin/manual editing
   - Logging:
-    - structured fields: run_id, agent_id, routine_id, status, duration_ms, spend_estimate, error_code
-    - redact prompts/responses by default unless explicitly safe
+    - no runtime logs; docs must not include secret values, private key paths, server IPs,
+      tokens, or raw env values
   - Dependencies:
-    - Task 11 can start before this, but production schedule should wait for this task
+    - Tasks 1-8
 
-- [x] Task 13: Promote content SEO readiness on the main domain
+- [x] Task 10: Verify locally and on the server with one dry content run
   - Files/repos:
-    - `diaweb/frontend/app/robots.ts`
-    - `diaweb/frontend/app/sitemap.ts`
-    - `diaweb/frontend/app/llms.txt/route.ts`
-    - `diaweb/frontend/shared/content/*`
-    - deployment docs
+    - `diaverse-content`
+    - operational target: content server deployment
   - Deliverable:
-    - production `diaverse.app` exposes content-aware `robots.txt`, `sitemap.xml`, and `llms.txt`
-    - content pages under `/ru/learn/*` remain on the main domain
-    - existing API/web routes are not shadowed by content edge routing
+    - run `pnpm test`, `pnpm typecheck`, and targeted content-operator tests
+    - run the new metrics/context export command against local or server data
+    - create one sample Codex draft payload and import it as `status=draft`
+    - confirm the draft appears in admin and is not published
+    - confirm AI Cofounder runtime remains stopped/disabled and no schedules are active
   - Logging:
-    - web server logs should distinguish proxied content routes from native diaweb routes
+    - verification notes may include command names, pass/fail status, draft/import ids,
+      guide ids, and service status
+    - do not log full generated article bodies, env values, tokens, private server details,
+      or raw SSH command material
   - Dependencies:
-    - current content factory deployment stays healthy
-
-- [x] Task 14: Write runbooks and rollback steps
-  - Files/repos:
-    - root `docs/architecture/ai-cofounder.md`
-    - root `docs/runbooks/ai-cofounder-foreign-server.md`
-    - `diaverse-ai-cofounder/docs/*`
-  - Deliverable:
-    - setup, deploy, rotate secrets, disable schedules, restore journal DB, rollback image, and emergency stop procedures
-    - clear list of required environment variables without values
-    - current server topology documented without public digest leakage
-  - Logging:
-    - runbook examples must use placeholders, never real secrets
-  - Dependencies:
-    - Tasks 11 and 12
+    - Tasks 1-9
+  - Status 2026-06-26:
+    - `pnpm test` passed in `diaverse-content`
+    - `pnpm typecheck` passed in `diaverse-content`
+    - `pnpm build` passed in `diaverse-content`
+    - `pnpm content:operator:import -- --dry-run` passed with a valid Codex draft payload
+    - local `pnpm content:operator:context` starts but cannot complete without local DB env;
+      server context export passed against the deployed content DB
+    - foreign server confirms AI Cofounder runtime remains stopped: no matching Docker
+      containers, systemd services, user services, or timers
+    - foreign server `diaverse-content-app` and `diaverse-content-db` are healthy after
+      redeploy from release `20260626110731`
+    - `CONTENT_IMPORTS_ENABLED` was enabled with a backup of the prior env file; real
+      internal import succeeded as a draft-only guide with guide id
+      `cmqufe9jf0001qog7kos20jni` and import id `cmqufe9kl0003qog7f6z72y94`
+    - DB verification confirms the imported guide status is `draft`, area `game`,
+      locale `ru`, and source service `codex`
+    - post-import `pnpm content:operator:context -- --area game --days 30 --limit 5`
+      returned `rowCount=1`, so future Codex runs can see imported draft context
 
 ## Verification Plan
 
-Run targeted checks before any production schedule is enabled:
+- `diaverse-content`
+  - `pnpm test`
+  - `pnpm typecheck`
+  - `pnpm build` if UI/dashboard or route changes are made
+  - targeted script smoke:
+    - `pnpm content:operator:context -- --days 30 --area game`
+    - `pnpm content:operator:import -- --file <local-test-payload>`
 
 - `diaverse-ai-cofounder`
-  - `pnpm install --frozen-lockfile`
-  - `pnpm typecheck`
-  - `pnpm test`
-  - `pnpm build`
-  - secret provider tests: macOS keychain mocked, Linux env/file provider real temp files
-  - unsafe target execution test: production profile denies `targetCwd`/`bypassPermissions`
-  - routine dry run: metrics summary to local artifact, no Telegram send
-
-- `diaverseapi`
-  - targeted pytest for new internal analytics/finance endpoints
-  - auth tests for service token scopes
-  - migration check if any schema changes are introduced
-
-- `diaverse-content`
-  - draft import tests remain draft-only
-  - internal scope tests for `content:read` and `content:create`
-  - smoke: create draft from AI Cofounder payload and verify it is not published
-
-- `aibot`
-  - publish adapter tests for draft-only content import
-  - schema validation tests for club/game article metadata
-
-- `diaweb`
-  - content staff route tests if touched
-  - SEO route smoke for `robots.txt`, `sitemap.xml`, `llms.txt`
-  - production deploy smoke confirms `/api/health` still belongs to diaweb and `/ru/learn/*` belongs to content edge
+  - no feature build required if only archived docs are changed
+  - if code/runtime files are edited, run the smallest relevant existing check
 
 - Server smoke
-  - container starts with no secret values in logs
-  - healthcheck passes
-  - one manual routine can read safe metrics and write a run journal entry
-  - one content draft can be generated and imported as draft
-  - Telegram dry-run or approved test chat receives a redacted report
-  - disabling the systemd timer stops scheduled work
+  - SSH access works after reboot
+  - AI Cofounder runtime is stopped/disabled
+  - content factory health endpoint remains healthy
+  - one draft-only import succeeds
+  - no schedules or auto-publish paths are active
 
-## Commit And Push Plan
+## Commit Plan
 
-Use small commits grouped by repository:
-
-- `diaverse-ai-cofounder`
-  - `chore(cofounder): import baseline and add diaverse rules`
-  - `feat(cofounder): add linux secrets and scheduling adapters`
-  - `fix(cofounder): disable unsafe unattended targets by default`
-  - `feat(cofounder): add diaverse agents and content draft workflow`
-  - `chore(cofounder): add deployment and operations docs`
-
-- `diaverseapi`
-  - `feat(api): expose safe ai cofounder metrics summaries`
-
-- `diaverse-content`
-  - `feat(content): expose scoped content read integration`
-  - or no commit if existing internal APIs are enough
-
-- `aibot`
-  - `feat(aibot): support ai cofounder draft handoff`
-  - or no commit if existing publish adapter is enough
-
-- `diaweb`
-  - `feat(web): promote content seo aggregation to production`
-  - only if production branch still lacks the dev content SEO routes
-
-- root `diaverse`
-  - `docs: plan ai cofounder server integration`
-  - `docs: add ai cofounder deployment runbook`
+- **Commit 1 (`diaverse-content`)** after Tasks 3-4:
+  - `feat(content): add codex content operator context`
+- **Commit 2 (`diaverse-content`)** after Tasks 5-7:
+  - `feat(content): add content operator metrics and dashboard`
+- **Commit 3 (`diaverse-content`)** after Tasks 6 and 8:
+  - `feat(content): add codex draft import tooling`
+- **Commit 4 (`diaverse-content`)** after tests/docs:
+  - `test(content): cover codex content operator flow`
+- **Commit 5 (root `diaverse`)** after Tasks 2 and 9:
+  - `docs(workspace): retire ai cofounder runtime`
+- **Commit 6 (`diaverse-ai-cofounder`, optional)** if archive docs are edited:
+  - `docs(cofounder): mark runtime archived`
 
 ## Open Risks
 
-- The upstream AI-Cofounder starter is designed for macOS. Linux production support is real implementation work, not just configuration.
-- The current `executeUnattendedRoutine` path can bypass permissions when pointed at external project directories. This must be guarded before server schedules are enabled.
-- Finance and analytics data needs careful minimization. Start with aggregate reports, not table-level database access.
-- AI content quality depends on a later SEO/content strategy pass. This plan builds the structure and safety rails first.
-- `diaverse.app` production SEO aggregation is not fully live until the `diaweb` production branch receives the content SEO route changes already proven on dev.
+- Existing analytics are mostly first-party guide counters. Search Console, Yandex,
+  install attribution, club conversion, and revenue attribution may need later adapters.
+- If `diaverse-content` production env does not expose a safe internal import token for
+  operator scripts, Task 6 must add or document the minimal env contract.
+- The current import source name `ai-cofounder` may exist in historical rows; do not
+  rename old DB data in this phase.
+- Deleting the AI Cofounder repo immediately would lose useful context and rollback
+  options. Archive first, delete only after successful Codex-driven content runs.
+- Codex-driven "auto" generation is still manually initiated by the user. True unattended
+  generation would require a server-side LLM credential or another hosted AI runtime.
 
 ## Definition Of Done
 
-- `diaverse-ai-cofounder` exists as a private GitLab-backed child repo.
-- It runs on the foreign server with Linux secrets and scheduling.
-- It has Diaverse-specific product context and safe agents.
-- It can read approved aggregate data only.
-- It can create content drafts through the approved draft-only path.
-- It reports to Telegram with human approval gates.
-- It cannot publish content, mutate production DBs, or run unrestricted code/shell on production by default.
-- Targeted tests and server smoke checks pass.
-- Deployment and rollback runbooks exist.
-- GBrain and daily logs remain untouched unless the user later allows updates.
+- `diaverse-content` contains all content strategy, topic matrix, safety rules, and
+  Codex run instructions needed for future content sessions.
+- Codex can export metrics/context, generate draft payloads, validate them, and import
+  draft-only articles without AI Cofounder.
+- Admin has a stream-level content operations view for deciding what to update,
+  expand, or generate next.
+- AI Cofounder runtime is stopped/disabled on the foreign server and removed from the
+  active architecture.
+- No server-side LLM API key is required for the new manual Codex workflow.
+- Existing content imports, analytics, admin editing, and publication review still work.

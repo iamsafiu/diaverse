@@ -21,6 +21,7 @@ The repo owns content state only: drafts, revisions, slugs, slug history, conten
 | Staff identity/RBAC | `diaverseapi` | Content permissions come from backend staff access |
 | Site analytics storage | `diaverseapi` | Content pages post sanitized visits through the content runtime proxy |
 | Copywriting drafts | `aibot` | Optional draft import source, disabled by default |
+| Codex content operator | local Codex session + `diaverse-content` | Manual metrics analysis and draft-only import flow |
 | Content database/media | `diaverse-content` | Separate Postgres and S3-compatible media storage |
 
 ## Route Map
@@ -91,9 +92,37 @@ diaverse-content server  -> diaverseapi /v1/analytics/site/visit
 
 The content runtime does not forward browser cookies to `diaverseapi` for analytics.
 
+## Codex Operator Flow
+
+Content generation is manual and operator-driven. The server does not need a
+server-side LLM API key for this flow:
+
+```text
+owner connects to content server
+        |
+        v
+local Codex session reads metrics + content operator rules
+        |
+        v
+Codex proposes topics, rewrites, and draft payloads
+        |
+        v
+diaverse-content validates and imports draft-only guides
+        |
+        v
+human reviews and publishes through admin
+```
+
+This replaces the earlier active AI Cofounder runtime for content operations.
+AI Cofounder may remain in Git history as a strategy/prompt archive, but it
+should not be required for article analysis, draft generation, import, review,
+or publication.
+
 ## Draft Import Bridge
 
-`aibot` can define a `content` or `stateinik` publish target, but the bridge is disabled by default in both runtimes:
+`aibot` can define a `content` or `stateinik` publish target, and local Codex
+operator runs can send validated draft payloads. Imports are disabled by default
+unless the content runtime explicitly enables them:
 
 ```text
 COPYWRITING_CONTENT_PUBLISH_ENABLED=false
@@ -109,6 +138,7 @@ source_service + source_draft_id + source_draft_version + source_content_hash
 The v1 payload ownership is:
 
 - `aibot`: source draft id/version/hash, title, markdown body, and safe source metadata.
+- local Codex operator: source draft id/version/hash, title, markdown body, topic ids, CTA metadata, and safe source metadata.
 - publish target config: area, locale, author id, guide type, and difficulty.
 - `diaverse-content`: guide id, slug conflict handling, draft lifecycle, revisions, and publish decisions.
 

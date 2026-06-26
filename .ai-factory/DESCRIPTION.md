@@ -2,7 +2,7 @@
 
 ## Overview
 
-Shared coordination workspace for the Diaverse system. This folder groups the web frontend, the mobile frontend, the core backend, the internal copywriting service, the standalone content factory, and the standalone Club10000 bot so AI agents can reason about the whole system in one place without collapsing the repositories into a monorepo. The workspace root is a lightweight git repository for cross-repo documentation, AI context, and shared scripts only.
+Shared coordination workspace for the Diaverse system. This folder groups the web frontend, the mobile frontend, the core backend, the internal copywriting service, the standalone content factory, the archived AI Cofounder reference repo, and the standalone Club10000 bot so AI agents can reason about the whole system in one place without collapsing the repositories into a monorepo. The workspace root is a lightweight git repository for cross-repo documentation, AI context, and shared scripts only.
 
 ## Repositories
 
@@ -11,6 +11,7 @@ Shared coordination workspace for the Diaverse system. This folder groups the we
 - **diaverseapi** - FastAPI backend, SQLModel/SQLAlchemy, Alembic, PostgreSQL, Redis, task processing
 - **aibot** - internal copywriting service, FastAPI + worker + Telegram ingest runtimes, OpenAI/Groq-backed LLM workflows
 - **diaverse-content** - standalone Next.js/Prisma content factory for public learn pages, drafts, revisions, slugs, content search, and content SEO fragments
+- **diaverse-ai-cofounder** - archived/R&D AI Cofounder reference repo. Keep it for historical content strategy, prompts, and rollback context only; it is not an active runtime dependency for content operations.
 - **club10000-bot** - standalone Club10000 Telegram bot, aiohttp callbacks, aiogram runtime, Prodamus recurring payments, and bot-local PostgreSQL state
 - **diaverse-auth-bot** - stateless Telegram auth transport adapter for Diaverse browser login and mobile Telegram linking
 
@@ -20,7 +21,8 @@ Shared coordination workspace for the Diaverse system. This folder groups the we
 - **Auth bot:** `diaverse-auth-bot` owns only the Telegram transport for login and mobile-link deep links. `diaverseapi/app/security` owns login session state, user provisioning, Telegram identity persistence, cookies, RBAC assignment, and account-linking semantics.
 - **Mobile app:** `diaverse-mobile` owns the iOS/Android client runtime and release configuration. Its shared backend source of truth is `diaverseapi`; `diaweb` remains the web frontend and same-origin BFF layer, not the default backend authority for mobile contracts.
 - **Staff shop skin uploads:** `diaverseapi` owns canonical `PilotSkin`/`PetSkinDef` mutations, Pillow PNG validation/WebP conversion, `SKIN_UPLOADS_DIR`, `/static/skin-uploads`, upload audit rows, and stale shop/library image override refresh. `diaweb` owns the staff upload dialog. `diaverse-mobile` consumes the resulting canonical image/avatar fields through existing backend APIs.
-- **Content factory:** `diaverse-content` owns content state, public learn rendering, content search, draft/revision lifecycle, slug history, and content SEO fragments. Public content is intended to be mounted on the main domain under `/ru/learn/*`; browser staff entrypoints remain in `diaweb`, while staff identity and RBAC remain in `diaverseapi`.
+- **Content factory:** `diaverse-content` owns content state, public learn rendering, content search, draft/revision lifecycle, slug history, content SEO fragments, first-party content metrics, and the manual Codex operator workflow for analyzing metrics and creating draft-only articles. Public content is intended to be mounted on the main domain under `/ru/learn/*`; browser staff entrypoints remain in `diaweb`, while staff identity and RBAC remain in `diaverseapi`.
+- **Archived AI Cofounder:** `diaverse-ai-cofounder` is retained as a historical/R&D source for prompts, strategy notes, and rollback context. It is not part of the active content production path, should not run schedules, and should not be required for generating or importing content drafts.
 
 ## Shared AI Layer
 
