@@ -192,6 +192,43 @@ cd /srv/diaverse-ai-cofounder/current
 docker compose --env-file .env.production stop bridge
 ```
 
+## Remote Local Control
+
+Use a dedicated `cofounder-ops` SSH user for local AI/controller access. The user
+must not be in the Docker group. It receives passwordless sudo only for the
+root-owned wrapper:
+
+```text
+/usr/local/sbin/diaverse-ai-cofounder-ops
+```
+
+From the workspace, use:
+
+```powershell
+$env:AI_COFUNDER_SSH_HOST="<host>"
+powershell -ExecutionPolicy Bypass -File .\scripts\ai-cofounder-remote.ps1 health
+powershell -ExecutionPolicy Bypass -File .\scripts\ai-cofounder-remote.ps1 status
+powershell -ExecutionPolicy Bypass -File .\scripts\ai-cofounder-remote.ps1 logs bridge 200
+powershell -ExecutionPolicy Bypass -File .\scripts\ai-cofounder-remote.ps1 routines
+powershell -ExecutionPolicy Bypass -File .\scripts\ai-cofounder-remote.ps1 run <routine-id>
+```
+
+For browser access to the private bridge UI, open a local tunnel:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\ai-cofounder-remote.ps1 tunnel
+```
+
+Then open:
+
+```text
+http://127.0.0.1:3737
+```
+
+The remote wrapper validates command names, service names, log limits, and
+routine ids before calling Docker Compose. Direct Docker access and arbitrary
+sudo should remain blocked for `cofounder-ops`.
+
 ## Rotate Secrets
 
 Prefer rotating the upstream service credential first, then replacing the file
