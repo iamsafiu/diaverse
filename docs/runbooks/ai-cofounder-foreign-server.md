@@ -72,7 +72,9 @@ shared/secrets/diaverse_content__internal_jwt_secret
 ```
 
 Secret values must be files under `shared/secrets/`, not inline in the runbook,
-shell history, docs, GitLab variables visible to broad roles, or Telegram.
+shell history, docs, GitLab variables visible to broad roles, or Telegram. The
+containers run as uid `10001`, so keep `shared/secrets/` owned by `10001:10001`
+with mode `0700`, and keep secret files owned by `10001:10001` with mode `0600`.
 
 ## First-Time Setup
 
@@ -85,6 +87,7 @@ chmod 700 "$APP/shared" "$APP/shared/secrets"
 touch "$APP/shared/.env.production"
 touch "$APP/shared/config/allowlist.md" "$APP/shared/config/support-source.md"
 chmod 600 "$APP/shared/.env.production"
+chown 10001:10001 "$APP/shared/secrets"
 ```
 
 Populate `.env.production` from the repo example and create secret files with
@@ -239,6 +242,7 @@ receiving service when possible.
 cd /srv/diaverse-ai-cofounder
 install -m 600 /dev/null shared/secrets/<logical_secret_name>.next
 vi shared/secrets/<logical_secret_name>.next
+chown 10001:10001 shared/secrets/<logical_secret_name>.next
 mv shared/secrets/<logical_secret_name>.next shared/secrets/<logical_secret_name>
 ```
 
