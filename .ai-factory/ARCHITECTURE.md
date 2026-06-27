@@ -47,6 +47,7 @@ diaweb -> aibot          # internal JWT-backed BFF integration for copywriting
 diaverse-mobile -> diaverseapi   # mobile app API integration over shared backend contracts
 diaverseapi -> aibot     # signed club creative asset requests only
 aibot -> diaverseapi     # copywriting-clubbot signed club Telegram events/outbox only
+aibot -> diaverseapi     # ops-agent signed diagnostics and registered repair actions only
 diaweb -> diaverse-content  # internal JWT-backed BFF integration for content staff workflows
 aibot -> diaverse-content   # optional disabled draft import bridge only after content contracts stabilize
 local Codex session -> diaverse-content # manual content analysis, metrics export, draft-only imports
@@ -95,6 +96,21 @@ aibot                        -> Telegram Bot API using bot_profile=club only for
 ```
 
 The Diaverse club domain state belongs to `diaverseapi`. `aibot` generates and publishes creative assets but never owns membership, roster, payment, pair, or leaderboard truth. `copywriting-clubbot` in `aibot/app/clubbot` owns Telegram system/member lifecycle runtime actions on the foreign bot server, while `diaverseapi/app/club` owns the persisted state and outbox. `club10000-bot` owns the separate Club10000 bot-local state required for funnels, reminders, referrals, historical payment attempts, and Prodamus callback handling; it mirrors only normalized payment status into `diaverseapi`. Leaderboard content can be sent by the existing Premium userbot. Club operational notes live in `docs/club.md`.
+
+### Ops Agent
+
+```text
+trusted Telegram operator -> aibot/app/ops_agent polling runtime
+aibot case memory          -> copywriting database tables and Markdown playbooks
+aibot ops-agent            -> signed HMAC HTTP -> diaverseapi/app/ops_agent
+diaverseapi ops-agent      -> payment diagnostics, action registry, previews, executions
+aibot Codex runner         -> local codex exec with dedicated CODEX_HOME/workspace
+```
+
+The ops-agent is an internal operator tool. It may investigate with sanitized
+case memory, playbooks, read-only database access, and local Codex analysis,
+but product mutations must go through registered `diaverseapi` actions with
+guards, idempotency keys, risk policy, and audit events.
 
 ### Content Factory
 

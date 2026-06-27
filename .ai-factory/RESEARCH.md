@@ -1,39 +1,82 @@
 # Research
 
-Updated: 2026-06-04 11:55
+Updated: 2026-06-26 21:53
 Status: active
 
 ## Active Summary (input for /aif-plan)
 <!-- aif:active-summary:start -->
-Topic: Advent calendar revenue analysis and monetization strategy
-Goal: Analyze the April and May Advent calendars, understand revenue, currency/payment-method behavior, paid/free day balance, funnel losses, and define a strategy to raise calendar revenue toward 2000 USDT.
+Topic: Telegram Codex ops-agent interaction modes
+Goal: Let the Telegram ops bot work both as a normal conversational bot and as an operational case runner without starting the heaviest Codex flow for every casual message.
 Constraints:
-  - Explore mode allows persisting research only in `.ai-factory/RESEARCH.md`; no product code or other docs were edited
-  - Production database inspection was read-only and aggregated; no user ids, guest ids, IPs, tokens, checkout URLs, or raw provider payloads are captured here
-  - Revenue is counted from successful paid Advent unlocks in the relevant 2026 calendar windows
-  - Business source prices are USD/USDT; Pay1Time and Prodamus collect through RUB provider amounts via FX; crypto uses USDTTRC20
-  - Old 2024 Zion rows attached to the April calendar exist in raw data and must be excluded from 2026 calendar-window analysis
+  - Explore mode allows persisting research only in `.ai-factory/RESEARCH.md`; `.ai-factory/PLAN.md` should be updated later through `$aif-plan` or `$aif-improve`
+  - The bot should remain simple enough for MVP: Telegram control plane, Codex as worker brain, no custom rich Codex client at first
+  - Casual chat must not accidentally execute repair actions or use production write capabilities
+  - Case mode may use playbooks, similar case memory, read-only DB diagnostics, Codex investigation, and registered/generated actions according to risk policy
 Decisions:
-  - April calendar `aprelskiy_kalendar` is a 15-day calendar: 2026-04-15 through 2026-04-30, 6 paid and 9 free days, full paid path listed at 19 USD
-  - May calendar `mayskiy_kalendar` is a 31-day calendar: 2026-05-01 through 2026-06-05, active as of 2026-06-04, 8 paid and 23 free days, full paid path listed at 29 USD
-  - Main monetization issue is the first paid gate, not late-calendar pricing or weak first paid rewards: April day 3 and May day 5 cut a large portion of engaged users despite generous reward bundles
-  - After the first paid gate, remaining players are highly monetizable; later paid days show strong reached-to-paid conversion
-  - Recommended direction: keep a low-friction free runway, sell a discounted pass/mini-pass, make Pay1Time/RUB the primary CTA, and keep crypto secondary
+  - Support two modes:
+    - Chat mode: free-form conversation, lightweight Codex/LLM call or resumed chat thread, no repair execution.
+    - Case mode: create/resume ops case, load playbook, inspect similar cases, run read-only diagnostics, invoke Codex investigation, then preview/execute actions by risk policy.
+  - Free-form Telegram messages should be classified by intent:
+    - casual/general question -> Chat mode
+    - incident/support request -> ask to create an ops case or auto-create when confidence is high
+    - explicit command -> route directly
+  - Required Telegram commands:
+    - `/chat <text>` for lightweight conversation
+    - `/ops <text>` for case creation
+    - `/case <id>` for case resume
+    - `/status` for active cases
+    - `/close` for closing the active case
+    - `/mode chat|ops` for default behavior in the current Telegram thread
+  - Persist thread mapping by `telegram_chat_id`, optional `telegram_thread_id`, `telegram_user_id`, `active_codex_thread_id`, and optional `active_case_id`.
+  - Use `codex exec resume <thread_id>` for follow-up messages when possible instead of starting a new Codex thread every time.
+  - For the first implementation, prefer `codex exec --json` as the worker interface. Hooks/notify are outbound alerts only; MCP is optional tooling inside Codex; app-server/SDK can come later if richer thread control is needed.
 Open questions:
-  - Exact next calendar theme, reward inventory, and whether a pass product can be implemented before the next launch
-  - Whether to A/B test first paid day timing and pass pricing or ship a single improved calendar model
-  - Whether failed/abandoned crypto checkout users should receive a guided SBP fallback prompt
-  - Whether calendar cell display titles are the same as actual reward bundles; several DB rows show title/reward mismatches that may weaken perceived value
+  - Whether Chat mode should use Codex only, or a cheaper direct LLM path for simple non-code conversation.
+  - Whether incident intent should auto-create cases or always ask confirmation for the first MVP.
+  - How long to keep a chat thread active before expiring the `active_codex_thread_id`.
 Success signals:
-  - Calendar revenue reaches or exceeds 2000 USDT
-  - First paid gate conversion improves from roughly 11-13% of reached users to at least 20-25%
-  - ARPPU rises from May's 18.16 USDT toward 27 USDT or higher
-  - Pay1Time remains the dominant successful path while failed crypto checkout leakage falls
-Next step: Convert this research into an implementation/product plan outside explore mode if changes are needed; likely work touches Advent pricing/admin data, checkout UX, pass/bundle products, and payment fallback messaging
+  - The operator can casually talk to the bot without creating cases or touching repair actions.
+  - A clear ops request creates or resumes a case and runs the heavier playbook/diagnostic/Codex flow.
+  - Follow-up messages continue the right Codex thread or case instead of losing context.
+  - Tests cover intent classification, mode switching, thread persistence, and separation between Chat mode and action execution.
+Next step: Update `.ai-factory/PLAN.md` through `$aif-plan` or `$aif-improve` to include Telegram interaction modes in the architecture decisions, Task 10 runtime deliverables, Task 13 lifecycle, verification plan, and definition of done.
 <!-- aif:active-summary:end -->
 
 ## Sessions
 <!-- aif:sessions:start -->
+### 2026-06-26 21:53 - Telegram bot chat and case modes
+What changed:
+  Captured the decision that the Telegram ops bot should support both normal conversation and explicit operational case workflows.
+
+Key notes:
+  - Chat mode handles ordinary messages and questions without repair/action execution.
+  - Case mode creates or resumes ops cases, loads playbooks, checks similar cases, runs read-only diagnostics, and invokes Codex investigation.
+  - Free-form messages should be intent-classified before choosing mode.
+  - Required commands should include `/chat`, `/ops`, `/case`, `/status`, `/close`, and `/mode chat|ops`.
+  - Persist thread mapping by Telegram chat/thread/user and Codex thread/case ids.
+  - Prefer `codex exec --json` and `codex exec resume` for MVP worker control.
+  - Use hooks/notify only for outbound alerts, MCP only as optional Codex tooling, and app-server/SDK later for richer thread control if needed.
+
+Links (paths):
+  - `.ai-factory/PLAN.md`
+  - `aibot/app/ops_agent/handlers.py`
+  - `aibot/app/ops_agent/orchestrator.py`
+  - `aibot/app/ops_agent/codex_runner.py`
+
+### 2026-06-23 07:33 - Factory map/layout convention
+What changed:
+  Captured the product convention that all factory levels must use the same playable map and the same workshop layout/hotspot geometry.
+
+Key notes:
+  - Current source verification found shared hotspot geometry in `diaweb/frontend/modules/factory/assetManifest.ts`, so workshop positions were not removed.
+  - Initial source verification found that level 2 and level 3 did not resolve to the exact same playable background/aspect ratio.
+  - Follow-up implementation aligned level visual keys and level 3 preview to the shared playable map asset/geometry.
+
+Links (paths):
+  - `diaweb/frontend/modules/factory/assetManifest.ts`
+  - `diaweb/frontend/modules/factory/components/FactoryScene.tsx`
+  - `diaweb/frontend/__tests__/modules/factory/FactoryScene.test.tsx`
+
 ### 2026-06-04 11:55 - April and May Advent revenue strategy
 What changed:
   Captured a read-only production analysis of the April and May Advent calendars, including configuration, revenue, payment methods, currency behavior, paid-day funnel performance, and a recommended monetization strategy toward 2000 USDT calendar revenue.

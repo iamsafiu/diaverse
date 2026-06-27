@@ -47,6 +47,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | Product Master Plan | [product/master-plan.md](product/master-plan.md) | Перед изменением продуктового scope |
 | Copywriting Web Architecture | [architecture/copywriting-web-architecture.md](architecture/copywriting-web-architecture.md) | Перед изменением staff copywriting |
 | Content Factory Architecture | [architecture/content-factory.md](architecture/content-factory.md) | Перед изменением `diaverse-content`, `/ru/learn/*`, staff content BFF, SEO fragments или зарубежного runtime |
+| Ops Agent Architecture | [architecture/ops-agent.md](architecture/ops-agent.md) | Перед изменением Telegram ops-agent, Codex runner, playbooks, action registry, generated actions или case memory |
+| Ops Agent Runbook | [runbooks/ops-agent.md](runbooks/ops-agent.md) | Перед запуском, дежурством, smoke check или rollback Telegram Codex ops-agent |
 | Copywriting Auth Bot Broadcasts | [features/copywriting/auth-bot-broadcasts.md](features/copywriting/auth-bot-broadcasts.md) | Перед изменением рассылок через auth bot в staff copywriting |
 | Copywriting Club10000 Broadcasts | [features/copywriting/club10000-broadcasts.md](features/copywriting/club10000-broadcasts.md) | Перед изменением рассылок через `@club10000_bot` в staff copywriting |
 | Cabinet Auth Guide | [features/cabinet/auth-guide.md](features/cabinet/auth-guide.md) | Перед изменением auth UI/BFF |

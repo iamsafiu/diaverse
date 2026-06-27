@@ -1,4 +1,4 @@
-# Implementation Plan: Content Factory Codex Operator And AI Cofounder Retirement
+# Implementation Plan: Telegram Codex Ops Agent
 
 Branch: none
 Created: 2026-06-26
@@ -7,354 +7,469 @@ Mode: fast plan, no branch creation
 ## Settings
 
 - Testing: yes
-- Logging: standard
+- Logging: verbose for the new ops-agent flows, safe and sanitized for production
 - Docs: yes
 - Roadmap: none found in `.ai-factory/ROADMAP.md`
-- GBrain/daily: do not update by explicit user instruction
+- GBrain: use local GBrain first for architecture/code navigation and run targeted sync after meaningful docs/code changes
+- Runtime: deploy as an internal Telegram ops bot on the trusted bots server; no public Codex web UI or exposed app-server
+- LLM/Codex: use a server-side Codex/GPT runner abstraction; exact CLI/SDK install command must be verified against current official OpenAI docs during implementation
 
 ## Goal
 
-Move Diaverse content operations to a simpler model:
+Build an internal Telegram operations agent for Diaverse. A trusted operator can tag the bot in Telegram with a support task, for example:
 
-- `diaverse-content` is the only active runtime for public content, drafts, metrics,
-  article review, and publication.
-- Local Codex sessions act as the AI operator. The user periodically connects to the
-  server, starts Codex, asks it to analyze metrics, generate topics/articles, and
-  import draft-only content.
-- The server does not need an LLM API key, Claude CLI OAuth, autonomous schedules,
-  Telegram AI Cofounder reporting, or an always-on AI Cofounder bridge.
-- `diaverse-ai-cofounder` is retired from the critical path after its useful content
-  strategy, topic matrix, prompts, and safety rules are migrated into `diaverse-content`.
+```text
+@diaverse_ops_bot пользователь 123 оплатил, но начисление не пришло. Проверь и реши.
+```
 
-## Requirements Snapshot
+The bot should:
 
-- Keep article generation draft-only. Generated content must never publish
-  automatically.
-- Preserve the two content streams:
-  - `club`: Club 10000 SEO and paid club funnel.
-  - `game`: cold acquisition positioning Diaverse as an MMO-RPG step tracker.
-- AI remains an internal production tool, not a public topic cluster.
-- Codex must be able to consume content metrics, topic matrix, editorial rules, and
-  draft import contracts from inside `diaverse-content`.
-- Existing content import and analytics behavior must continue to work.
-- AI Cofounder server runtime should be stopped/disabled safely, not destructively
-  deleted before the migration is verified.
+- create an ops case and remember the full lifecycle in a sanitized case memory;
+- look up a simple text playbook library before doing fresh investigation;
+- look up similar past cases from the case database;
+- run safe diagnostics against Diaverse services, read-only database access, and code context;
+- use a Codex/GPT session on the server to analyze cause and propose a fix;
+- request approval according to action risk before product mutations;
+- execute only registered audited repair actions through `diaverseapi`, not arbitrary production write SQL;
+- auto-author missing repair actions as code when no existing action can safely solve a repeated problem;
+- return a Telegram summary: what was repaired, why it broke, what code/config should be fixed, and what was stored for next time;
+- speak in a light internal humorous tone while keeping money, security, approvals, and audit records factual.
 
-## Reconnaissance Notes
+## Research Context
 
-- The foreign server was rebooted by the user and SSH access was reachable during
-  planning with hostname `discontent`.
-- `diaverse-content` already has:
-  - public learn routes under `src/app/ru/learn/*`
-  - admin guide editor under `src/app/admin/guides/*`
-  - per-guide analytics under `src/app/admin/guides/[id]/analytics`
-  - internal draft import route at `src/app/internal/v1/imports/drafts/route.ts`
-  - import parser at `src/lib/internal/imports.ts`
-  - metrics helpers under `src/lib/analytics/*`
-  - anti-AI text checks under `src/lib/guides/anti-ai-check.ts`
-- The current import contract accepts `source_service = aibot | ai-cofounder`.
-  The new model should add a neutral source such as `codex` or
-  `content-operator`, while keeping `ai-cofounder` as legacy compatibility only
-  until old imports are no longer needed.
-- `diaverse-ai-cofounder` already contains reusable source material:
-  - `projects/diaverse/content-playbook.md`
-  - `projects/diaverse/topic-matrix.ru.md`
-  - `org/*.md`
-  - `agents/diaverse-content-strategist/*`
-  - `agents/diaverse-article-drafter/*`
-  - `skills/article-writing/references/*`
+Local `.ai-factory/RESEARCH.md` active summary now covers this feature (`Telegram Codex ops-agent interaction modes`), so its chat/case-mode decisions are carried into Task 1 and the Telegram runtime tasks.
+
+Context gathered for this plan:
+
+- GBrain docs confirm that the workspace is a coordination repo and cross-repo implementation belongs in child repositories.
+- Existing Telegram/bot deployment patterns already live in `aibot`, `club10000-bot`, and `diaverse-auth-bot`.
+- Existing signed internal HTTP patterns exist between `aibot` and `diaverseapi` for Club10000 delivery.
+- `diaverseapi` already owns cabinet payments, payment sessions, finalizers, RBAC, and cabinet logging.
+- The safest MVP is an `aibot` ops-agent runtime that calls narrow signed `diaverseapi` ops endpoints for diagnostics and approved actions.
+- The knowledge base should stay simple: Markdown playbooks are the source of truth for "how to solve this class of issue"; the database stores concrete case history, action runs, and links back to playbook ids.
+- The agent may receive broad read-only database access for investigation, but product mutations still go through registered actions or generated action code that passed automated safety gates.
+- The Telegram bot should support both free-form Chat mode and operational Case mode. Casual chat must not create cases or execute repair actions unless the message is classified as an incident or the operator explicitly uses `/ops`.
 
 ## Affected Repositories
 
-- `diaverse-content`: primary owner for Codex operator context, metrics exports,
-  draft import tooling, dashboard improvements, tests, and docs.
-- `diaverse-ai-cofounder`: source-only during migration; then archive/retire runtime
-  docs and stop server services.
-- root `diaverse`: update workspace AI context/docs so AI Cofounder is no longer
-  described as an active runtime dependency.
-- `diaweb`, `diaverseapi`, `aibot`, `diaverse-mobile`, `club10000-bot`,
-  `diaverse-auth-bot`: not expected to change in this phase.
+- `aibot`: primary MVP runtime for Telegram ops agent, Codex runner adapter, case memory, voice layer, orchestration, tests, and deployment entrypoint.
+- `diaverseapi`: owner of safe signed diagnostics/actions for payment investigations and audited repairs.
+- root `diaverse`: this plan, cross-repo docs/runbooks, GBrain sync, and daily work entry.
+- `diaweb`: no MVP implementation; possible future staff dashboard for ops cases.
+- `diaverse-mobile`: no MVP implementation.
+- `diaverse-content`: no MVP implementation.
+- `club10000-bot`: no MVP implementation unless future Club10000-specific case actions are added.
+- `diaverse-auth-bot`: no MVP implementation.
 
 ## Architecture Decisions
 
-1. Use `diaverse-content` as the active content control plane.
-2. Use Codex as a manual operator, not a persistent server daemon.
-3. Do not require `ANTHROPIC_API_KEY` or Claude CLI auth on the content server.
-4. Keep generated drafts reviewable in `/admin/guides/*`.
-5. Store content strategy and operator instructions close to the content engine,
-   not in a retired AI Cofounder runtime.
-6. Keep AI Cofounder GitLab history as an archive first; only delete later if the
-   user explicitly confirms after successful content runs.
-
-## Phase 1 - Freeze AI Cofounder Runtime Safely
-
-- [x] Task 1: Inspect the rebooted foreign server and stop only AI Cofounder runtime services
-  - Files/repos:
-    - operational target: existing AI Cofounder deployment directory on the foreign server
-    - optional docs update: `diaverse-ai-cofounder/infrastructure/foreign-server/README.md`
-  - Deliverable:
-    - confirm SSH access and current service/container state after reboot
-    - stop AI Cofounder containers/systemd units/unfinished builds if present
-    - disable AI Cofounder autostart/schedules if configured
-    - preserve releases, env files, volumes, logs, and GitLab repo history
-    - do not touch `diaverse-content` services during this task
-  - Logging:
-    - log only service names, statuses, container names, command outcomes, and timestamps
-    - do not log secrets, env values, private keys, tokens, raw SSH commands with key paths,
-      or full server inventory
-  - Dependencies:
-    - none
-
-- [x] Task 2: Mark AI Cofounder as retired from the active architecture
-  - Files/repos:
-    - root `.ai-factory/DESCRIPTION.md`
-    - root `.ai-factory/ARCHITECTURE.md`
-    - possible root docs under `docs/architecture/` if a content factory doc exists
-    - optional `diaverse-ai-cofounder/ARCHIVED.md`
-  - Deliverable:
-    - update architecture wording from active AI Cofounder runtime to archived/R&D source
-    - state that content operations now run through `diaverse-content` plus manual Codex sessions
-    - remove AI Cofounder from active dependency diagrams and active server runbooks
-    - keep a note that the repo is retained only for historical reference until explicit deletion
-  - Logging:
-    - no runtime logs; commit/diff summary may mention changed files only
-    - do not include server addresses, keys, env values, or private infrastructure details
-  - Dependencies:
-    - Task 1
-
-## Phase 2 - Move Content Brain Into diaverse-content
-
-- [x] Task 3: Create Codex operator context inside `diaverse-content`
-  - Files/repos:
-    - new `diaverse-content/content-operator/README.md`
-    - new `diaverse-content/content-operator/codex-runbook.md`
-    - new `diaverse-content/content-operator/content-playbook.ru.md`
-    - new `diaverse-content/content-operator/topic-matrix.ru.md`
-    - new `diaverse-content/content-operator/claim-safety.md`
-    - new `diaverse-content/content-operator/draft-output-contract.md`
-  - Deliverable:
-    - migrate the useful Club 10000 and MMO-RPG step tracker strategy from AI Cofounder
-    - define the exact Codex workflow: analyze metrics -> choose topics -> write drafts
-      -> validate/import draft-only -> human review -> publish manually
-    - include CTA rules, forbidden claims, public AI-topic ban, and draft-only requirements
-    - make the files self-contained so a future Codex session can start from this repo
-      without reading `diaverse-ai-cofounder`
-  - Logging:
-    - no runtime logs; generated docs must avoid secrets, private metrics, hidden formulas,
-      antifraud details, and unannounced roadmap
-  - Dependencies:
-    - Task 2
-
-- [x] Task 4: Add a neutral Codex/content-operator draft source to the import contract
-  - Files/repos:
-    - `diaverse-content/src/lib/internal/imports.ts`
-    - `diaverse-content/tests/content-imports.test.ts`
-    - optional `diaverse-content/content-operator/draft-output-contract.md`
-  - Deliverable:
-    - accept `source_service = codex` or `content-operator` for new manual Codex imports
-    - keep `ai-cofounder` accepted only as legacy compatibility, if needed
-    - keep `status=draft` and reject `auto_publish` exactly as today
-    - update tests to cover the new source service and preserve old idempotency behavior
-  - Logging:
-    - import logs must remain structured and minimal: request id, actor id, source service,
-      draft id, version, import id, guide id, area, locale, status
-    - do not log full article bodies, prompts, tokens, secrets, or raw source metadata values
-  - Dependencies:
-    - Task 3
-
-## Phase 3 - Add Codex-Friendly Metrics And Generation Tooling
-
-- [x] Task 5: Add a content performance service and internal JSON export for Codex
-  - Files/repos:
-    - new `diaverse-content/src/lib/analytics/content-performance.ts`
-    - new `diaverse-content/src/app/internal/v1/analytics/content-performance/route.ts`
-    - possible updates to `diaverse-content/src/lib/internal/auth.ts`
-    - new or updated tests under `diaverse-content/tests/`
-  - Deliverable:
-    - provide article-level and stream-level metrics for Codex analysis
-    - include area, locale, slug, title, status, published date, guide type, target keyword,
-      views, CTA clicks, feedback counts, H1 stats, draft import source, and topic ids
-    - support filters for `area`, `locale`, `days`, `status`, and `limit`
-    - return empty optional sections safely where Search Console/revenue adapters are not wired yet
-  - Logging:
-    - log internal export access at INFO with route, actor, request id, filters, row count,
-      and duration
-    - log validation failures at WARN
-    - do not log reader identifiers, raw cookies, authorization headers, env values, or
-      full article content
-  - Dependencies:
-    - Task 4
-
-- [x] Task 6: Add CLI scripts for local/server Codex content runs
-  - Files/repos:
-    - new `diaverse-content/scripts/content-operator-context.ts`
-    - new `diaverse-content/scripts/content-operator-import.ts`
-    - update `diaverse-content/package.json`
-    - new tests or fixtures under `diaverse-content/tests/`
-  - Deliverable:
-    - add `pnpm content:operator:context` to export a compact metrics + rules + topic
-      context pack for a Codex session
-    - add `pnpm content:operator:import` to validate and import generated draft payloads
-      through the existing internal draft import contract
-    - write generated run artifacts to a gitignored local directory such as
-      `.content-runs/<run-id>/`
-    - avoid any dependency on server-side LLM API keys
-  - Logging:
-    - CLI logs should include run id, filters, output paths, imported draft ids, guide ids,
-      skipped duplicates, and high-level errors
-    - do not print full article bodies by default; allow an explicit preview flag if needed
-    - do not log tokens, internal JWTs, cookies, or env values
-  - Dependencies:
-    - Tasks 3-5
-
-- [x] Task 7: Add a content operations dashboard for stream-level decisions
-  - Files/repos:
-    - new `diaverse-content/src/app/admin/content-ops/page.tsx`
-    - possible new `diaverse-content/src/app/admin/content-ops/ContentOpsView.tsx`
-    - reuse `diaverse-content/src/lib/analytics/content-performance.ts`
-  - Deliverable:
-    - show Club 10000 and game stream health in one admin page
-    - surface articles with low CTA rate, high views/no CTA, stale published date,
-      missing topic/CTA metadata, and draft backlog
-    - show clear next-action labels: update, expand cluster, improve CTA, keep, archive
-    - link each row to existing guide edit and per-guide analytics pages
-  - Logging:
-    - no client logs in normal operation
-    - server-side data load may log route, filters, row count, and duration at INFO
-    - do not log raw article bodies, private user data, or sensitive headers
-  - Dependencies:
-    - Task 5
-
-## Phase 4 - Guardrails, Docs, And Verification
-
-- [x] Task 8: Add validation for Codex-generated content payloads and strategy files
-  - Files/repos:
-    - new `diaverse-content/src/lib/content-operator/validate-draft.ts`
-    - new `diaverse-content/tests/content-operator.test.ts`
-    - possible updates to `diaverse-content/src/lib/guides/anti-ai-check.ts`
-  - Deliverable:
-    - validate required fields before import: source service, draft id, title, slug,
-      area, locale, target keyword, CTA, markdown hash, topic ids, and source metadata
-    - block auto-publish, forbidden claims, public AI-topic framing, hidden mechanics,
-      internal formulas, and investment/medical guarantees
-    - fail fast with actionable validation messages for Codex to repair the draft
-  - Logging:
-    - validator logs only rule ids and failed field names
-    - do not log full draft text unless an explicit local debug flag is set
-  - Dependencies:
-    - Tasks 3, 4, and 6
-
-- [x] Task 9: Document the new manual Codex operating flow
-  - Files/repos:
-    - `diaverse-content/README.md`
-    - `diaverse-content/content-operator/codex-runbook.md`
-    - root architecture docs from Task 2, if needed
-  - Deliverable:
-    - document how the user connects to the server, starts Codex, exports metrics,
-      asks for analysis, generates drafts, imports drafts, and reviews in admin
-    - document required env vars for content imports/analytics only
-    - explicitly state that no LLM API key is required on the server for this model
-    - document rollback: stop using Codex scripts, keep existing admin/manual editing
-  - Logging:
-    - no runtime logs; docs must not include secret values, private key paths, server IPs,
-      tokens, or raw env values
-  - Dependencies:
-    - Tasks 1-8
-
-- [x] Task 10: Verify locally and on the server with one dry content run
-  - Files/repos:
-    - `diaverse-content`
-    - operational target: content server deployment
-  - Deliverable:
-    - run `pnpm test`, `pnpm typecheck`, and targeted content-operator tests
-    - run the new metrics/context export command against local or server data
-    - create one sample Codex draft payload and import it as `status=draft`
-    - confirm the draft appears in admin and is not published
-    - confirm AI Cofounder runtime remains stopped/disabled and no schedules are active
-  - Logging:
-    - verification notes may include command names, pass/fail status, draft/import ids,
-      guide ids, and service status
-    - do not log full generated article bodies, env values, tokens, private server details,
-      or raw SSH command material
-  - Dependencies:
-    - Tasks 1-9
-  - Status 2026-06-26:
-    - `pnpm test` passed in `diaverse-content`
-    - `pnpm typecheck` passed in `diaverse-content`
-    - `pnpm build` passed in `diaverse-content`
-    - `pnpm content:operator:import -- --dry-run` passed with a valid Codex draft payload
-    - local `pnpm content:operator:context` starts but cannot complete without local DB env;
-      server context export passed against the deployed content DB
-    - foreign server confirms AI Cofounder runtime remains stopped: no matching Docker
-      containers, systemd services, user services, or timers
-    - foreign server `diaverse-content-app` and `diaverse-content-db` are healthy after
-      redeploy from release `20260626110731`
-    - `CONTENT_IMPORTS_ENABLED` was enabled with a backup of the prior env file; real
-      internal import succeeded as a draft-only guide with guide id
-      `cmqufe9jf0001qog7kos20jni` and import id `cmqufe9kl0003qog7f6z72y94`
-    - DB verification confirms the imported guide status is `draft`, area `game`,
-      locale `ru`, and source service `codex`
-    - post-import `pnpm content:operator:context -- --area game --days 30 --limit 5`
-      returned `rowCount=1`, so future Codex runs can see imported draft context
-
-## Verification Plan
-
-- `diaverse-content`
-  - `pnpm test`
-  - `pnpm typecheck`
-  - `pnpm build` if UI/dashboard or route changes are made
-  - targeted script smoke:
-    - `pnpm content:operator:context -- --days 30 --area game`
-    - `pnpm content:operator:import -- --file <local-test-payload>`
-
-- `diaverse-ai-cofounder`
-  - no feature build required if only archived docs are changed
-  - if code/runtime files are edited, run the smallest relevant existing check
-
-- Server smoke
-  - SSH access works after reboot
-  - AI Cofounder runtime is stopped/disabled
-  - content factory health endpoint remains healthy
-  - one draft-only import succeeds
-  - no schedules or auto-publish paths are active
+1. Telegram is the operator UI, not the authority for product mutations.
+2. `aibot` owns the MVP runtime because it already has Python, aiogram, OpenAI settings, database access, worker/API patterns, and bots-server deployment.
+3. `diaverseapi` remains the owner of product state changes. The agent never runs arbitrary write SQL against production.
+4. The agent can use a dedicated read-only database role for investigation. That role may inspect known product schemas but cannot run DDL, `INSERT`, `UPDATE`, `DELETE`, locks, or long-running statements.
+5. Codex runs inside a controlled server runner with a dedicated workspace, least-privilege credentials, and read-only defaults for diagnostics.
+6. Playbooks are Markdown files plus a small YAML index. They are the primary knowledge base because they are easy for humans and AI to read, diff, review, and update.
+7. Case memory stores concrete sanitized incidents, fingerprints, action results, closure summaries, and links to playbook ids. It does not duplicate the full playbook body into the database.
+8. If no registered action can solve a repeated issue, Codex may auto-author a new action as code without manual code review, but only inside a generated patch/worktree path that must pass automated policy checks, tests, static denylist checks, migration checks when relevant, and feature-flag activation before runtime use.
+9. A generated action cannot grant itself arbitrary authority. It must be registered with metadata: owner, risk level, preview support, idempotency, allowed service calls, tests, rollback notes, and audit fields.
+10. Production execution uses registered actions only. Risk policy decides whether execution needs Telegram approval, automatic approval, or break-glass handling; all paths require idempotency keys and audit events.
+11. Similar-case lookup uses playbook index matching first, exact/fingerprint DB lookup second, then safe full-text search. Embeddings or pgvector can be added later behind an explicit privacy/config decision.
+12. The Telegram bot supports two modes:
+    - Chat mode for ordinary conversation, lightweight Codex/LLM responses, playbook explanations, and case summaries without repair execution.
+    - Case mode for operational incidents, playbook selection, similar-case lookup, read-only diagnostics, Codex investigation, and action preview/execute by risk policy.
+13. Free-form Telegram messages are intent-classified before routing. Explicit commands override inference.
+14. Follow-up messages should resume an existing Codex thread or case where possible instead of starting a fresh run for every message.
+15. Humorous tone is a Telegram rendering layer only. Approval prompts, audit records, security errors, and money-impacting confirmations stay factual.
+16. The implementation should be extractable into a future standalone `diaverse-ops-agent` repo if the runtime grows beyond `aibot`.
 
 ## Commit Plan
 
-- **Commit 1 (`diaverse-content`)** after Tasks 3-4:
-  - `feat(content): add codex content operator context`
-- **Commit 2 (`diaverse-content`)** after Tasks 5-7:
-  - `feat(content): add content operator metrics and dashboard`
-- **Commit 3 (`diaverse-content`)** after Tasks 6 and 8:
-  - `feat(content): add codex draft import tooling`
-- **Commit 4 (`diaverse-content`)** after tests/docs:
-  - `test(content): cover codex content operator flow`
-- **Commit 5 (root `diaverse`)** after Tasks 2 and 9:
-  - `docs(workspace): retire ai cofounder runtime`
-- **Commit 6 (`diaverse-ai-cofounder`, optional)** if archive docs are edited:
-  - `docs(cofounder): mark runtime archived`
+- **Commit 1** (after tasks 1-3): `docs(ops): define Codex ops agent contracts`
+- **Commit 2** (after tasks 4-6): `feat(api): add ops diagnostics and action registry`
+- **Commit 3** (after tasks 7-10): `feat(aibot): add playbooks, case memory, and Telegram runtime`
+- **Commit 4** (after tasks 11-15): `test(ops): verify generated actions and rollout`
 
-## Open Risks
+## Tasks
 
-- Existing analytics are mostly first-party guide counters. Search Console, Yandex,
-  install attribution, club conversion, and revenue attribution may need later adapters.
-- If `diaverse-content` production env does not expose a safe internal import token for
-  operator scripts, Task 6 must add or document the minimal env contract.
-- The current import source name `ai-cofounder` may exist in historical rows; do not
-  rename old DB data in this phase.
-- Deleting the AI Cofounder repo immediately would lose useful context and rollback
-  options. Archive first, delete only after successful Codex-driven content runs.
-- Codex-driven "auto" generation is still manually initiated by the user. True unattended
-  generation would require a server-side LLM credential or another hosted AI runtime.
+### Phase 1: Contracts And Safety Model
+
+- [x] Task 1: Document the ops-agent architecture and runbook
+  - Files:
+    - `docs/architecture/ops-agent.md`
+    - `docs/runbooks/ops-agent.md`
+    - `docs/README.md`
+  - Deliverable:
+    - define the Telegram -> `aibot` -> Codex runner -> `diaverseapi` flow;
+    - define supported MVP case type: "paid but not credited";
+    - define the text playbook system: `playbooks/index.yml` plus one Markdown file per problem class;
+    - define read-only database investigation rules;
+    - define action registry, generated-action safety gates, approval levels, rollback expectations, incident closure format, and case-memory rules;
+    - define Chat mode vs Case mode, intent classification, thread persistence, and the required `/chat`, `/ops`, `/case`, `/status`, `/close`, and `/mode chat|ops` commands;
+    - define the Telegram tone policy with examples of allowed light humor and disallowed jokes around harm, money loss, access, security, or approvals.
+  - Logging:
+    - no runtime logging;
+    - docs must not include secrets, private server inventory, internal IPs, credentials, raw provider payloads, or raw production data.
+  - Dependencies:
+    - none
+
+- [x] Task 2: Define shared ops API contracts and schemas
+  - Files:
+    - `diaverseapi/app/ops_agent/schemas.py`
+    - `diaverseapi/app/ops_agent/__init__.py`
+    - `aibot/app/ops_agent/schemas.py`
+    - `aibot/app/ops_agent/__init__.py`
+  - Deliverable:
+    - define request id, case id, actor id, chat id, target user/payment identifiers, playbook id, fingerprint, idempotency key, approval id, action kind, and sanitized diagnostic payloads;
+    - define action registry metadata: risk level, supports preview, idempotency scope, required guards, allowed service methods, required tests, rollback notes, and audit fields;
+    - define generated-action proposal metadata: proposed action id, missing capability, code patch path, test command list, safety gate result, activation status, and failure reason;
+    - define common response envelopes for diagnostics, proposed action, generated action proposal, approval required, action executed, and action rejected;
+    - include versioned contract fields so the bot and API can evolve without silent breakage.
+  - Logging:
+    - schemas should separate safe log fields from raw payload fields;
+    - never log Telegram message text, provider payloads, auth headers, env values, or full stack traces with secrets.
+  - Dependencies:
+    - Task 1
+
+- [x] Task 3: Add environment/config preflight for the ops agent
+  - Files:
+    - `aibot/core/config.py`
+    - `aibot/.env.example`
+    - `diaverseapi/app/core/settings.py`
+    - `diaverseapi/.env.example`
+  - Deliverable:
+    - add disabled-by-default flags for ops-agent bot, signed internal ops API, Codex runner, and optional memory embeddings;
+    - add read-only database connection settings for investigation, separate from application write credentials;
+    - add allowlisted Telegram chat/user ids;
+    - add HMAC key id/secret settings for `aibot` -> `diaverseapi`;
+    - add Codex runner workspace, `CODEX_HOME`, timeout, concurrency, sandbox mode, generated-action worktree, generated-action policy, and auto-activation settings;
+    - fail closed when required config is missing.
+  - Logging:
+    - startup logs may report enabled/disabled feature flags and redacted key ids;
+    - never print tokens, HMAC secrets, OpenAI/Codex credentials, database URLs, or Telegram bot tokens.
+  - Dependencies:
+    - Task 1
+
+### Phase 2: `diaverseapi` Safe Ops Surface And Action Registry
+
+- [x] Task 4: Add signed internal ops-agent API auth and router
+  - Files:
+    - `diaverseapi/app/ops_agent/security.py`
+    - `diaverseapi/app/ops_agent/api.py`
+    - `diaverseapi/app/main.py` or existing API router registration file
+    - `diaverseapi/tests/test_ops_agent_security.py`
+  - Deliverable:
+    - implement HMAC verification with timestamp, key id, body digest, request id, replay window, and structured rejection reasons;
+    - register internal-only routes behind feature flag;
+    - align implementation with existing signed internal API patterns already used for Club10000 integrations.
+  - Logging:
+    - log safe rejection reason, request id, key id, route, and timestamp skew;
+    - do not log signatures, secrets, raw request bodies, auth headers, or target user PII.
+  - Dependencies:
+    - Tasks 2-3
+
+- [x] Task 5: Implement read-only payment diagnostics endpoint
+  - Files:
+    - `diaverseapi/app/ops_agent/payment_diagnostics.py`
+    - `diaverseapi/app/ops_agent/api.py`
+    - `diaverseapi/tests/test_ops_agent_payment_diagnostics.py`
+  - Deliverable:
+    - support lookup by safe identifiers: internal user id, Telegram id when mapped safely, payment session id, public checkout reference, or provider invoice id when allowed;
+    - return sanitized `CabinetPaymentSession` state: `status`, `finalization_status`, `domain_code`, `source_ref`, `idempotency_key`, timestamps, finalizer errors, related claim/unlock/order state, and safe alert ids;
+    - include a diagnosis summary such as `paid_not_finalized`, `finalizer_failed`, `review_required`, `already_granted`, `not_paid`, or `not_found`;
+    - never return raw provider callback payloads by default.
+  - Logging:
+    - log diagnostic request id, case id, actor id, lookup type, result code, and duration;
+    - do not log payment provider raw payloads, cards, emails, phone numbers, secrets, or full Telegram text.
+  - Dependencies:
+    - Task 4
+
+- [x] Task 6: Implement action registry and payment repair actions
+  - Files:
+    - `diaverseapi/app/ops_agent/action_registry.py`
+    - `diaverseapi/app/ops_agent/payment_actions.py`
+    - `diaverseapi/app/ops_agent/api.py`
+    - `diaverseapi/app/cabinet/payments/service.py`
+    - relevant domain finalizer tests under `diaverseapi/tests/`
+  - Deliverable:
+    - implement a typed action registry with action id, risk level, owner, preview support, idempotency scope, guard list, allowed service methods, required audit fields, and rollback notes;
+    - add a preview endpoint that explains what action would happen and which guards passed/failed;
+    - add execute endpoint for narrow actions:
+      - retry existing finalizer for paid sessions;
+      - mark review-needed sessions with a structured ops note;
+      - optional MVP manual repair only through domain-specific service methods when all invariants pass;
+    - require risk-policy result, idempotency key, and case id for every mutation;
+    - support Telegram approval for high-risk actions and automatic approval only for action ids explicitly marked safe by registry metadata and automated policy;
+    - write `CabLogEvent`/alert entries for preview and execution.
+  - Logging:
+    - log action kind, case id, payment session id, domain code, approval id, idempotency key, before/after status, and result;
+    - do not log raw SQL, raw provider payloads, secrets, or unredacted user contact data.
+  - Dependencies:
+    - Tasks 4-5
+
+### Phase 3: `aibot` Playbooks, Read-Only DB, And Case Memory
+
+- [x] Task 7: Add lightweight case database, text playbooks, and repository
+  - Files:
+    - `aibot/migrations/20260626_0001_ops_agent_cases.sql`
+    - `aibot/db/models.py`
+    - `aibot/db/repositories/ops_agent_repo.py`
+    - `aibot/app/ops_agent/playbooks/index.yml`
+    - `aibot/app/ops_agent/playbooks/payments/paid-not-credited.md`
+    - `aibot/app/ops_agent/playbooks/README.md`
+    - `aibot/tests/test_ops_agent_repo.py`
+  - Deliverable:
+    - add tables:
+      - `ops_agent_cases`
+      - `ops_agent_messages`
+      - `ops_agent_actions`
+      - `ops_agent_artifacts`
+      - `ops_agent_action_proposals`
+    - do not store full playbook bodies in the database; store `playbook_id`, path, version/hash, and case links only;
+    - add a starter playbook for "paid but not credited" with symptoms, fingerprints, checks, allowed actions, forbidden actions, repair workflow, and Telegram text examples;
+    - store case type, status, fingerprint, target domain, playbook id, sanitized summary, root cause, resolution, code pointers, linked artifacts, generated action proposal ids, and follow-up tasks;
+    - add indexes for status, case type, domain, fingerprint, playbook id, action proposal status, and created_at.
+  - Logging:
+    - repository logs should use case id, fingerprint, status, and safe action ids;
+    - do not log raw Telegram messages, secrets, raw stack traces with sensitive values, or full user/payment payloads.
+  - Dependencies:
+    - Tasks 1-3
+
+- [x] Task 8: Implement sanitizer, playbook retrieval, read-only DB inspector, and case memory
+  - Files:
+    - `aibot/app/ops_agent/sanitizer.py`
+    - `aibot/app/ops_agent/memory.py`
+    - `aibot/app/ops_agent/playbooks.py`
+    - `aibot/app/ops_agent/read_only_db.py`
+    - `aibot/tests/test_ops_agent_memory.py`
+  - Deliverable:
+    - sanitize Telegram messages and diagnostics before storage;
+    - compute stable fingerprints from case type, domain, failure state, finalizer code, and known error category;
+    - read `playbooks/index.yml` first and load the most relevant Markdown playbook by tag/symptom/fingerprint;
+    - search similar DB cases by exact fingerprint after playbook matching, then safe full-text/trigram search;
+    - provide a read-only DB inspector with query allowlist/denylist, statement timeout, row limit, and no write/DDL statements;
+    - return playbook instructions, previous resolution steps, safe DB observations, and code pointers to the Codex prompt;
+    - keep embeddings disabled until an explicit privacy review enables them.
+  - Logging:
+    - log retrieval strategy, playbook id, match count, top score/fingerprint, DB query template id, row count, and duration;
+    - do not log raw user text, raw SQL with values, secrets, full provider payloads, query result payloads, or full case transcripts.
+  - Dependencies:
+    - Task 7
+
+- [x] Task 9: Implement signed Diaverse ops client in `aibot`
+  - Files:
+    - `aibot/app/ops_agent/diaverse_client.py`
+    - `aibot/tests/test_ops_agent_diaverse_client.py`
+  - Deliverable:
+    - reuse the signed HTTP style already used by existing `aibot` internal clients;
+    - support diagnostics, action registry fetch, action preview, action execute, generated-action proposal status, and health check;
+    - add retries only for safe idempotent calls;
+    - provide structured errors for auth failure, timeout, not found, guard failed, and upstream unavailable.
+  - Logging:
+    - log request id, case id, endpoint name, result code, retry count, and duration;
+    - do not log HMAC signatures, secrets, request bodies containing identifiers beyond safe ids, or raw upstream response bodies.
+  - Dependencies:
+    - Tasks 4-6
+
+### Phase 4: Telegram Runtime And Codex Runner
+
+- [x] Task 10: Implement the Telegram ops-agent runtime
+  - Files:
+    - `aibot/app/ops_agent/main.py`
+    - `aibot/app/ops_agent/handlers.py`
+    - `aibot/app/ops_agent/settings.py`
+    - existing `aibot` runtime/entrypoint files as needed
+    - `aibot/tests/test_ops_agent_handlers.py`
+  - Deliverable:
+    - support mention-based case creation in allowlisted chats;
+    - support Chat mode and Case mode;
+    - classify free-form Telegram messages as casual chat, incident/support request, or explicit command;
+    - support commands: `/chat`, `/ops`, `/case`, `/approve`, `/cancel`, `/status`, `/close`, `/mode`, `/playbook`;
+    - persist active thread mapping by Telegram chat/thread/user id, active Codex thread id, and optional active case id;
+    - resume existing Codex threads for follow-up messages when possible;
+    - show staged updates: case created, similar cases found, diagnostics done, approval needed, action executed, root cause summary;
+    - run as a dedicated runtime role such as `COPYWRITING_RUNTIME_ROLE=ops-agent-bot`.
+  - Logging:
+    - log chat id hash, user id hash, case id, command, authorization decision, and handler duration;
+    - do not log Telegram bot token, raw message text, private chat content, or unredacted Telegram ids unless explicitly classified as safe internal ids.
+  - Dependencies:
+    - Tasks 7-9
+
+- [x] Task 11: Add the Russian humorous voice renderer with guardrails
+  - Files:
+    - `aibot/app/ops_agent/voice.py`
+    - `aibot/tests/test_ops_agent_voice.py`
+  - Deliverable:
+    - add tone modes: `calm`, `default`, `spicy`;
+    - render internal Telegram messages with light humor, for example:
+      - "Платеж нашли, начисление пока притворяется мебелью. Проверяю finalizer."
+      - "Похожий случай уже был: тот же домен, та же стадия падения. Беру старую карту сокровищ."
+    - force factual templates for approvals, failed repairs, security issues, access denials, and money-impacting confirmations;
+    - keep all stored/audit summaries non-jokey.
+  - Logging:
+    - no special runtime logs for text rendering beyond template id if needed;
+    - never log raw generated joke candidates or private incident details.
+  - Dependencies:
+    - Task 10
+
+- [x] Task 12: Implement Codex runner abstraction
+  - Files:
+    - `aibot/app/ops_agent/codex_runner.py`
+    - `aibot/app/ops_agent/prompting.py`
+    - `aibot/app/ops_agent/action_authoring.py`
+    - `aibot/tests/test_ops_agent_codex_runner.py`
+  - Deliverable:
+    - support a minimal runner command such as `codex exec` or an SDK-backed runner behind one interface;
+    - verify the exact server install/auth flow against official OpenAI docs during implementation;
+    - run with a dedicated `CODEX_HOME`, isolated workspace, timeouts, bounded concurrency, and read-only defaults;
+    - inject only sanitized case data, selected playbook text, similar-case summaries, read-only DB observations, GBrain/doc pointers, code pointers, and diagnostic responses;
+    - capture structured artifacts: proposed root cause, code pointers, recommended patch, tests to run, and repair recommendation;
+    - when no action exists, let Codex generate a new action patch in an isolated worktree with registry metadata, preview/execute implementation, tests, playbook update, and rollback notes;
+    - run automated generated-action gates before activation: formatting, type/lint checks, targeted tests, denylist scan for raw write SQL and unsafe imports, required audit fields, idempotency checks, and registry risk-policy validation;
+    - allow no-manual-review activation only after all generated-action gates pass and the action risk is within configured auto-activation policy;
+    - avoid exposing a public Codex app server.
+  - Logging:
+    - log runner id, case id, model/runner alias, timeout, exit code, artifact ids, generated action id, safety gate result, and duration;
+    - do not log prompts containing private data, raw model output before sanitization, API keys, OAuth tokens, raw DB rows, or full environment.
+  - Dependencies:
+    - Tasks 7-9
+
+- [x] Task 13: Wire the case lifecycle orchestrator
+  - Files:
+    - `aibot/app/ops_agent/orchestrator.py`
+    - `aibot/app/ops_agent/handlers.py`
+    - `aibot/tests/test_ops_agent_orchestrator.py`
+  - Deliverable:
+    - implement lifecycle:
+      1. create case from Telegram;
+      2. classify free-form messages into Chat mode or Case mode;
+      3. in Chat mode, answer or resume a lightweight Codex thread without repair execution;
+      4. in Case mode, sanitize and store message;
+      5. select and read the best matching Markdown playbook;
+      6. retrieve similar DB cases;
+      7. run read-only DB and `diaverseapi` diagnostics;
+      8. ask Codex for analysis if playbooks/diagnostics are insufficient;
+      9. generate action preview if a registered action exists;
+      10. if no action exists, start generated-action authoring, run automated gates, and activate only if policy allows;
+      11. request Telegram approval only when the action risk policy requires it;
+      12. execute registered safe action;
+      13. save sanitized closure summary, playbook update candidate, and generated action proposal outcome;
+      14. send final Telegram report.
+    - ensure retries do not duplicate repairs.
+  - Logging:
+    - log state transitions, case id, action id, result code, and duration per step;
+    - do not log raw user messages, raw SQL, secrets, raw payment payloads, or full Codex prompts.
+  - Dependencies:
+    - Tasks 10-12
+
+### Phase 5: Verification, Deployment, And Rollout
+
+- [x] Task 14: Add focused automated tests and safety checks
+  - Files:
+    - `diaverseapi/tests/test_ops_agent_*.py`
+    - `aibot/tests/test_ops_agent_*.py`
+  - Deliverable:
+    - cover HMAC auth, replay rejection, diagnostics result codes, action registry metadata, approval/idempotency guards, finalizer retry, audit write, playbook selection, read-only DB denylist, memory sanitizer, retrieval, Telegram auth, voice guardrails, Codex runner mock, generated-action gates, and orchestrator lifecycle;
+    - add regression tests for the "paid but not credited" case.
+  - Logging:
+    - test logs may include case ids and assertion details;
+    - fixtures must not include real tokens, real payment payloads, raw user PII, or production ids.
+  - Dependencies:
+    - Tasks 4-13
+
+- [x] Task 15: Add deployment docs and runtime wiring
+  - Files:
+    - `aibot/docker-compose.prod.yml` or existing compose/runtime files
+    - `aibot/Dockerfile` or existing entrypoint files if needed
+    - `aibot/docs/ops-agent.md`
+    - `docs/runbooks/ops-agent.md`
+    - `docs/infrastructure/deployment-matrix.md` if deployment ownership changes
+  - Deliverable:
+    - add an ops-agent service/role for the bots server;
+    - document Codex install/auth verification, dedicated runtime user, `CODEX_HOME`, workspace path, sandbox mode, read-only DB credentials, generated-action worktree, timeout, and rollback;
+    - document Telegram bot token setup, allowlist setup, HMAC setup, action auto-activation policy, and dry-run rollout;
+    - add a smoke-test checklist for dev bot, playbook lookup, read-only DB diagnostics, generated-action dry run, approval dry-run when policy requires it, and one controlled repair in staging.
+  - Logging:
+    - deployment logs may include service name, role, health status, and redacted config presence;
+    - do not log tokens, secrets, raw env values, server private IPs, SSH paths, or credential file paths in public docs.
+  - Dependencies:
+    - Tasks 1-14
+
+## Verification Plan
+
+Run from `diaverseapi`:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests\test_ops_agent_*.py -q
+.\.venv\Scripts\python.exe -m ruff check app\ops_agent tests
+```
+
+If `diaverseapi` adds an Alembic migration:
+
+```powershell
+.\.venv\Scripts\python.exe -m alembic upgrade <down_revision>:<new_revision> --sql
+```
+
+Run from `aibot`:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests\test_ops_agent_*.py -q
+.\.venv\Scripts\python.exe -m ruff check app db tests
+```
+
+Migration verification for `aibot`:
+
+- apply the new SQL migration to a local/test database using the existing migration workflow;
+- verify rollback strategy manually if the project has no rollback migration convention;
+- verify indexes and constraints exist for case lookup and idempotency.
+- verify the read-only DB role cannot run `INSERT`, `UPDATE`, `DELETE`, `DDL`, lock-heavy statements, or unbounded queries.
+
+Runtime smoke checks:
+
+- start `diaverseapi` with signed ops API enabled in a non-production environment;
+- start `aibot` as `ops-agent-bot` with a dev Telegram bot token and allowlisted chat;
+- create a fake "paid but not credited" case;
+- verify `/chat` stays in Chat mode and cannot execute actions;
+- verify `/ops` creates Case mode explicitly;
+- verify free-form incident text is classified into Case mode or asks for confirmation according to configured confidence;
+- verify follow-up messages resume the correct active Codex thread or case;
+- verify playbook lookup runs before similar-case DB lookup and before Codex;
+- verify read-only DB diagnostics work with row limits and timeouts;
+- verify diagnostics-only response works without approval;
+- verify risk policy blocks mutation until approval when the selected action requires it;
+- verify a missing action can produce a generated-action proposal and that unsafe generated code is rejected by automated gates;
+- verify repeated `/approve` does not duplicate repair;
+- verify closure summary is stored and future similar case finds it.
+
+Codex runner checks:
+
+- verify exact install/auth flow against current official OpenAI docs before server rollout;
+- verify the runner can execute in the dedicated workspace with read-only defaults;
+- verify prompts and artifacts are sanitized before storage;
+- verify timeouts and concurrency limits stop stuck sessions.
+- verify generated-action patches cannot activate if tests, denylist, idempotency, audit, registry metadata, or risk policy gates fail.
+
+Docs/GBrain checks:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\docs-health.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-sync.ps1
+```
+
+For a narrower sync after implementation, prefer only changed sources such as `diaverse-docs`, `diaverse-aif`, `aibot-code`, and `diaverseapi-code` if the helper supports source-scoped sync.
 
 ## Definition Of Done
 
-- `diaverse-content` contains all content strategy, topic matrix, safety rules, and
-  Codex run instructions needed for future content sessions.
-- Codex can export metrics/context, generate draft payloads, validate them, and import
-  draft-only articles without AI Cofounder.
-- Admin has a stream-level content operations view for deciding what to update,
-  expand, or generate next.
-- AI Cofounder runtime is stopped/disabled on the foreign server and removed from the
-  active architecture.
-- No server-side LLM API key is required for the new manual Codex workflow.
-- Existing content imports, analytics, admin editing, and publication review still work.
+- Telegram bot accepts allowlisted mentions and creates an ops case.
+- Telegram bot also supports free-form Chat mode and separates it from Case mode.
+- Free-form messages are classified and commands route directly.
+- Follow-up messages resume the right active Codex thread or case when possible.
+- The agent checks Markdown playbooks before similar case history and before new investigation.
+- Payment diagnostics can use signed `diaverseapi` APIs and a dedicated read-only DB role.
+- Any repair action requires registry metadata, risk-policy decision, idempotency key, audit event, and safe service method.
+- If no action exists, Codex can author a new action without manual code review, but activation requires automated gates, registry metadata, tests, and configured auto-activation policy.
+- The bot returns a useful Russian Telegram report with controlled light humor.
+- Case memory stores sanitized closure summaries, playbook ids, playbook update candidates, and generated action proposal outcomes.
+- Codex/GPT runner is isolated, timeout-bound, and does not expose a public server.
+- Tests cover security, payment diagnostics/actions, playbook retrieval, read-only DB restrictions, memory, Telegram handlers, intent classification, mode switching, thread persistence, voice guardrails, generated-action gates, and orchestration.
+- Docs/runbook/deployment notes are updated.
+- GBrain is synced after meaningful docs/code changes.
