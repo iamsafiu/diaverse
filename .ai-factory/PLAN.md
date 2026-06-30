@@ -1,403 +1,252 @@
-# Implementation Plan: Crypton Pet Evolution Selection
+# Implementation Plan: Factory Level 4 Playable Scope
 
-**Created:** 2026-06-07
-**Mode:** fast
-**Branch:** none
-**Testing:** yes
-**Logging:** verbose
-**Docs/Roadmap:** warn-only
+Branch: none
+Created: 2026-06-30
 
-## Goal
+## Settings
+- Testing: yes
+- Logging: standard
+- Docs: yes
 
-Add pet evolution selection to the Crypton offer builder so a user can choose the desired evolution for a selected pet, submit that choice with a custom desired price, and receive the purchased pet with that evolution after approval and payment.
+## Workspace Scope
 
-## Product Decisions
+This is a fast cross-repo plan from the workspace root. No branches are created.
 
-- For pet/character Crypton offers, do not show the recommended price in the user modal because evolution-specific pricing is not defined yet.
-- For pet/character Crypton offers, do not block user-entered desired price as "above market"; staff/Crypton can review, approve, reject, or counter the request manually.
-- Store the selected evolution in the existing Crypton request metadata/snapshots and fulfillment line options. No database migration is planned.
-- Validate evolution server-side against authoritative pet rarity rules. Default legacy submissions to evolution 1 only when no selection exists.
-- Show selected evolution in web UI, staff request UI, backend notification payloads, and Telegram notifications.
+| Repository | Path | Affected | Role |
+| --- | --- | --- | --- |
+| diaverse | C:\Users\Indigo\Desktop\diaverse | yes | active AIF plan and factory documentation |
+| diaverseapi | C:\Users\Indigo\Desktop\diaverse\diaverseapi | yes | authoritative factory rules, state, commands, catalog behavior, tests |
+| diaweb | C:\Users\Indigo\Desktop\diaverse\diaweb | yes | web cabinet factory UI, BFF client/types, tests |
+| diaverse-mobile | C:\Users\Indigo\Desktop\diaverse\diaverse-mobile | no | mobile factory screen remains out of scope |
+| aibot | C:\Users\Indigo\Desktop\diaverse\aibot | no | out of scope |
+| diaverse-content | C:\Users\Indigo\Desktop\diaverse\diaverse-content | no | out of scope |
+| diaverse-ai-cofounder | C:\Users\Indigo\Desktop\diaverse\diaverse-ai-cofounder | no | archived/reference only |
+| club10000-bot | C:\Users\Indigo\Desktop\diaverse\club10000-bot | no | out of scope |
+| diaverse-auth-bot | C:\Users\Indigo\Desktop\diaverse\diaverse-auth-bot | no | out of scope |
 
-## Scope
+## Roadmap Linkage
 
-Affected repositories:
+Milestone: "none"
+Rationale: Fast plan requested; no `.ai-factory/ROADMAP.md` is available in the workspace context.
 
-- `diaweb` - Crypton modal UI, API payload/types, staff panel display, frontend tests, i18n.
-- `diaverseapi` - Crypton request contract, validation, metadata/snapshot, fulfillment options, notification payloads, backend tests.
-- `diaverse-auth-bot` - Telegram Crypton status caption rendering and tests.
+## Research Context
 
-Not affected:
+Source: `docs/tasks/fabric/factory-mechanics-final.md`, local GBrain `diaverse-docs/features/factory`, and verified source files in `diaverseapi/app/factory` and `diaweb/frontend/modules/factory`.
 
-- `aibot`
-- `club10000-bot`
-- Root workspace implementation code
+Note: `.ai-factory/RESEARCH.md` currently has an unrelated Telegram ops-agent active summary, so it is intentionally not carried into this factory plan.
 
-## Context Verified
+Goal:
+- Raise the supported playable factory scope from levels 1-3 to levels 1-4 in backend and diaweb.
+- Allow a valid level 3 factory to upgrade to level 4 using existing level 4 catalog pricing and requirements.
+- At factory level 4, expose the level 4 gameplay surface from the final mechanics document: resource parts up to level 4, pet craft workshop as normal required content, rare pet craft as normal required content, epic pet craft as early access, rare biomass as normal content, epic biomass as early access, and mutagen workshop/common mutagen as early access.
 
-- `diaverseapi/app/cabinet/item_catalog/providers.py` already exposes character metadata with `min_evolution`, `max_evolution`, and `evolution_options`.
-- `diaverseapi/app/cabinet/fulfillment/handlers.py` already grants characters using `options_json.evolution`.
-- `diaverseapi/app/characters/grants.py` validates requested evolution against character rarity limits.
-- `diaweb/frontend/modules/staff-shop/shop-pet-evolution.ts` already has helper functions for character evolution options.
-- Crypton currently calculates recommended price from base offer unit price, which is not valid for pet evolution pricing.
-- Existing `.ai-factory/RESEARCH.md` content is unrelated to this feature and was not reused as a source of truth.
+Constraints:
+- Backend remains the source of truth for requirements, spendability, unlocks, inventory reservation, craft results, timers, idempotency, and payment-finalized state.
+- Frontend may hide unsupported future targets but must not calculate authoritative requirements or balances.
+- Keep the established convention that all factory levels use the same playable map and hotspot geometry unless a separate art decision changes it.
+- Do not build native mobile factory screens or mobile-specific contracts in this scope.
+- Do not enable level 5 progression yet; target level 5 must remain hidden/blocked until a separate implementation raises the max gate.
+- Avoid catalog economy changes unless tests reveal a mismatch required for level 4 playability.
+
+Decisions:
+- Change both hard caps from `3` to `4`: backend `FACTORY_SUPPORTED_MAX_LEVEL` and frontend `FACTORY_SUPPORTED_MAX_LEVEL`.
+- Treat the existing catalog v1 level 4 row and early-access rows as the intended economy source unless implementation tests prove otherwise.
+- Keep level 4 visual keys stable and use the existing shared map fallback; add only minimal manifest/test polish if the level 4 upgrade preview is visibly broken.
+- Use targeted backend and frontend tests around the old blocked level 4 paths instead of broad unrelated factory refactors.
+
+Open questions:
+- Whether level 5 requirement rows should already include mutagen workshop/common mutagen as mandatory for 5 -> 6. This is noted as future level 5 scope and should not block level 4 enablement unless current tests fail.
 
 ## Tasks
 
-### Backend Phase
-
-- [x] **1. Backend: Add Evolution Contract, Validation Error, and HTTP Mapping**
-
-Repository: `diaverseapi`
-
-Files:
-
-- `app/cabinet/offers/crypton/schemas.py`
-- `app/cabinet/offers/crypton/exceptions.py`
-- `app/cabinet/offers/crypton/api.py`
-- `app/cabinet/offers/crypton/admin_api.py`
-- `app/cabinet/offers/crypton/service.py`
-- `tests/test_cabinet_crypton.py`
-
-Work:
-
-- Add optional `selected_evolution` to `CryptonRequestSubmitRequest`.
-- Add `selected_evolution`, `selected_evolution_label`, `is_character_offer`, and, where useful, `evolution_options` to `CryptonSelectedOfferSummaryRead` and `CryptonRequestDetailRead`.
-- Add a domain error such as `CryptonEvolutionValidationError` and map it to HTTP 422 in public and admin Crypton API error handling.
-- Add a focused service helper such as `_resolve_selected_character_evolution(...)` that detects `ShopSourceType.character`, reads allowed options from `shop_item.metadata_json`, and falls back to the authoritative character rarity rules if metadata is incomplete.
-- For character offers, normalize missing legacy selections to evolution 1, but reject explicit invalid selections.
-- Preserve existing non-character submit behavior unchanged.
-
-Logging requirements:
-
-- Log `INFO` when a Crypton request submit resolves character evolution metadata.
-- Log `DEBUG` for resolved allowed evolution options and selected value.
-- Log `WARN` for invalid, explicit out-of-range, or metadata-mismatched pet evolution data before raising validation errors.
-
-- [x] **2. Backend: Apply Pet Pricing Rule and Persist Evolution Snapshots**
-
-Repository: `diaverseapi`
-
-Depends on: Task 1
-
-Files:
-
-- `app/cabinet/offers/crypton/service.py`
-- `app/cabinet/offers/crypton/catalog_policy.py`
-- `tests/test_cabinet_crypton.py`
-
-Work:
-
-- Resolve character-offer status and selected evolution before calling `_validate_proposed_price`.
-- For character/pet offers, set `recommended_price_amount=None` and skip the proposed-price-above-market validation.
-- Persist selected evolution fields in request `metadata_json`, `item_snapshot_json`, and `pricing_snapshot_json`.
-- Keep `market_price_amount` as the original catalog market/reference amount for audit only; do not treat it as a hard cap for pet offers.
-- Keep regular non-pet recommended price and market-cap validation unchanged.
-
-Logging requirements:
-
-- Log `INFO` when character pet pricing is switched to manual review mode.
-- Log `DEBUG` with request id, offer id, `is_character_offer`, and selected evolution; do not log user-entered price beyond existing safe amount logs.
-- Log `WARN` if a character source cannot produce evolution metadata and the service falls back to evolution 1.
-
-- [x] **3. Backend: Apply Evolution to Fulfillment Lines**
-
-Repository: `diaverseapi`
-
-Depends on: Task 2
-
-Files:
-
-- `app/cabinet/offers/crypton/fulfillment.py`
-- `app/cabinet/offers/crypton/service.py`
-- `tests/test_cabinet_crypton.py`
-
-Work:
-
-- Merge selected evolution into `options_json` only for fulfillment lines where `item_type == "character"`, preferably matching `item_ref` to the selected `shop_item.source_ref`.
-- Copy and merge configured `options_json` instead of mutating `CabShopItemFulfillmentLine.options_json`.
-- Preserve configured `options_json` for non-character bundle/static fulfillment lines.
-- Include selected evolution in batch metadata and request detail payloads where useful.
-- Ensure legacy requests without selected evolution still fulfill safely as evolution 1 or an existing configured character line value.
-
-Logging requirements:
-
-- Log `DEBUG` when selected evolution is merged into a fulfillment line.
-- Log `INFO` when a character fulfillment is prepared with selected evolution.
-- Log `WARN` if a character offer reaches fulfillment without resolvable evolution metadata.
-
-- [x] **4. Backend: Propagate Evolution to Web, Ops, Payment, and Telegram Payloads**
-
-Repository: `diaverseapi`
-
-Depends on: Task 2
-
-Files:
-
-- `app/cabinet/offers/crypton/schemas.py`
-- `app/cabinet/offers/crypton/service.py`
-- `tests/test_cabinet_crypton.py`
-
-Work:
-
-- Include selected evolution/evolution label in `_selected_offer_summary`, `_request_detail`, admin list/detail responses, and current request state.
-- Include selected evolution/evolution label in new-request ops alert metadata and summary.
-- Include selected evolution/evolution label in Crypton checkout/payment payload metadata.
-- Include selected evolution/evolution label in `_decision_telegram_payload` sent to `diaverse-auth-bot`.
-- Keep legacy and non-pet payloads clean by omitting empty evolution fields where the consumer should not show them.
-
-Logging requirements:
-
-- Log `DEBUG` when outgoing Crypton payloads include selected evolution.
-- Do not add sensitive user, price, or payment details beyond existing safe payload summaries.
-
-### Frontend Phase
-
-- [x] **5. Frontend: Extend Crypton API Types, Normalizers, and Exports**
-
-Repository: `diaweb`
-
-Depends on: Backend field names from Tasks 1, 2, and 4
-
-Files:
-
-- `frontend/modules/crypton/types.ts`
-- `frontend/modules/crypton/api.ts`
-- `frontend/modules/crypton/shopCatalogAdapter.ts`
-- `frontend/modules/staff-shop/shop-pet-evolution.ts`
-- `frontend/modules/crypton/index.ts`
-
-Work:
-
-- Add `selectedEvolution` to `CryptonRequestSubmitInput`.
-- Add selected evolution fields to `CryptonSelectedOfferSummary` and `CryptonRequestDetail`.
-- Normalize selected evolution fields from backend read models.
-- Reuse or extend existing pet-evolution helpers so they can read top-level metadata and nested Crypton metadata from `display`, `item`, and `offer`.
-- Export any new helper needed by `CryptonOfferBuilder` without leaking staff-only implementation details.
-- Keep non-character offers unchanged.
-
-Logging requirements:
-
-- Emit development-only warnings when character metadata is malformed or has no usable evolution options.
-- Avoid logging user-entered prices or sensitive request details.
-
-- [x] **6. Frontend: Forward Evolution Through BFF and API Boundary Tests**
-
-Repository: `diaweb`
-
-Depends on: Task 5
-
-Files:
-
-- `frontend/modules/crypton/api.ts`
-- `frontend/app/api/cabinet/offers/crypton/requests/route.ts`
-- `frontend/__tests__/app/api/cabinet/offers/crypton/route.test.ts`
-- `frontend/__tests__/app/api/cabinet/offers/crypton/proxy-utils.test.ts`
-
-Work:
-
-- Send `selected_evolution` in the submit payload only when a pet/character offer has an evolution selection.
-- Include `selected_evolution` in the BFF route's safe development diagnostic summary.
-- Add or update BFF tests to assert the submit JSON forwards `selected_evolution` unchanged.
-- Add or update API/normalizer test coverage for selected evolution fields if an existing test file is available; otherwise cover the behavior through modal submit and BFF route tests.
-
-Logging requirements:
-
-- Keep BFF diagnostic logging safe: log only boolean/number selection metadata, not raw user-entered prices beyond existing fields.
-- Continue warning on malformed JSON via `safeParseCryptonBody`.
-
-- [x] **7. Frontend: Add Evolution Selector to Crypton Offer Modal**
-
-Repository: `diaweb`
-
-Depends on: Task 5 and Task 6
-
-Files:
-
-- `frontend/modules/crypton/components/CryptonOfferBuilder.tsx`
-- `frontend/modules/crypton/components/cryptonOfferModal.module.css`
-- `frontend/modules/i18n/types.ts`
-- `frontend/modules/i18n/dictionaries/ru.json`
-- `frontend/modules/i18n/dictionaries/en.json`
-- `frontend/__tests__/modules/crypton/CryptonOfferBuilder.test.tsx`
-- `frontend/__tests__/modules/crypton/test-helpers.ts`
-
-Work:
-
-- Show an evolution selector when the selected catalog item is a pet/character offer.
-- Derive `selectedShopItem` from the same `mapCryptonOfferToShopCatalogItem` adapter output used for catalog cards.
-- Populate options from the selected pet's available evolution range.
-- Reset selected evolution to the pet-specific default when the selected offer changes.
-- Hide recommended price and recommended-price copy for pet/character offers.
-- Disable or hide the frontend "above market" validation for pet/character offers.
-- Submit selected evolution with the request.
-- Display selected evolution in the request status/detail area after submission and in immutable status panels.
-- Preserve existing units, price input, validation, and rendering for regular offers.
-
-Logging requirements:
-
-- Log `DEBUG` during local development when a pet offer selection changes.
-- Log `WARN` during local development if a selected pet offer lacks evolution options.
-
-- [x] **8. Frontend: Show Evolution in Staff Crypton Requests**
-
-Repository: `diaweb`
-
-Depends on: Task 5
-
-Files:
-
-- `frontend/modules/staff-shop/components/CryptonRequestsPanel.tsx`
-- `frontend/modules/staff-shop/crypton-admin-types.ts`
-- `frontend/modules/i18n/types.ts`
-- `frontend/modules/i18n/dictionaries/ru.json`
-- `frontend/modules/i18n/dictionaries/en.json`
-- `frontend/__tests__/modules/staff-shop/CryptonRequestsPanel.test.tsx`
-
-Work:
-
-- Add selected evolution fields to staff request types.
-- Show selected evolution near selected offer title/quantity in desktop list rows, mobile list cards, and detail view.
-- Read list evolution from `selected_offer`; read detail evolution from normalized fields, `metadata`, or `item_snapshot` fallback so list/detail cannot drift.
-- Ensure staff can see the requested evolution before approve, reject, or counter actions.
-- Avoid showing `"0"` as a counter-price placeholder when pet requests intentionally have no recommended price.
-- Keep existing display unchanged when the request is not a pet offer or has no evolution metadata.
-
-Logging requirements:
-
-- Avoid noisy runtime logging in staff UI.
-- Emit development-only warnings for character requests missing selected evolution if the backend identifies them as pet/character offers.
-
-### Telegram Phase
-
-- [x] **9. Telegram Auth Bot: Render Evolution in Crypton Captions**
-
-Repository: `diaverse-auth-bot`
-
-Depends on: Task 4
-
-Files:
-
-- `app/services/outbox_delivery.py`
-- `tests/test_outbox_delivery.py`
-
-Work:
-
-- Read selected evolution/evolution label from Crypton notification payloads.
-- Add an evolution line to Crypton status captions when the payload contains it, e.g. `Эволюция: E5`.
-- Do not render an empty evolution line for legacy or non-pet requests.
-- Preserve all existing caption fields and formatting.
-
-Logging requirements:
-
-- Do not add sensitive payload logging.
-- Preserve existing delivery logs and only add warning-level diagnostics if caption payload shape is invalid.
-
-### Verification Phase
-
-- [x] **10. Backend Verification Tests**
-
-Repository: `diaverseapi`
-
-Files:
-
-- `tests/test_cabinet_crypton.py`
-
-Work:
-
-- Test submit flow for a character offer with selected evolution.
-- Test invalid evolution rejection.
-- Test pet request has no recommended price and bypasses above-market rejection.
-- Test fulfillment line receives `options_json.evolution`.
-- Test decision Telegram payload includes selected evolution.
-- Test ops alert metadata/summary and payment payload include selected evolution for pet offers.
-- Test regular non-pet offers keep the old recommended price and market-cap validation.
-- Test public API maps invalid selected evolution to HTTP 422 with a stable reason code.
-
-Commands:
+### Phase 1: Backend Gate And Level Upgrade
+
+- [x] **Task 1: Raise the backend factory supported max level to 4**
+  - Deliverable: Update backend policy gates so target level 4 is accepted and target level 5 is still rejected.
+  - Expected behavior:
+    - `is_factory_level_upgrade_supported(3)` returns true.
+    - `is_factory_target_level_supported(4)` returns true.
+    - Target level 5 remains unsupported through the same controlled command error path.
+  - Files:
+    - `diaverseapi/app/factory/domain/policies.py`
+    - `diaverseapi/app/factory/services/command_service.py`
+    - `diaverseapi/app/factory/services/state_service.py`
+    - `diaverseapi/app/factory/tests/test_command_service.py`
+    - `diaverseapi/app/factory/tests/test_state_service.py`
+  - Logging requirements:
+    - Keep existing command-service logging shape.
+    - Log level-up accept/reject decisions at INFO/WARNING with user/profile id, current level, target level, and supported max level.
+    - Do not log full factory state, inventory payloads, payment payloads, or raw balance snapshots.
+  - Dependencies: none.
+
+- [x] **Task 2: Cover successful 3 -> 4 upgrade requirements and failure cases**
+  - Deliverable: Replace old "target level 4 is blocked" expectations with tests that prove level 3 requirements can unlock level 4, while incomplete requirements still block the upgrade.
+  - Expected behavior:
+    - A level 3 profile with all level 3 resource parts, life force built, epic life force level 5, and optional pet craft early access can upgrade to level 4.
+    - Missing required level 3 prerequisites still returns a typed requirement failure.
+    - Target level 5 returns an unsupported-target error with `supported_max_level: 4`.
+  - Files:
+    - `diaverseapi/app/factory/tests/test_command_service.py`
+    - `diaverseapi/app/factory/tests/test_catalog.py`
+    - `diaverseapi/app/factory/services/command_service.py` if tests reveal missing normalization.
+  - Logging requirements:
+    - INFO on successful level-up command completion with old/new level and idempotency key.
+    - WARNING on unmet requirement failure with requirement code/target only, not full state.
+    - DEBUG may be used in tests/helpers for setup details, controlled by normal test logging.
+  - Dependencies: Task 1.
+
+### Phase 2: Backend Level 4 Gameplay Surface
+
+- [x] **Task 3: Verify and expose level 4 state/actions for buildings and compartments**
+  - Deliverable: Add focused state/action tests for level 4 availability across resource, biomass, pet craft, and mutagen surfaces.
+  - Expected behavior:
+    - Resource workshop parts can upgrade/build through resource level 4.
+    - `dna_capsule_workshop.rare_biomass` is normal content at level 4 and `epic_biomass` is early access.
+    - `pet_craft_workshop` and `rare_pet_craft` are normal content at level 4; `epic_pet_craft` is early access.
+    - `mutagen_workshop` and `common_mutagen` are visible/buildable as early access at level 4.
+    - Level 5-only content remains locked or early access exactly as the catalog defines.
+  - Files:
+    - `diaverseapi/app/factory/services/state_service.py`
+    - `diaverseapi/app/factory/services/building_service.py`
+    - `diaverseapi/app/factory/services/compartment_service.py`
+    - `diaverseapi/app/factory/tests/test_state_service.py`
+    - `diaverseapi/app/factory/tests/test_building_service.py`
+    - `diaverseapi/app/factory/tests/test_compartment_service.py`
+  - Logging requirements:
+    - INFO for build/package purchase state transitions with building/compartment key and early-access flag.
+    - WARNING for blocked build/upgrade commands with lock reason and factory level.
+    - Avoid per-card state logs during normal state rendering.
+  - Dependencies: Tasks 1-2.
+
+- [x] **Task 4: Verify level 4 crafting and inventory mappings**
+  - Deliverable: Add/adjust backend crafting coverage for level 4 craftable outputs and aliases so production jobs reserve inputs and credit outputs correctly.
+  - Expected behavior:
+    - Rare pet craft remains concrete-shard based and still reserves the selected rare shard before producing the selected rare pet.
+    - Epic pet craft is available as level 4 early access and uses the same selected-shard validation pattern for epic fragments if supported by current catalog/resource helpers.
+    - Common mutagen craft produces the existing canonical mutagen resource through the `common_mutagen`/`mutagen_common` alias path.
+    - Rare and epic biomass craft rows reserve the configured inputs and credit the configured biomass output keys.
+  - Files:
+    - `diaverseapi/app/factory/services/crafting_service.py`
+    - `diaverseapi/app/factory/services/inventory_gateway.py`
+    - `diaverseapi/app/factory/services/resource_assets.py`
+    - `diaverseapi/app/factory/tests/test_crafting_service.py`
+    - `diaverseapi/app/factory/tests/test_inventory_gateway.py`
+    - `diaverseapi/app/factory/tests/test_award_resource_support.py`
+  - Logging requirements:
+    - INFO on craft job creation/collection with building key, compartment key, output key, and job id.
+    - WARNING when selected shard/material validation fails, with the requested material id/key only.
+    - ERROR on inventory reservation/credit failure using sanitized gateway context.
+  - Dependencies: Task 3.
+
+### Phase 3: Diaweb Gate And Level 4 UI
+
+- [x] **Task 5: Raise the diaweb supported max level to 4**
+  - Deliverable: Update the frontend factory cap and tests so level 4 upgrade controls render when backend state offers target level 4, while level 5 remains hidden.
+  - Expected behavior:
+    - `FactoryShell` no longer hides the 3 -> 4 upgrade CTA solely because of the local max constant.
+    - The existing unsupported-target guard now applies to target level 5.
+    - The UI still respects backend `available_actions`, lock reasons, and command errors.
+  - Files:
+    - `diaweb/frontend/modules/factory/constants.ts`
+    - `diaweb/frontend/modules/factory/components/FactoryShell.tsx`
+    - `diaweb/frontend/__tests__/modules/factory/FactoryShell.test.tsx`
+  - Logging requirements:
+    - Keep production client logs minimal.
+    - Use existing warning/error handling for rejected commands.
+    - Do not log full `FactoryStateSnapshot` or inventory excerpts.
+  - Dependencies: Tasks 1-2.
+
+- [x] **Task 6: Cover level 4 workshop and compartment rendering in diaweb**
+  - Deliverable: Add frontend tests for the level 4 gameplay surface and update UI normalization only where tests reveal stale assumptions.
+  - Expected behavior:
+    - Pet craft workshop appears as normal content at level 4.
+    - Rare pet craft appears as normal content; epic pet craft appears as early access.
+    - Mutagen workshop/common mutagen and epic biomass can render as early-access cards/actions using existing labels and asset manifest keys.
+    - Resource and production screens show backend-provided lock reasons instead of client-side unsupported-level text.
+  - Files:
+    - `diaweb/frontend/modules/factory/catalogView.ts`
+    - `diaweb/frontend/modules/factory/displayLabels.ts`
+    - `diaweb/frontend/modules/factory/components/FactoryResourceWorkshopScreen.tsx`
+    - `diaweb/frontend/modules/factory/components/FactoryProductionWorkshopScreen.tsx`
+    - `diaweb/frontend/modules/factory/components/FactoryCompartmentScreen.tsx`
+    - `diaweb/frontend/__tests__/modules/factory/FactoryResourceWorkshopScreen.test.tsx`
+    - `diaweb/frontend/__tests__/modules/factory/FactoryProductionWorkshopScreen.test.tsx`
+    - `diaweb/frontend/__tests__/modules/factory/FactoryCompartmentScreen.test.tsx`
+  - Logging requirements:
+    - No new noisy render logs.
+    - Keep user-visible blocked states in the UI and reserve console errors for failed mutations or malformed data.
+    - Any dev-only debug logs must stay behind existing factory debug environment flags.
+  - Dependencies: Task 5.
+
+- [x] **Task 7: Polish level 4 visual keys and upgrade preview behavior**
+  - Deliverable: Ensure level 4 map, hotspot geometry, and upgrade preview render nonblank with stable manifest keys and mobile-first layout.
+  - Expected behavior:
+    - `factory.map.level_4` resolves through the shared playable map convention.
+    - If the upgrade dialog asks for a level 4 preview key, it either has a manifest entry or reliably falls back to the level 4 map without broken image UI.
+    - Existing workshop hotspots remain stable across levels.
+  - Files:
+    - `diaweb/frontend/modules/factory/assetManifest.ts`
+    - `diaweb/frontend/modules/factory/components/FactoryUpgradeDialog.tsx`
+    - `diaweb/frontend/modules/factory/components/FactoryScene.tsx`
+    - `diaweb/frontend/__tests__/modules/factory/FactoryScene.test.tsx`
+    - `diaweb/frontend/__tests__/modules/factory/FactoryUpgradeDialog.test.tsx` if present or created.
+  - Logging requirements:
+    - Do not add production image-load logs.
+    - Keep any asset fallback diagnostics dev-only.
+    - Test visual-key selection directly instead of relying on console output.
+  - Dependencies: Task 5.
+
+### Phase 4: Documentation And Verification
+
+- [x] **Task 8: Update factory documentation for level 4 support**
+  - Deliverable: Update canonical workspace docs so they no longer say web/backend only support levels 1-3.
+  - Expected behavior:
+    - `docs/features/factory.md` states that levels 1-4 are playable after implementation.
+    - The doc names the level 4 enabled surface and keeps level 5+ explicitly unsupported.
+    - Any smoke/task note that references the old target level 4 block is adjusted or linked to the new implementation status.
+  - Files:
+    - `docs/features/factory.md`
+    - `docs/tasks/fabric/factory-web-integration-smoke.md` if it still asserts the old gate.
+  - Logging requirements:
+    - Documentation changes do not add runtime logging.
+    - Include a note in verification/daily work only after implementation, not as a runtime log.
+  - Dependencies: Tasks 1-7.
+
+## Verification Plan
+
+Run from `diaverseapi`:
 
 ```powershell
-cd C:\Users\Indigo\Desktop\diaverse\diaverseapi
-.\.venv\Scripts\python.exe -m pytest tests/test_cabinet_crypton.py -q
-.\.venv\Scripts\python.exe -m ruff check app/cabinet/offers/crypton tests/test_cabinet_crypton.py
+.\.venv\Scripts\python.exe -m pytest app/factory/tests/test_catalog.py app/factory/tests/test_command_service.py app/factory/tests/test_state_service.py app/factory/tests/test_building_service.py app/factory/tests/test_compartment_service.py app/factory/tests/test_crafting_service.py app/factory/tests/test_inventory_gateway.py app/factory/tests/test_award_resource_support.py -q
+.\.venv\Scripts\python.exe -m ruff check app/factory
 ```
 
-Logging requirements:
-
-- Assert important log paths with `caplog` where practical, especially invalid evolution validation and fulfillment preparation.
-
-- [x] **11. Frontend and Auth Bot Verification Tests**
-
-Repositories: `diaweb`, `diaverse-auth-bot`
-
-Files:
-
-- `diaweb/frontend/__tests__/modules/crypton/CryptonOfferBuilder.test.tsx`
-- `diaweb/frontend/__tests__/modules/staff-shop/CryptonRequestsPanel.test.tsx`
-- `diaweb/frontend/__tests__/app/api/cabinet/offers/crypton/route.test.ts`
-- `diaweb/frontend/__tests__/app/api/cabinet/offers/crypton/proxy-utils.test.ts`
-- `diaverse-auth-bot/tests/test_outbox_delivery.py`
-
-Work:
-
-- Test the modal renders evolution options for pet offers.
-- Test selecting an evolution sends it in the submit payload.
-- Test recommended price is hidden for pet offers.
-- Test non-pet offers still show recommended price and old validation behavior.
-- Test staff panel displays selected evolution in list and detail views.
-- Test BFF submit route forwards `selected_evolution`.
-- Test Telegram caption includes evolution when present and omits it when absent.
-
-Commands:
+Run from `diaweb/frontend`:
 
 ```powershell
-cd C:\Users\Indigo\Desktop\diaverse\diaweb\frontend
-npm test -- __tests__/modules/crypton/CryptonOfferBuilder.test.tsx __tests__/modules/staff-shop/CryptonRequestsPanel.test.tsx __tests__/app/api/cabinet/offers/crypton/route.test.ts __tests__/app/api/cabinet/offers/crypton/proxy-utils.test.ts
+npm run test -- __tests__/modules/factory
+npm run lint -- modules/factory __tests__/modules/factory
 npm run typecheck
-
-cd C:\Users\Indigo\Desktop\diaverse\diaverse-auth-bot
-python -m pytest tests/test_outbox_delivery.py -q
 ```
 
-Logging requirements:
-
-- Cover development-warning paths only where the existing test setup can do it without brittle console assertions.
-
-## Full Verification Plan
-
-Run after implementation:
+Run from the workspace root after code/docs changes:
 
 ```powershell
-cd C:\Users\Indigo\Desktop\diaverse\diaverseapi
-.\.venv\Scripts\python.exe -m pytest tests/test_cabinet_crypton.py -q
-.\.venv\Scripts\python.exe -m ruff check app/cabinet/offers/crypton tests/test_cabinet_crypton.py
-
-cd C:\Users\Indigo\Desktop\diaverse\diaweb\frontend
-npm test -- __tests__/modules/crypton/CryptonOfferBuilder.test.tsx __tests__/modules/staff-shop/CryptonRequestsPanel.test.tsx __tests__/app/api/cabinet/offers/crypton/route.test.ts __tests__/app/api/cabinet/offers/crypton/proxy-utils.test.ts
-npm run typecheck
-
-cd C:\Users\Indigo\Desktop\diaverse\diaverse-auth-bot
-python -m pytest tests/test_outbox_delivery.py -q
+powershell -ExecutionPolicy Bypass -File C:\Users\Indigo\Desktop\diaverse\scripts\gbrain-sync.ps1
 ```
 
-No Alembic migration is planned. If implementation unexpectedly requires schema changes, add a migration and run the PostgreSQL DDL safety check before verification is considered complete.
+## Commit Plan
 
-After meaningful source changes, run targeted GBrain sync for affected repositories or the full workspace sync.
+- **Commit 1** (after tasks 1-4): `feat(api): enable factory level four`
+- **Commit 2** (after tasks 5-7): `feat(web): expose factory level four`
+- **Commit 3** (after task 8 and verification): `docs(factory): mark level four playable`
 
-## Suggested Commit Plan
+## Definition Of Done
 
-Commit per affected repository after tests pass:
-
-1. `diaverseapi`: `feat(api): support crypton pet evolution requests`
-2. `diaweb`: `feat(web): add crypton pet evolution selection`
-3. `diaverse-auth-bot`: `feat(auth-bot): show crypton pet evolution`
-
-Root workspace commit only if this plan or related root documentation is meant to be persisted separately.
-
-## Ready for Implementation
-
-Next command:
-
-```text
-$aif-implement
-```
+- Backend and diaweb both support factory target level 4 and still block/hide target level 5.
+- A valid level 3 factory can upgrade to level 4 through existing command/payment/inventory paths.
+- Level 4 state exposes the intended normal and early-access workshops/compartments from the final mechanics document.
+- Craft/build/package flows for level 4 content have targeted backend coverage.
+- Diaweb renders the level 4 upgrade and gameplay surface without broken map/preview assets or stale unsupported-level copy.
+- Canonical factory docs describe the new supported scope and the remaining level 5+ boundary.
+- Targeted backend and frontend checks pass.

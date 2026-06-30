@@ -1,7 +1,7 @@
 # Factory Web
 
-Updated: 2026-05-26
-Status: implemented behind authenticated web cabinet rollout
+Updated: 2026-06-30
+Status: implemented behind authenticated web cabinet rollout; playable scope supports factory levels 1-4
 
 ## Overview
 
@@ -14,6 +14,26 @@ Browser -> diaweb /api/cabinet/factory/* -> diaverseapi /v1/cabinet/factory/*
 ```
 
 The mobile app does not own the new factory UI. Mobile remains the owner of its existing native surfaces such as steps, existing inventory display, and other already shipped gameplay screens. Factory state must not be duplicated in the mobile frontend.
+
+## Supported Playable Scope
+
+Current supported progression:
+
+- Factory levels 1, 2, 3, and 4 are playable in web.
+- Backend and frontend hard gates allow the level 3 -> 4 upgrade when backend requirements are met.
+- Target level 5 remains unsupported in the current web/backend gate and must stay hidden or blocked until a later implementation explicitly raises the supported max level.
+- At factory level 4, resource workshops can upgrade to resource level 4.
+- At factory level 4, `pet_craft_workshop` and `pet_craft_workshop.rare_pet_craft` are normal required content.
+- At factory level 4, `pet_craft_workshop.epic_pet_craft`, `dna_capsule_workshop.epic_biomass`, `mutagen_workshop`, and `mutagen_workshop.common_mutagen` are available as early-access features with backend early-access modifiers.
+- At factory level 4, `dna_capsule_workshop.rare_biomass` is normal content.
+- Pet craft and biomass recipes that require a concrete selected shard/material send the selected shard through `input_overrides.selected_shard_id`; the backend validates selection before reserving any inputs.
+
+Art status:
+
+- All factory levels intentionally use the same playable map background and workshop hotspot geometry.
+- Level-specific visual keys remain stable manifest keys, but they resolve to the shared playable map unless a future product decision explicitly scopes a layout change.
+- Factory level 4 has a stable `factory.map.level_4` scene key and `factory.map_preview.level_4` upgrade-preview key; both resolve to the shared playable map.
+- The scene must render nonblank and keep hotspot navigation wired through the normal manifest scene contract.
 
 ## Ownership
 
@@ -306,7 +326,8 @@ diaweb/frontend/modules/factory/assetManifest.ts
 
 Current asset groups:
 
-- maps for levels 1, 2, and 8;
+- one shared playable map background used by all factory levels;
+- stable level visual keys that resolve to the shared playable map;
 - building state layers: locked, ruins, building, ready, active, upgrade, repair, disabled;
 - central warehouse;
 - resource icons;
@@ -327,14 +348,14 @@ Asset replacement rules:
 
 When final art is delivered:
 
-- map images for levels 1, 2, and 8;
+- one shared playable map image for all factory levels unless product explicitly approves a layout change;
 - separate building/cell states for all required states;
 - warehouse/central storage art;
 - resource and production icons;
 - subscription badges: no sub, Step Pass Pro, Trademaster;
 - UI action icons: queue, autocollect, timer, cooldown, repair, collect, upgrade, demolition;
 - static animation frames for build, collect, repair/explosion, slot-token assembly, level 8 final state;
-- hotspot coordinates for every map level;
+- shared hotspot coordinates for every map level;
 - safe mobile crop guidance for 390px width;
 - source Figma node/page references if available.
 
@@ -354,6 +375,7 @@ What mobile frontend should do:
 - continue existing steps/activity flows as currently owned by mobile/backend;
 - show factory-related inventory items if the existing inventory screen already lists resource entities;
 - use backend-provided labels/icons where the mobile inventory already supports remote/resource assets.
+- continue to avoid hardcoded factory progression caps; as of 2026-06-30, source verification found no mobile factory supported-max-level constant.
 
 What mobile frontend should not do for this phase:
 
