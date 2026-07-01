@@ -285,18 +285,18 @@ Operational invariant:
   participant, including the fallback admin, from appearing in multiple active
   buddy groups.
 
-15-day pairing rollover:
+10-day pairing rollover:
 
 - The scheduler still publishes the deployment-compatible
   `club_monthly_pairing_rollover` channel, but it now ticks daily at
   `10 0 * * *`.
 - The service decides whether work is due by checking
   `last_successful_rollover_date + pairing_rollover_interval_days <= today`.
-  The default interval is 15 calendar days.
-- The first 15-day cycle is anchored from the latest successful legacy monthly
+  The default interval is 10 calendar days.
+- The first 10-day cycle is anchored from the latest successful legacy monthly
   state: prefer `program.metadata_json.last_monthly_pairing_at`, otherwise use
   the first day of `last_monthly_pairing_month`.
-- Do not use a day-of-month cron such as `*/15`: it resets on month boundaries
+- Do not use a day-of-month cron such as `*/10`: it resets on month boundaries
   and produces short gaps such as day 31 to day 1.
 - When due, all active buddy groups are closed, active regular members are
   shuffled, and new pairs are created.
@@ -305,14 +305,23 @@ Operational invariant:
 - The new primary idempotency metadata is stored under
   `last_pairing_rollover_period_key`, `last_pairing_rollover_at`,
   `last_pairing_rollover_anchor_date`, and `last_pairing_rollover_payload`.
-- After the rollover transaction commits, `diaverseapi` sends a signed request
-  to `aibot` to generate and publish one Telegram post with image and caption.
-  No `message_thread_id` is sent, so the post lands in the general/common group
+- Before the new-pairs post, `diaverseapi` sends `aibot` a separate
+  `season_result` asset with the previous season's personal and pair tops,
+  formatted public top lists, and its own image/caption templates.
+- After the season-result request is accepted or synchronously skipped,
+  `diaverseapi` sends a second signed request to `aibot` to generate and
+  publish the new-pairs Telegram post with image and caption. No
+  `message_thread_id` is sent, so the post lands in the general/common group
   destination.
-- If the initial signed `aibot` request fails synchronously, backend queues a
-  plain-text fallback notice with the same pair list, also without a topic id.
+- If the season-result signed `aibot` request fails synchronously, backend logs
+  the skip and still attempts the new-pairs post. If the new-pairs request fails
+  synchronously, backend queues a plain-text fallback notice with the same pair
+  list, also without a topic id.
 - Pairing rollover images use `pairing_rollover_image_prompt_template` and
   reuse `leaderboard_image_reference_paths`.
+- Season-result images use `season_result_image_prompt_template`; captions use
+  `season_result_publish_text_template`; both reuse
+  `leaderboard_image_reference_paths`.
 - Pairing rollover pair lines prefer Telegram usernames formatted as
   `@username`; members without a Telegram username fall back to the existing
   display-name rules.
@@ -335,12 +344,20 @@ Settings templates:
 - `pairing_rollover_image_prompt_template` supports `{club_title}`,
   `{period_key}`, `{period_start}`, `{period_end}`, `{pairs_list}`,
   `{pairs_count}`, and `{generated_at}`.
+- `season_result_image_prompt_template` and
+  `season_result_publish_text_template` support `{club_title}`, `{period_key}`,
+  `{period_start}`, `{period_end}`, `{interval_days}`,
+  `{formatted_personal_top}`, `{formatted_pair_top}`, `{personal_top}`,
+  `{pair_top}`, `{personal_top_count}`, `{pair_top_count}`,
+  `{personal_entries_count}`, `{pair_entries_count}`, `{total_members_count}`,
+  and `{generated_at}`.
 
 Logs to inspect:
 
 - `diaverseapi`: `[club.pairing] fallback pair created`, `fallback pair
   replaced`, `rollover due calculated`, `periodic rollover skipped`,
-  `rollover complete`, and `pairing rollover image publish accepted`.
+  `rollover complete`, `season result image publish accepted`, and
+  `pairing rollover image publish accepted`.
 - `diaverseapi` outbox: `reason=telegram_pair_assigned` and
   `reason=pairing_rollover_fallback`.
 - `aibot`: `copywriting.api.club_assets.leaderboard_image.requested`,
