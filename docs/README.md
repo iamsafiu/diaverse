@@ -2,7 +2,7 @@
 
 > Единый вход в документацию workspace `diaverse`.
 
-Этот каталог хранит долгоживущую документацию для связанных репозиториев: `diaweb`, `diaverseapi`, `aibot`, `club10000-bot` и `diaverse-auth-bot`. Кодовая истина остается в дочерних репозиториях, а продуктовые контракты, cross-repo runbook'и, исследования, задачи и daily logs собираются здесь.
+Этот каталог хранит долгоживущую документацию для связанных репозиториев: `diaweb`, `diaverse-mobile`, `diaverseapi`, `aibot`, `diaverse-content`, `diaverse-ai-cofounder`, `club10000-bot` и `diaverse-auth-bot`. Кодовая истина остается в дочерних репозиториях, а продуктовые контракты, cross-repo runbook'и, исследования, задачи и daily logs собираются здесь.
 
 ## Быстрый Старт
 
@@ -28,6 +28,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | [Architecture](architecture/copywriting-web-architecture.md) | Cross-repo архитектура, file maps, ключевые потоки |
 | [Features](features/factory.md) | Живые документы по factory, auth, RBAC, shop, Advent, pets, analytics |
 | [Runbooks](runbooks/copywriting-production-runtime.md) | Deploy, nginx, VPS, production/runtime операции |
+| [Autonomous Editorial System](features/autonomous-editor.md) | Evidence-first content automation, privacy, attribution, learning, visual review, RBAC and promotion gates |
+| [Autonomous Editorial Runbook](runbooks/autonomous-editor.md) | Draft-only operations, rollout stages, kill switches, rollback and verification commands |
 | [Temporary Factory/Raids Staff Gate](runbooks/temporary-factory-raids-staff-gate.md) | Временный frontend-only доступ к Factory/Raids только для staff и инструкция отката |
 | [Research](research/shop/shop-research.md) | Исследования, старые варианты, discovery notes |
 | [Logs](logs/shop-network.md) | Исторические технические логи и расследования |
@@ -45,12 +47,15 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | Workspace Architecture | [../.ai-factory/ARCHITECTURE.md](../.ai-factory/ARCHITECTURE.md) | Перед cross-repo решениями |
 | Product Master Plan | [product/master-plan.md](product/master-plan.md) | Перед изменением продуктового scope |
 | Copywriting Web Architecture | [architecture/copywriting-web-architecture.md](architecture/copywriting-web-architecture.md) | Перед изменением staff copywriting |
+| Autonomous Editorial System | [features/autonomous-editor.md](features/autonomous-editor.md) | Перед изменением autonomous editor, content learning, product attribution, visual candidates, publish modes или Studio UI |
+| Autonomous Editorial Runbook | [runbooks/autonomous-editor.md](runbooks/autonomous-editor.md) | Перед promotion, scheduler activation, canary/autopublish, incident response или rollback autonomous editor |
 | Copywriting Auth Bot Broadcasts | [features/copywriting/auth-bot-broadcasts.md](features/copywriting/auth-bot-broadcasts.md) | Перед изменением рассылок через auth bot в staff copywriting |
 | Copywriting Club10000 Broadcasts | [features/copywriting/club10000-broadcasts.md](features/copywriting/club10000-broadcasts.md) | Перед изменением рассылок через `@club10000_bot` в staff copywriting |
 | Cabinet Auth Guide | [features/cabinet/auth-guide.md](features/cabinet/auth-guide.md) | Перед изменением auth UI/BFF |
 | Diaverse Auth Bot | [features/cabinet/auth-bot.md](features/cabinet/auth-bot.md) | Перед изменением Telegram auth bot, login-session approve или mobile Telegram link flow |
 | Cabinet RBAC Guide | [features/cabinet/rbac-guide.md](features/cabinet/rbac-guide.md) | Перед изменением ролей/permissions |
 | Cabinet Shop Web | [features/cabinet/shop-web.md](features/cabinet/shop-web.md) | Перед изменением shop frontend/BFF |
+| Site Analytics | [features/site-analytics.md](features/site-analytics.md) | Перед изменением site tracker, content attribution, staff Site analytics или executive KPI definitions |
 | Factory Web | [features/factory.md](features/factory.md) | Перед изменением веб-фабрики, factory API, каталога, ассетов или mobile handoff |
 | Staff Logging | [architecture/staff-logging.md](architecture/staff-logging.md) | Перед изменением staff logging |
 | Advent Calendar | [features/advent-calendar.md](features/advent-calendar.md) | Перед изменением Advent guest/payment flows |
@@ -62,8 +67,12 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 
 | Репозиторий | Примеры |
 | --- | --- |
+| `diaweb` | `diaweb/README.md`, frontend module docs when they only affect the web app |
+| `diaverse-mobile` | `diaverse-mobile/MOBILE_RELEASE.md`, `diaverse-mobile/docs/*` |
 | `diaverseapi` | `diaverseapi/docs/*`, `diaverseapi/app/exchange/*.md` |
 | `aibot` | `aibot/docs/web-copywriting-service.md`, `aibot/docs/ops-alerts.md` |
+| `diaverse-content` | `diaverse-content/README.md`, repo-local content factory setup docs |
+| `diaverse-ai-cofounder` | repo-local private AI Cofounder runtime docs |
 | `club10000-bot` | `club10000-bot/docs/referral_system.md` |
 | `diaverse-auth-bot` | `diaverse-auth-bot/README.md` |
 
