@@ -24,6 +24,7 @@ The staff analytics dashboard exposes this data in the `Сайт` tab next to `�
 - Stored paths and referrers intentionally omit query strings and hashes.
 - Cookies, Telegram init data, auth tokens, and raw visitor ids must not be logged.
 - `diaverse-content` reuses the browser consent storage key `diaweb:privacy-consent:v1`; no content analytics runs before accepted consent.
+- Content attribution uses a separate hash-only ledger. Opaque `dattr` tokens are captured into a short-lived host-only HttpOnly cookie and redeemed after auth; raw tokens and token hashes are not logged or exposed to staff UI.
 
 ## Metrics
 
@@ -107,6 +108,27 @@ The daily trend tooltip should show App Store, Google Play, website, `mobile_unk
 ### Mobile Handoff
 
 The current backend can separate background-only days from foreground/tap evidence, but a true app-open/session metric needs a future mobile contract. Mobile should send an explicit foreground/open/session event with platform and app-version context; backend analytics should store that separately from step/background sync events. Until that exists, staff reporting must present `activity DAU` and `foreground/tap` as proxies, not as exact app sessions.
+
+## Content Attribution Metrics
+
+Content attribution connects consented learn-page touches to later authenticated backend outcomes without exposing per-user facts to the content system.
+
+| Metric | Denominator | Privacy Rule |
+| --- | --- | --- |
+| Touches | Consented content-attribution touch rows for a bounded date window. | Raw token and visitor key are HMAC-hashed before persistence. |
+| Anonymous visitors | Distinct anonymous visitor hashes in the touch ledger. | No raw browser id is stored. |
+| Claimed users | Distinct users stitched from valid same/later-day auth claims inside the bounded claim window. | Monotonic stitching; claims are not reassigned to another user. |
+| First meaningful activity | Claimed users with positive backend activity within the first eligible activity window. | Returned only when cohort size and maturity thresholds are met. |
+| D1 / D7 active | Claimed users active on the D1/D7 UTC calendar-day windows. | Immature or below-threshold cohorts are `insufficient_evidence`, not zero. |
+| Approved paid users/outcomes | Authenticated paid outcomes in approved backend payment domains. | Guest/unclaimed outcomes are an explicit `unavailable` gap. |
+
+Unavailable sources are named in the response:
+
+- onboarding conversion: unavailable until an immutable completion timestamp exists;
+- guest and unclaimed outcomes: unavailable because no safe stitchable identity exists;
+- mobile install attribution: unavailable until a separate mobile deep-link attribution contract exists.
+
+These states must be rendered as `unavailable` or `insufficient_evidence`. Do not coerce them to zero in dashboards, learning scores, or Daily Work summaries.
 
 ## Executive KPI Summary
 

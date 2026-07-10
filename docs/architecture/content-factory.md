@@ -22,6 +22,7 @@ The repo owns content state only: drafts, revisions, slugs, slug history, conten
 | Site analytics storage | `diaverseapi` | Content pages post sanitized visits through the content runtime proxy |
 | Copywriting drafts | `aibot` | Optional draft import source, disabled by default |
 | Codex content operator | local Codex session + `diaverse-content` | Manual metrics analysis and draft-only import flow |
+| Autonomous editorial system | `diaverse-content` + `diaweb` + `diaverseapi` | Evidence-first automation, staff Studio, hash-only attribution aggregates |
 | Content database/media | `diaverse-content` | Separate Postgres and S3-compatible media storage |
 
 ## Route Map
@@ -33,6 +34,8 @@ The repo owns content state only: drafts, revisions, slugs, slug history, conten
 | `/_diaverse-content/_next/*` | yes | `diaverse-content` | Isolated Next assets and image optimizer |
 | `/ru/staff/content/*` | staff only | `diaweb` | Browser UI and permission-aware workspace |
 | `/api/staff/content/*` | same-origin staff only | `diaweb` | BFF, never forwards browser cookies to content runtime |
+| `/ru/staff/content/studio` | staff only | `diaweb` | Editorial Studio for opportunities, episodes, evidence, learning, approvals, canary, rollback |
+| `/api/staff/content/content-editor/*` | same-origin staff only | `diaweb` | Deny-by-default BFF for Studio internal APIs |
 | `/internal/v1/*` | internal only | `diaverse-content` | Requires short-lived internal JWT |
 | `/admin`, `/api/admin`, `/login`, `/api/auth` | no | `diaverse-content` | Inherited Stateinik surfaces disabled unless explicit local migration flag is set |
 | `/sitemap.xml`, `/robots.txt`, `/llms.txt` | yes | `diaweb` root owner | Aggregates content fragments from `diaverse-content` |
@@ -55,6 +58,17 @@ Internal JWT policy:
 - `jti`, `iat`, `exp`, `sub`, issuer, and audience are required.
 - Permissions are explicit, for example `content:read`, `content:create`, `content:edit`, `content:publish`, and `content.settings:manage`.
 - Cookies, raw JWTs, and draft bodies must not be logged.
+
+Content Studio permission matrix:
+
+| Permission | Routes / Actions |
+| --- | --- |
+| `content:read` | status, opportunities, hypotheses, episodes, sources, variants, evaluations, lessons, policies, human decisions |
+| `content:edit` | episode jobs, cancellation, human decisions |
+| `content:publish` | guide approval, canary action, guide rollback |
+| `content.settings:manage` | policy activation and policy rollback |
+
+The BFF denies unknown method/path combinations by default. Approval, canary, and rollback remain explicit operator actions with idempotency key and reason code.
 
 ## SEO Ownership
 
@@ -91,6 +105,30 @@ diaverse-content server  -> diaverseapi /v1/analytics/site/visit
 ```
 
 The content runtime does not forward browser cookies to `diaverseapi` for analytics.
+
+### Content Attribution
+
+Content attribution is separate from ordinary site visits. `diaweb` captures a bounded opaque `dattr` token only after consent and stores it in a short-lived `HttpOnly; Secure; SameSite=Lax` host cookie. After auth, `diaweb` redeems the token through `diaverseapi`.
+
+`diaverseapi` persists a dedicated `content_attribution_touches` ledger. It stores HMAC token hashes, HMAC anonymous visitor hashes, content dimensions, consent/contract version, touched/claimed/expiry timestamps, and nullable user FK. It does not store raw tokens, raw visitor ids, paths, referrers, browser cookies, JWTs, or article bodies.
+
+Product outcomes consumed by `diaverse-content` are private suppressed aggregates only. Groups below the privacy threshold are omitted. Missing onboarding timestamps, guest/unclaimed outcomes, and mobile install attribution are returned as `unavailable`, not zero.
+
+## Autonomous Editorial System
+
+The autonomous editor extends the manual Codex operator into a controlled, auditable system:
+
+```text
+evidence import -> mature outcome snapshots -> lessons -> opportunity ranking
+-> draft/revision/hold -> research/critics/visual review -> hard-policy gate
+-> trusted draft/canary action -> human approval -> later outcome evaluation
+```
+
+Hard-policy gates are code-owned and immutable by learning. Learning proposals can change only scoped soft preferences after mature evidence, minimum sample, confidence, conflict, expiry, and diversity checks pass.
+
+The production default remains draft-only. The rollout stages, kill switches, provider credential rules, and rollback process are documented in [Autonomous Editorial System](../features/autonomous-editor.md) and [Autonomous Editorial Runbook](../runbooks/autonomous-editor.md).
+
+`diaverse-ai-cofounder` is not in the content publish path. It can remain a private ops/runtime repository, but it must not bypass the content runtime's source safety, privacy suppression, hard gates, human approvals, or rollbackable policy versions.
 
 ## Codex Operator Flow
 
