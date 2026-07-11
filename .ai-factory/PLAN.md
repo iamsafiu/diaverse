@@ -1,252 +1,231 @@
-# Implementation Plan: Factory Level 4 Playable Scope
+# Implementation Plan: Separate Game, Site, and Overview Analytics
 
-Branch: none
-Created: 2026-06-30
+Branch: none (fast mode)
+Created: 2026-07-11
 
 ## Settings
 - Testing: yes
 - Logging: standard
 - Docs: yes
-
-## Workspace Scope
-
-This is a fast cross-repo plan from the workspace root. No branches are created.
-
-| Repository | Path | Affected | Role |
-| --- | --- | --- | --- |
-| diaverse | C:\Users\Indigo\Desktop\diaverse | yes | active AIF plan and factory documentation |
-| diaverseapi | C:\Users\Indigo\Desktop\diaverse\diaverseapi | yes | authoritative factory rules, state, commands, catalog behavior, tests |
-| diaweb | C:\Users\Indigo\Desktop\diaverse\diaweb | yes | web cabinet factory UI, BFF client/types, tests |
-| diaverse-mobile | C:\Users\Indigo\Desktop\diaverse\diaverse-mobile | no | mobile factory screen remains out of scope |
-| aibot | C:\Users\Indigo\Desktop\diaverse\aibot | no | out of scope |
-| diaverse-content | C:\Users\Indigo\Desktop\diaverse\diaverse-content | no | out of scope |
-| diaverse-ai-cofounder | C:\Users\Indigo\Desktop\diaverse\diaverse-ai-cofounder | no | archived/reference only |
-| club10000-bot | C:\Users\Indigo\Desktop\diaverse\club10000-bot | no | out of scope |
-| diaverse-auth-bot | C:\Users\Indigo\Desktop\diaverse\diaverse-auth-bot | no | out of scope |
+- Mobile repository: no edits
 
 ## Roadmap Linkage
-
 Milestone: "none"
-Rationale: Fast plan requested; no `.ai-factory/ROADMAP.md` is available in the workspace context.
+Rationale: No `.ai-factory/ROADMAP.md` file was found; this is a focused staff analytics clarification.
+
+## Workspace Mode
+- Mode: fast multi-repo plan
+- Workspace root: `C:\Users\Indigo\Desktop\diaverse`
+- Knowledge: local GBrain was attempted first; exact behavior was verified from source files.
+- Affected product repos: `diaweb`
+- Affected workspace docs: `docs/research/dau-wau-mau-growth-analysis-2026-07.md`
+- Explicitly excluded: `diaverse-mobile`
+- Backend default: no backend code changes unless implementation proves an existing frontend-safe API field is missing.
 
 ## Research Context
+Current confusion:
+- `Общая` currently sounds like the whole system, but the DAU/WAU/MAU cards are actually game/app activity from `user_activities` and `user_taps`.
+- `Сайт` is already a separate tab and is based on `site_daily_visits`; authenticated web visits can stitch to `users.uuid`, but anonymous web visits are visitor hashes, not users.
+- `Новые пользователи по источнику` mixes App Store, Google Play, website, mobile unknown, and legacy unknown in one block, which makes people read backend-account creation as real user acquisition.
 
-Source: `docs/tasks/fabric/factory-mechanics-final.md`, local GBrain `diaverse-docs/features/factory`, and verified source files in `diaverseapi/app/factory` and `diaweb/frontend/modules/factory`.
+Decision:
+- Keep headline DAU/WAU/MAU under `Игра / приложение`.
+- Keep website analytics under `Сайт`.
+- Add `Обзор` as an executive summary that compares system signals side by side without summing app and site DAU into one fake total.
+- Split account/source cards by context:
+  - app/game tab shows App Store, Google Play, Mobile unknown, Legacy unknown, and total app/backend accounts excluding website;
+  - site tab shows website-attributed backend accounts near website visitor metrics.
 
-Note: `.ai-factory/RESEARCH.md` currently has an unrelated Telegram ops-agent active summary, so it is intentionally not carried into this factory plan.
+## Repository Matrix
+| Repository | Path | Affected | Current status at planning | Role |
+| --- | --- | --- | --- | --- |
+| diaweb | `C:\Users\Indigo\Desktop\diaverse\diaweb` | yes | `dev`, only untracked `.worktrees/` visible from status | staff analytics UI and frontend tests |
+| diaverseapi | `C:\Users\Indigo\Desktop\diaverse\diaverseapi` | no by default | `dev`, dirty with unrelated backend/device/support/payment changes | existing analytics API source of truth |
+| diaverse-mobile | `C:\Users\Indigo\Desktop\diaverse\diaverse-mobile` | no | do not touch | future app-open/session instrumentation only |
+| workspace root | `C:\Users\Indigo\Desktop\diaverse` | yes | dirty docs research file | plan and analytics research doc |
+| aibot | `C:\Users\Indigo\Desktop\diaverse\aibot` | no | unchanged | not involved |
+| diaverse-content | `C:\Users\Indigo\Desktop\diaverse\diaverse-content` | no | unchanged | not involved |
+| club10000-bot | `C:\Users\Indigo\Desktop\diaverse\club10000-bot` | no | unchanged | not involved |
+| diaverse-auth-bot | `C:\Users\Indigo\Desktop\diaverse\diaverse-auth-bot` | no | unchanged | not involved |
 
-Goal:
-- Raise the supported playable factory scope from levels 1-3 to levels 1-4 in backend and diaweb.
-- Allow a valid level 3 factory to upgrade to level 4 using existing level 4 catalog pricing and requirements.
-- At factory level 4, expose the level 4 gameplay surface from the final mechanics document: resource parts up to level 4, pet craft workshop as normal required content, rare pet craft as normal required content, epic pet craft as early access, rare biomass as normal content, epic biomass as early access, and mutagen workshop/common mutagen as early access.
-
-Constraints:
-- Backend remains the source of truth for requirements, spendability, unlocks, inventory reservation, craft results, timers, idempotency, and payment-finalized state.
-- Frontend may hide unsupported future targets but must not calculate authoritative requirements or balances.
-- Keep the established convention that all factory levels use the same playable map and hotspot geometry unless a separate art decision changes it.
-- Do not build native mobile factory screens or mobile-specific contracts in this scope.
-- Do not enable level 5 progression yet; target level 5 must remain hidden/blocked until a separate implementation raises the max gate.
-- Avoid catalog economy changes unless tests reveal a mismatch required for level 4 playability.
-
-Decisions:
-- Change both hard caps from `3` to `4`: backend `FACTORY_SUPPORTED_MAX_LEVEL` and frontend `FACTORY_SUPPORTED_MAX_LEVEL`.
-- Treat the existing catalog v1 level 4 row and early-access rows as the intended economy source unless implementation tests prove otherwise.
-- Keep level 4 visual keys stable and use the existing shared map fallback; add only minimal manifest/test polish if the level 4 upgrade preview is visibly broken.
-- Use targeted backend and frontend tests around the old blocked level 4 paths instead of broad unrelated factory refactors.
-
-Open questions:
-- Whether level 5 requirement rows should already include mutagen workshop/common mutagen as mandatory for 5 -> 6. This is noted as future level 5 scope and should not block level 4 enablement unless current tests fail.
+## Commit Plan
+- **Commit 1** (`diaweb`): `feat(analytics): separate game and site metrics`
+- **Commit 2** (`diaweb`): `test(analytics): cover metric grouping labels`
+- **Commit 3** (root docs): `docs(analytics): clarify app site overview metrics`
 
 ## Tasks
 
-### Phase 1: Backend Gate And Level Upgrade
-
-- [x] **Task 1: Raise the backend factory supported max level to 4**
-  - Deliverable: Update backend policy gates so target level 4 is accepted and target level 5 is still rejected.
+### Phase 1: Information Architecture
+- [x] Task 1: Rename the current `Общая` tab to `Игра / приложение` and add a new `Обзор` tab.
+  - Deliverable: staff analytics has separate top-level tabs for executive summary, game/app activity, and site analytics.
+  - Files to change:
+    - `diaweb/frontend/modules/analytics/components/AnalyticsDashboard.tsx`
   - Expected behavior:
-    - `is_factory_level_upgrade_supported(3)` returns true.
-    - `is_factory_target_level_supported(4)` returns true.
-    - Target level 5 remains unsupported through the same controlled command error path.
-  - Files:
-    - `diaverseapi/app/factory/domain/policies.py`
-    - `diaverseapi/app/factory/services/command_service.py`
-    - `diaverseapi/app/factory/services/state_service.py`
-    - `diaverseapi/app/factory/tests/test_command_service.py`
-    - `diaverseapi/app/factory/tests/test_state_service.py`
+    - Default tab becomes `Обзор`.
+    - Existing DAU/WAU/MAU, lifecycle chart, activity-quality chart, WAU/MAU bridge, and retention move under `Игра / приложение`.
+    - Existing `Сайт`, `Адвент`, `Магазин`, and `Crypton` tabs remain available.
+    - No app/game metric is labeled as a website metric.
   - Logging requirements:
-    - Keep existing command-service logging shape.
-    - Log level-up accept/reject decisions at INFO/WARNING with user/profile id, current level, target level, and supported max level.
-    - Do not log full factory state, inventory payloads, payment payloads, or raw balance snapshots.
-  - Dependencies: none.
+    - UI-only task; do not add runtime console logging.
+  - Dependency notes:
+    - Base task for the UI split.
 
-- [x] **Task 2: Cover successful 3 -> 4 upgrade requirements and failure cases**
-  - Deliverable: Replace old "target level 4 is blocked" expectations with tests that prove level 3 requirements can unlock level 4, while incomplete requirements still block the upgrade.
+- [x] Task 2: Create an executive `AnalyticsOverviewPanel`.
+  - Deliverable: `Обзор` shows a compact cross-system trend summary without adding app and site DAU together.
+  - Files to create/change:
+    - `diaweb/frontend/modules/analytics/components/AnalyticsOverviewPanel.tsx`
+    - `diaweb/frontend/modules/analytics/components/AnalyticsDashboard.tsx`
   - Expected behavior:
-    - A level 3 profile with all level 3 resource parts, life force built, epic life force level 5, and optional pet craft early access can upgrade to level 4.
-    - Missing required level 3 prerequisites still returns a typed requirement failure.
-    - Target level 5 returns an unsupported-target error with `supported_max_level: 4`.
-  - Files:
-    - `diaverseapi/app/factory/tests/test_command_service.py`
-    - `diaverseapi/app/factory/tests/test_catalog.py`
-    - `diaverseapi/app/factory/services/command_service.py` if tests reveal missing normalization.
+    - Fetch existing data through `useDauWauMau`, `useNewUsersBySource`, and `useSiteAnalytics`.
+    - Show side-by-side cards:
+      - `Игра: Activity DAU`;
+      - `Игра: WAU`;
+      - `Игра: MAU`;
+      - `Новые app/backend аккаунты`;
+      - `Mobile unknown`;
+      - `Background-only`;
+      - `Сайт: посетители`;
+      - `Сайт: web DAU`.
+    - Add a clear non-summing note in UI copy: overview compares signals and does not produce a fake total DAU.
+    - Use existing date range defaults and avoid nested cards.
   - Logging requirements:
-    - INFO on successful level-up command completion with old/new level and idempotency key.
-    - WARNING on unmet requirement failure with requirement code/target only, not full state.
-    - DEBUG may be used in tests/helpers for setup details, controlled by normal test logging.
-  - Dependencies: Task 1.
+    - UI-only task; no runtime logging.
+    - Fetch errors should render through existing React Query error states.
+  - Dependency notes:
+    - Depends on Task 1 tab structure.
 
-### Phase 2: Backend Level 4 Gameplay Surface
-
-- [x] **Task 3: Verify and expose level 4 state/actions for buildings and compartments**
-  - Deliverable: Add focused state/action tests for level 4 availability across resource, biomass, pet craft, and mutagen surfaces.
+### Phase 2: Game/App Tab
+- [x] Task 3: Relabel game/app DAU copy so headline metrics are explicitly app/core activity.
+  - Deliverable: the game tab no longer reads as "whole system DAU".
+  - Files to change:
+    - `diaweb/frontend/modules/analytics/components/DauWauMauCards.tsx`
+    - `diaweb/frontend/modules/analytics/components/DauChart.tsx`
+    - `diaweb/frontend/modules/analytics/components/WauMauBridgePanel.tsx`
+    - `diaweb/frontend/modules/analytics/components/AnalyticsDashboard.tsx`
   - Expected behavior:
-    - Resource workshop parts can upgrade/build through resource level 4.
-    - `dna_capsule_workshop.rare_biomass` is normal content at level 4 and `epic_biomass` is early access.
-    - `pet_craft_workshop` and `rare_pet_craft` are normal content at level 4; `epic_pet_craft` is early access.
-    - `mutagen_workshop` and `common_mutagen` are visible/buildable as early access at level 4.
-    - Level 5-only content remains locked or early access exactly as the catalog defines.
-  - Files:
-    - `diaverseapi/app/factory/services/state_service.py`
-    - `diaverseapi/app/factory/services/building_service.py`
-    - `diaverseapi/app/factory/services/compartment_service.py`
-    - `diaverseapi/app/factory/tests/test_state_service.py`
-    - `diaverseapi/app/factory/tests/test_building_service.py`
-    - `diaverseapi/app/factory/tests/test_compartment_service.py`
+    - Section title becomes `Игра / приложение: activity DAU / WAU / MAU`.
+    - Cards clarify that values are based on game activity signals, not website visits.
+    - Chart labels/tooltips are Russian and include color meaning where needed.
+    - `background-only` remains visible as a quality warning, not hidden.
   - Logging requirements:
-    - INFO for build/package purchase state transitions with building/compartment key and early-access flag.
-    - WARNING for blocked build/upgrade commands with lock reason and factory level.
-    - Avoid per-card state logs during normal state rendering.
-  - Dependencies: Tasks 1-2.
+    - UI-only task; no runtime logging.
+  - Dependency notes:
+    - Depends on Task 1.
 
-- [x] **Task 4: Verify level 4 crafting and inventory mappings**
-  - Deliverable: Add/adjust backend crafting coverage for level 4 craftable outputs and aliases so production jobs reserve inputs and credit outputs correctly.
+- [x] Task 4: Parameterize `NewUsersSourcePanel` and place app-account source cards inside the game tab.
+  - Deliverable: game tab shows new app/backend accounts without the website source card in the same block.
+  - Files to change:
+    - `diaweb/frontend/modules/analytics/components/NewUsersSourcePanel.tsx`
+    - `diaweb/frontend/modules/analytics/components/AnalyticsDashboard.tsx`
   - Expected behavior:
-    - Rare pet craft remains concrete-shard based and still reserves the selected rare shard before producing the selected rare pet.
-    - Epic pet craft is available as level 4 early access and uses the same selected-shard validation pattern for epic fragments if supported by current catalog/resource helpers.
-    - Common mutagen craft produces the existing canonical mutagen resource through the `common_mutagen`/`mutagen_common` alias path.
-    - Rare and epic biomass craft rows reserve the configured inputs and credit the configured biomass output keys.
-  - Files:
-    - `diaverseapi/app/factory/services/crafting_service.py`
-    - `diaverseapi/app/factory/services/inventory_gateway.py`
-    - `diaverseapi/app/factory/services/resource_assets.py`
-    - `diaverseapi/app/factory/tests/test_crafting_service.py`
-    - `diaverseapi/app/factory/tests/test_inventory_gateway.py`
-    - `diaverseapi/app/factory/tests/test_award_resource_support.py`
+    - Add a presentation mode such as `variant="app"` / `variant="site"` / `variant="all"` or equivalent.
+    - In app mode, show:
+      - total app/backend accounts = App Store + Google Play + Mobile unknown + Legacy unknown;
+      - App Store;
+      - Google Play;
+      - Mobile unknown;
+      - Legacy unknown.
+    - In app mode, do not show website as part of app account growth.
+    - Labels say `backend-аккаунты`, not plain `новые пользователи`.
   - Logging requirements:
-    - INFO on craft job creation/collection with building key, compartment key, output key, and job id.
-    - WARNING when selected shard/material validation fails, with the requested material id/key only.
-    - ERROR on inventory reservation/credit failure using sanitized gateway context.
-  - Dependencies: Task 3.
+    - UI-only task; no runtime logging.
+  - Dependency notes:
+    - Depends on Task 3.
 
-### Phase 3: Diaweb Gate And Level 4 UI
-
-- [x] **Task 5: Raise the diaweb supported max level to 4**
-  - Deliverable: Update the frontend factory cap and tests so level 4 upgrade controls render when backend state offers target level 4, while level 5 remains hidden.
+### Phase 3: Site Tab
+- [x] Task 5: Move website-attributed backend account cards into the site tab.
+  - Deliverable: site tab explains both website visitors and website-attributed account creation in one place.
+  - Files to change:
+    - `diaweb/frontend/modules/analytics/components/SiteAnalyticsPanel.tsx`
+    - `diaweb/frontend/modules/analytics/components/NewUsersSourcePanel.tsx`
   - Expected behavior:
-    - `FactoryShell` no longer hides the 3 -> 4 upgrade CTA solely because of the local max constant.
-    - The existing unsupported-target guard now applies to target level 5.
-    - The UI still respects backend `available_actions`, lock reasons, and command errors.
-  - Files:
-    - `diaweb/frontend/modules/factory/constants.ts`
-    - `diaweb/frontend/modules/factory/components/FactoryShell.tsx`
-    - `diaweb/frontend/__tests__/modules/factory/FactoryShell.test.tsx`
+    - Site tab keeps existing website visitor DAU/WAU/MAU cards.
+    - Add a compact website account block using existing `new-users/sources` data in `variant="site"`.
+    - Site tab labels distinguish:
+      - `Web visitors` / `посетители сайта`;
+      - `Website-attributed backend accounts` / `backend-аккаунты с web evidence`.
+    - Do not call anonymous visitors "users".
   - Logging requirements:
-    - Keep production client logs minimal.
-    - Use existing warning/error handling for rejected commands.
-    - Do not log full `FactoryStateSnapshot` or inventory excerpts.
-  - Dependencies: Tasks 1-2.
+    - UI-only task; no runtime logging.
+  - Dependency notes:
+    - Depends on Task 4.
 
-- [x] **Task 6: Cover level 4 workshop and compartment rendering in diaweb**
-  - Deliverable: Add frontend tests for the level 4 gameplay surface and update UI normalization only where tests reveal stale assumptions.
+- [x] Task 6: Tighten site metric labels and selected-period wording.
+  - Deliverable: site cards no longer imply they are the same as app DAU.
+  - Files to change:
+    - `diaweb/frontend/modules/analytics/components/SiteAnalyticsPanel.tsx`
+    - `diaweb/frontend/modules/analytics/components/SiteDauChart.tsx`
   - Expected behavior:
-    - Pet craft workshop appears as normal content at level 4.
-    - Rare pet craft appears as normal content; epic pet craft appears as early access.
-    - Mutagen workshop/common mutagen and epic biomass can render as early-access cards/actions using existing labels and asset manifest keys.
-    - Resource and production screens show backend-provided lock reasons instead of client-side unsupported-level text.
-  - Files:
-    - `diaweb/frontend/modules/factory/catalogView.ts`
-    - `diaweb/frontend/modules/factory/displayLabels.ts`
-    - `diaweb/frontend/modules/factory/components/FactoryResourceWorkshopScreen.tsx`
-    - `diaweb/frontend/modules/factory/components/FactoryProductionWorkshopScreen.tsx`
-    - `diaweb/frontend/modules/factory/components/FactoryCompartmentScreen.tsx`
-    - `diaweb/frontend/__tests__/modules/factory/FactoryResourceWorkshopScreen.test.tsx`
-    - `diaweb/frontend/__tests__/modules/factory/FactoryProductionWorkshopScreen.test.tsx`
-    - `diaweb/frontend/__tests__/modules/factory/FactoryCompartmentScreen.test.tsx`
+    - Use labels such as `Web DAU`, `Web WAU`, `Web MAU`, `Уникальные посетители за период`.
+    - Copy explains that site metrics are `site_daily_visits` visitor/user hashes.
+    - Keep website tab separate from core game/app DAU.
   - Logging requirements:
-    - No new noisy render logs.
-    - Keep user-visible blocked states in the UI and reserve console errors for failed mutations or malformed data.
-    - Any dev-only debug logs must stay behind existing factory debug environment flags.
-  - Dependencies: Task 5.
+    - UI-only task; no runtime logging.
+  - Dependency notes:
+    - Depends on Task 5.
 
-- [x] **Task 7: Polish level 4 visual keys and upgrade preview behavior**
-  - Deliverable: Ensure level 4 map, hotspot geometry, and upgrade preview render nonblank with stable manifest keys and mobile-first layout.
+### Phase 4: Tests And Docs
+- [x] Task 7: Add frontend tests for the new tab split and source placement.
+  - Deliverable: tests prevent regression back into mixed "Общая" semantics.
+  - Files to change/create:
+    - `diaweb/frontend/__tests__/modules/analytics/AnalyticsDashboard.test.tsx`
+    - `diaweb/frontend/__tests__/modules/analytics/NewUsersSourcePanel.test.tsx`
+    - `diaweb/frontend/__tests__/modules/analytics/SiteAnalyticsPanel.test.tsx`
   - Expected behavior:
-    - `factory.map.level_4` resolves through the shared playable map convention.
-    - If the upgrade dialog asks for a level 4 preview key, it either has a manifest entry or reliably falls back to the level 4 map without broken image UI.
-    - Existing workshop hotspots remain stable across levels.
-  - Files:
-    - `diaweb/frontend/modules/factory/assetManifest.ts`
-    - `diaweb/frontend/modules/factory/components/FactoryUpgradeDialog.tsx`
-    - `diaweb/frontend/modules/factory/components/FactoryScene.tsx`
-    - `diaweb/frontend/__tests__/modules/factory/FactoryScene.test.tsx`
-    - `diaweb/frontend/__tests__/modules/factory/FactoryUpgradeDialog.test.tsx` if present or created.
+    - Assert default `Обзор` tab renders executive summary labels.
+    - Assert `Игра / приложение` tab renders app activity metrics and app-account source labels.
+    - Assert app mode does not present website as part of app-account total.
+    - Assert `Сайт` tab renders website visitor labels and website-attributed backend account labels.
   - Logging requirements:
-    - Do not add production image-load logs.
-    - Keep any asset fallback diagnostics dev-only.
-    - Test visual-key selection directly instead of relying on console output.
-  - Dependencies: Task 5.
+    - Tests should not assert console logs.
+    - Mock data must not include real user identifiers.
+  - Dependency notes:
+    - Depends on Tasks 1-6.
 
-### Phase 4: Documentation And Verification
-
-- [x] **Task 8: Update factory documentation for level 4 support**
-  - Deliverable: Update canonical workspace docs so they no longer say web/backend only support levels 1-3.
+- [x] Task 8: Update analytics research documentation with the final tab model.
+  - Deliverable: the research doc tells operators where each metric belongs.
+  - Files to change:
+    - `docs/research/dau-wau-mau-growth-analysis-2026-07.md`
   - Expected behavior:
-    - `docs/features/factory.md` states that levels 1-4 are playable after implementation.
-    - The doc names the level 4 enabled surface and keeps level 5+ explicitly unsupported.
-    - Any smoke/task note that references the old target level 4 block is adjusted or linked to the new implementation status.
-  - Files:
-    - `docs/features/factory.md`
-    - `docs/tasks/fabric/factory-web-integration-smoke.md` if it still asserts the old gate.
+    - Add a section that defines:
+      - `Обзор` = executive comparison, no fake total DAU;
+      - `Игра / приложение` = headline app/core activity metrics;
+      - `Сайт` = website visitors and website-attributed accounts;
+      - app/backend accounts are not automatically confirmed real users.
+    - Preserve existing production analysis numbers and caveats.
+    - Do not include SSH commands, server IPs, raw production SQL, tokens, or PII.
   - Logging requirements:
-    - Documentation changes do not add runtime logging.
-    - Include a note in verification/daily work only after implementation, not as a runtime log.
-  - Dependencies: Tasks 1-7.
+    - Docs-only task; no runtime logging.
+  - Dependency notes:
+    - Depends on final UI naming from Tasks 1-6.
+
+- [x] Task 9: Run targeted verification.
+  - Deliverable: changed UI and docs are checked before handoff.
+  - Files/commands:
+    - `cd diaweb/frontend && npm run test -- __tests__/modules/analytics/AnalyticsDashboard.test.tsx __tests__/modules/analytics/NewUsersSourcePanel.test.tsx __tests__/modules/analytics/SiteAnalyticsPanel.test.tsx`
+    - `cd diaweb/frontend && npm run typecheck`
+    - `cd diaweb/frontend && npm run lint`
+    - `git diff --check -- docs/research/dau-wau-mau-growth-analysis-2026-07.md`
+  - Expected behavior:
+    - Targeted tests pass or any environment blocker is reported clearly.
+    - Typecheck/lint pass or unrelated existing failures are separated from this change.
+  - Logging requirements:
+    - Verification task only; no app logging changes.
+  - Dependency notes:
+    - Depends on Tasks 1-8.
 
 ## Verification Plan
+- `diaweb/frontend`:
+  - `npm run test -- __tests__/modules/analytics/AnalyticsDashboard.test.tsx __tests__/modules/analytics/NewUsersSourcePanel.test.tsx __tests__/modules/analytics/SiteAnalyticsPanel.test.tsx`
+  - `npm run typecheck`
+  - `npm run lint`
+- Workspace docs:
+  - `git diff --check -- docs/research/dau-wau-mau-growth-analysis-2026-07.md`
+  - Run targeted GBrain sync for `diaverse-docs` after docs changes if implementation completes successfully.
 
-Run from `diaverseapi`:
-
-```powershell
-.\.venv\Scripts\python.exe -m pytest app/factory/tests/test_catalog.py app/factory/tests/test_command_service.py app/factory/tests/test_state_service.py app/factory/tests/test_building_service.py app/factory/tests/test_compartment_service.py app/factory/tests/test_crafting_service.py app/factory/tests/test_inventory_gateway.py app/factory/tests/test_award_resource_support.py -q
-.\.venv\Scripts\python.exe -m ruff check app/factory
-```
-
-Run from `diaweb/frontend`:
-
-```powershell
-npm run test -- __tests__/modules/factory
-npm run lint -- modules/factory __tests__/modules/factory
-npm run typecheck
-```
-
-Run from the workspace root after code/docs changes:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File C:\Users\Indigo\Desktop\diaverse\scripts\gbrain-sync.ps1
-```
-
-## Commit Plan
-
-- **Commit 1** (after tasks 1-4): `feat(api): enable factory level four`
-- **Commit 2** (after tasks 5-7): `feat(web): expose factory level four`
-- **Commit 3** (after task 8 and verification): `docs(factory): mark level four playable`
-
-## Definition Of Done
-
-- Backend and diaweb both support factory target level 4 and still block/hide target level 5.
-- A valid level 3 factory can upgrade to level 4 through existing command/payment/inventory paths.
-- Level 4 state exposes the intended normal and early-access workshops/compartments from the final mechanics document.
-- Craft/build/package flows for level 4 content have targeted backend coverage.
-- Diaweb renders the level 4 upgrade and gameplay surface without broken map/preview assets or stale unsupported-level copy.
-- Canonical factory docs describe the new supported scope and the remaining level 5+ boundary.
-- Targeted backend and frontend checks pass.
+## Rollout Notes
+- This plan intentionally avoids mobile changes.
+- This plan intentionally avoids backend changes unless implementation discovers a hard API gap.
+- Main product DAU should be read from `Игра / приложение`.
+- Website metrics should be read from `Сайт`.
+- `Обзор` should be used for system-level explanation, not as a new mathematical total.
