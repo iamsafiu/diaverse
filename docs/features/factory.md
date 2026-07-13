@@ -1,7 +1,7 @@
 # Factory Web
 
-Updated: 2026-06-30
-Status: implemented behind authenticated web cabinet rollout; playable scope supports factory levels 1-4
+Updated: 2026-07-13
+Status: implemented behind authenticated web cabinet rollout; playable scope supports factory levels 1-5
 
 ## Overview
 
@@ -19,20 +19,22 @@ The mobile app does not own the new factory UI. Mobile remains the owner of its 
 
 Current supported progression:
 
-- Factory levels 1, 2, 3, and 4 are playable in web.
-- Backend and frontend hard gates allow the level 3 -> 4 upgrade when backend requirements are met.
-- Target level 5 remains unsupported in the current web/backend gate and must stay hidden or blocked until a later implementation explicitly raises the supported max level.
-- At factory level 4, resource workshops can upgrade to resource level 4.
+- Factory levels 1, 2, 3, 4, and 5 are playable in web.
+- Backend and frontend hard gates allow the level 4 -> 5 upgrade when backend requirements are met.
+- Target level 6 remains unsupported in the current web/backend gate and must stay hidden or blocked until a later implementation explicitly raises the supported max level.
+- At factory level 5, resource workshops can upgrade to resource level 5.
 - At factory level 4, `pet_craft_workshop` and `pet_craft_workshop.rare_pet_craft` are normal required content.
 - At factory level 4, `pet_craft_workshop.epic_pet_craft`, `dna_capsule_workshop.epic_biomass`, `mutagen_workshop`, and `mutagen_workshop.common_mutagen` are available as early-access features with backend early-access modifiers.
 - At factory level 4, `dna_capsule_workshop.rare_biomass` is normal content.
+- At factory level 5, `pet_craft_workshop.epic_pet_craft`, `dna_capsule_workshop.epic_biomass`, `mutagen_workshop`, and `mutagen_workshop.common_mutagen` are normal content.
+- At factory level 5, `dna_capsule_workshop.legendary_biomass`, `pet_incubator_workshop`, `pet_incubator_workshop.rare_pet_incubation`, `evogen_workshop`, `evogen_workshop.rare_evogen`, and `mutagen_workshop.rare_mutagen` are early-access content with backend early-access modifiers.
 - Pet craft and biomass recipes that require a concrete selected shard/material send the selected shard through `input_overrides.selected_shard_id`; the backend validates selection before reserving any inputs.
 
 Art status:
 
 - All factory levels intentionally use the same playable map background and workshop hotspot geometry.
 - Level-specific visual keys remain stable manifest keys, but they resolve to the shared playable map unless a future product decision explicitly scopes a layout change.
-- Factory level 4 has a stable `factory.map.level_4` scene key and `factory.map_preview.level_4` upgrade-preview key; both resolve to the shared playable map.
+- Factory levels 4 and 5 have stable scene and upgrade-preview keys: `factory.map.level_4`, `factory.map_preview.level_4`, `factory.map.level_5`, and `factory.map_preview.level_5`; all resolve to the shared playable map.
 - The scene must render nonblank and keep hotspot navigation wired through the normal manifest scene contract.
 
 ## Ownership
