@@ -61,6 +61,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | Diaverse Auth Bot | [features/cabinet/auth-bot.md](features/cabinet/auth-bot.md) | Перед изменением Telegram auth bot, login-session approve или mobile Telegram link flow |
 | Cabinet RBAC Guide | [features/cabinet/rbac-guide.md](features/cabinet/rbac-guide.md) | Перед изменением ролей/permissions |
 | Cabinet Shop Web | [features/cabinet/shop-web.md](features/cabinet/shop-web.md) | Перед изменением shop frontend/BFF |
+| Support Module | [features/support-module.md](features/support-module.md) | Перед изменением support tickets, attachments, staff board или Ops support digest |
 | DCR Web Commerce Rollout | [tasks/dcr/web-commerce-rollout.md](tasks/dcr/web-commerce-rollout.md) | Перед изменением DCR shop, Advent, admin, support, finance или mobile compatibility contracts |
 | Site Analytics | [features/site-analytics.md](features/site-analytics.md) | Перед изменением site tracker, content attribution, staff Site analytics или executive KPI definitions |
 | Factory Web | [features/factory.md](features/factory.md) | Перед изменением веб-фабрики, factory API, каталога, ассетов или mobile handoff |

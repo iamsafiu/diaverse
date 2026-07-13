@@ -39,6 +39,7 @@ All paths relative to project root.
 - `frontend/app/[lang]/(cabinet)/shop2/pets2/page.tsx` — pets category (static)
 - `frontend/app/[lang]/(cabinet)/shop2/pet-skins2/page.tsx` — pet skins category (static)
 - `frontend/app/[lang]/(cabinet)/shop2/pilot-skins2/page.tsx` — pilot skins category (static)
+- `frontend/app/[lang]/(cabinet)/support/page.tsx` — user support page with private attachment copy
 
 ### Staff Pages
 
@@ -112,6 +113,11 @@ All paths relative to project root.
 
 - `frontend/app/var/lib/copywriting/generated_images/[filename]/route.ts` — serves generated images
 - `frontend/app/var/lib/copywriting/reference_images/[filename]/route.ts` — serves reference images
+
+### Shared API And UI
+
+- `frontend/shared/api/client.ts` — authenticated JSON/FormData/blob API client
+- `frontend/shared/ui/components/ProtectedImageGallery.tsx` — private blob gallery with revocable object URLs
 
 ## frontend/modules/ — Feature Modules
 
@@ -221,6 +227,16 @@ Hooks:
 - `frontend/modules/logging/components/LogCountersSummary.tsx` — counters summary
 - `frontend/modules/logging/components/LoggingCountersHost.tsx` — counters host component
 
+### support/ — User Support Module
+
+- `frontend/modules/support/index.ts` — user support exports
+- `frontend/modules/support/support-api.ts` — user support JSON/multipart/blob API client
+- `frontend/modules/support/support-types.ts` — user support and attachment type definitions
+- `frontend/modules/support/components/SupportPage.tsx` — user support page container
+- `frontend/modules/support/components/SupportTicketForm.tsx` — ticket form with local attachment validation/previews
+- `frontend/modules/support/components/SupportTicketDetail.tsx` — ticket detail with protected gallery
+- `frontend/modules/support/components/SupportTicketList.tsx` — user ticket history with attachment counts
+
 ### staff-shop/ — Staff Shop Admin
 
 - `frontend/modules/staff-shop/index.ts` — staff shop exports
@@ -254,6 +270,8 @@ Hooks:
 - `frontend/modules/staff-support/index.ts` — support exports
 - `frontend/modules/staff-support/support-api.ts` — support API client
 - `frontend/modules/staff-support/support-types.ts` — support type definitions
+- `frontend/modules/staff-support/components/SupportTicketCard.tsx` — ticket board card with attachment count
+- `frontend/modules/staff-support/components/SupportTicketDetailPanel.tsx` — staff ticket detail with protected gallery
 - `frontend/modules/staff-support/components/SupportGrantPage.tsx` — grant page
 - `frontend/modules/staff-support/components/SupportCatalogPicker.tsx` — catalog picker
 - `frontend/modules/staff-support/components/SupportFulfillmentHistoryPanel.tsx` — fulfillment history
