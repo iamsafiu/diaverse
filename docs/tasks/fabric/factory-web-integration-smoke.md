@@ -1,7 +1,7 @@
 # Factory Web Integration Smoke
 
 Дата: 2026-05-26
-Updated: 2026-06-30 for factory level 4 playable evidence.
+Updated: 2026-07-13 for factory level 5 playable evidence.
 
 Цель: зафиксировать smoke-путь веб-фабрики без браузерной проверки. Browser/Playwright smoke намеренно не выполнялся по прямой инструкции пользователя: "в браузере не проверяй".
 
@@ -28,9 +28,12 @@ Smoke считается локально подтверждённым чере�
 | Payment checkout/finalizer path is idempotent | `test_command_service.py::test_upgrade_level_real_money_returns_checkout_without_level_change`, `test_command_service.py::test_paid_level_upgrade_applier_is_idempotent`, `test_payment_service.py`, and `tests/test_cabinet_payment_sessions.py` cover factory payment domain registration and finalizer path. | Covered |
 | Factory level 2 -> 3 upgrade is supported | `diaverseapi/app/factory/tests/test_command_service.py::test_upgrade_level_three_game_dollar_debits_and_updates_profile`; `FactoryShell.test.tsx` shows target level 3 upgrade controls when backend exposes `target_level=3`. | Covered |
 | Factory level 3 -> 4 upgrade is supported | `diaverseapi/app/factory/tests/test_command_service.py::test_upgrade_level_four_game_dollar_debits_and_updates_profile`; `FactoryShell.test.tsx` shows target level 4 upgrade controls when backend exposes `target_level=4`. | Covered |
-| Factory target level 5 remains unavailable | `diaverseapi/app/factory/tests/test_command_service.py::test_upgrade_level_blocks_targets_above_supported_max_level`; `FactoryShell.test.tsx` hides target level 5 controls while supported max level is 4. | Covered |
+| Factory level 4 -> 5 upgrade is supported | `diaverseapi/app/factory/tests/test_command_service.py::test_upgrade_level_five_game_dollar_debits_and_normalizes_level_five_content`; `FactoryShell.test.tsx` shows target level 5 upgrade controls when backend exposes `target_level=5`. | Covered |
+| Factory target level 6 remains unavailable | `diaverseapi/app/factory/tests/test_command_service.py::test_upgrade_level_blocks_targets_above_supported_max_level`; `FactoryShell.test.tsx` hides target level 6 controls while supported max level is 5. | Covered |
 | Level 4 gameplay surface renders and crafts | Backend state/building/compartment/crafting/inventory tests cover resource level 4, rare/epic pet craft, rare/epic biomass, and common mutagen; `FactoryResourceWorkshopScreen.test.tsx`, `FactoryProductionWorkshopScreen.test.tsx`, and `FactoryCompartmentScreen.test.tsx` cover the web surface. | Covered |
 | Level 4 scene and upgrade preview render through manifest | `FactoryScene.test.tsx` covers profile level 4 resolving to the shared playable map and preserving hotspot navigation; `FactoryDialogs.test.tsx` covers `factory.map_preview.level_4` in the level upgrade dialog. | Covered |
+| Level 5 gameplay surface renders and crafts | Backend state/building/compartment/crafting tests cover resource level 5, epic pet craft, epic biomass, common/rare mutagen, incubator, EvoGen, and legendary biomass access states; `FactoryProductionWorkshopScreen.test.tsx` and `FactoryCompartmentScreen.test.tsx` cover the web surface. | Covered |
+| Level 5 scene and upgrade preview render through manifest | `FactoryScene.test.tsx` covers profile level 5 resolving to the shared playable map and preserving hotspot navigation; `FactoryDialogs.test.tsx` covers `factory.map_preview.level_5` in the level upgrade dialog. | Covered |
 | Pet craft selected-shard inputs work across level 3/4 access states | `diaverseapi/app/factory/tests/test_crafting_service.py` covers selected rare/epic shard reserve/collect behavior; `FactoryCompartmentScreen.test.tsx` covers rare pet craft early-access at level 3, normal access at level 4, and epic pet craft early-access at level 4. | Covered |
 
 ## Commands
