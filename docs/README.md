@@ -30,6 +30,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | [Runbooks](runbooks/copywriting-production-runtime.md) | Deploy, nginx, VPS, production/runtime операции |
 | [Autonomous Editorial System](features/autonomous-editor.md) | Evidence-first content automation, privacy, attribution, learning, visual review, RBAC and promotion gates |
 | [Autonomous Editorial Runbook](runbooks/autonomous-editor.md) | Draft-only operations, rollout stages, kill switches, rollback and verification commands |
+| [SEO Intelligence](features/seo-intelligence.md) | Search/content strategy analyzer catalog, source credentials, Metrica privacy, read-only baseline, snapshots, outcome learning, rollout gates |
 | [Temporary Factory/Raids Staff Gate](runbooks/temporary-factory-raids-staff-gate.md) | Временный frontend-only доступ к Factory/Raids только для staff и инструкция отката |
 | [Research](research/shop/shop-research.md) | Исследования, старые варианты, discovery notes |
 | [Logs](logs/shop-network.md) | Исторические технические логи и расследования |
@@ -49,6 +50,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | Copywriting Web Architecture | [architecture/copywriting-web-architecture.md](architecture/copywriting-web-architecture.md) | Перед изменением staff copywriting |
 | Autonomous Editorial System | [features/autonomous-editor.md](features/autonomous-editor.md) | Перед изменением autonomous editor, content learning, product attribution, visual candidates, publish modes или Studio UI |
 | Autonomous Editorial Runbook | [runbooks/autonomous-editor.md](runbooks/autonomous-editor.md) | Перед promotion, scheduler activation, canary/autopublish, incident response или rollback autonomous editor |
+| SEO Intelligence | [features/seo-intelligence.md](features/seo-intelligence.md) | Перед изменением SEO analyzer catalog, Search Console/Yandex/Metrica imports, strategy snapshots, candidate influence или outcome strategy learning |
 | Copywriting Auth Bot Broadcasts | [features/copywriting/auth-bot-broadcasts.md](features/copywriting/auth-bot-broadcasts.md) | Перед изменением рассылок через auth bot в staff copywriting |
 | Copywriting Club10000 Broadcasts | [features/copywriting/club10000-broadcasts.md](features/copywriting/club10000-broadcasts.md) | Перед изменением рассылок через `@club10000_bot` в staff copywriting |
 | Cabinet Auth Guide | [features/cabinet/auth-guide.md](features/cabinet/auth-guide.md) | Перед изменением auth UI/BFF |
@@ -61,6 +63,12 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | Staff Logging | [architecture/staff-logging.md](architecture/staff-logging.md) | Перед изменением staff logging |
 | Advent Calendar | [features/advent-calendar.md](features/advent-calendar.md) | Перед изменением Advent guest/payment flows |
 | Diaverse Club Runbook | [club.md](club.md) | Перед изменением club runtime/ops |
+
+## Актуальные Исследования
+
+| Документ | Путь | Когда читать |
+| --- | --- | --- |
+| DAU/WAU/MAU Growth Analysis | [research/dau-wau-mau-growth-analysis-2026-07.md](research/dau-wau-mau-growth-analysis-2026-07.md) | Для технического расчета июльского роста и ограничений source-атрибуции |
 
 ## Repo-Local Документация
 

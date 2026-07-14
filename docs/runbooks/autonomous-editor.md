@@ -78,6 +78,61 @@ npx vitest run __tests__/app/api/analytics/content-attribution-route.test.ts __t
 
 If full `npm run lint` fails on unrelated legacy modules, record the exact path and rule separately; do not fold unrelated repairs into an autonomous-editor rollout.
 
+## SEO Strategy Migration Order and Forward-Only Rollback
+
+Deploy the SEO strategy persistence layer before enabling any strategy runtime behavior:
+
+1. Keep `CONTENT_STRATEGY_ENABLED=false` and every narrower `CONTENT_STRATEGY_*_ENABLED=false` flag.
+2. Run `npm run db:migrate:deploy`; the migration adds nullable lineage columns and new tables without rewriting or backfilling existing rows.
+3. Run `npm run content:strategy:bootstrap` twice. The first run inserts one manifest version/hash and analyzer-state summary; the second must report one skipped record and create no duplicate.
+4. Verify the manifest row, required tables/indexes/constraints, and existing editorial hypotheses/episodes before deploying compatible application code.
+5. Enable collection, execution, approval, candidate influence, and scheduling only through their later rollout gates. Migration success alone does not authorize analysis or publishing.
+
+The rollback is forward-only: set `CONTENT_STRATEGY_ENABLED=false`, set all narrower strategy flags to `false`, and use `CONTENT_STRATEGY_KILL_SWITCH=true` if any strategy process may still be running. Deploy code compatible with the additive schema and retain the new tables and nullable columns for audit. Do not run destructive down SQL or delete manifest, run, finding, snapshot, or evidence lineage records.
+
+## SEO Intelligence Baseline And Snapshot Rollout
+
+The first safe baseline is read-only. It may complete with capability-blocked
+records when providers are missing. That is expected and safer than fabricating
+zero demand.
+
+Static local checks:
+
+```powershell
+cd C:\Users\Indigo\Desktop\diaverse\diaverse-content
+npx tsx scripts/content-strategy-health.ts --static-only
+npx tsx scripts/content-strategy-cycle.ts --command execute --mode read_only --static-only --force
+```
+
+Database-backed checks after migration and provider import:
+
+```powershell
+npx tsx scripts/content-strategy-health.ts
+npx tsx scripts/content-strategy-cycle.ts --command execute --mode read_only
+```
+
+Baseline review checklist:
+
+- manifest version/hash and analyzer catalog match the deployed code;
+- data inventory lists missing providers as `not_configured`, `unavailable`, or
+  `insufficient`, not zero;
+- Search Console/Yandex/manual rows have source, period, confidence, freshness,
+  and privacy status;
+- Metrica rows are aggregate only, have minimum sample, and contain no visitor,
+  client, session, login, email, phone, cookie, fingerprint, or IP dimensions;
+- costs, request counts, duration, and skipped analyzer reason codes are logged;
+- findings retain fact/inference/hypothesis labels and source lineage;
+- draft snapshot is reviewed in Staff Studio before approval;
+- candidate influence stays off until explicit shadow rollout.
+
+Outcome learning is not an activation path. It may store refresh/regression
+findings and a superseding draft snapshot. Regressions produce rollback-review
+recommendations only; a human must approve rollback/activation in Studio.
+
+See [SEO Intelligence](../features/seo-intelligence.md) and the safe local
+report at
+`diaverse-content/tests/fixtures/content-strategy/verification-2026-07-14.md`.
+
 ## Runtime Flags
 
 Keep flags disabled until a stage explicitly permits them:
