@@ -126,7 +126,30 @@ evidence import -> mature outcome snapshots -> lessons -> opportunity ranking
 
 Hard-policy gates are code-owned and immutable by learning. Learning proposals can change only scoped soft preferences after mature evidence, minimum sample, confidence, conflict, expiry, and diversity checks pass.
 
+### SEO Intelligence Strategy Layer
+
+`diaverse-content` also owns the SEO Intelligence layer for public learn
+strategy. It adds a separate manifest-driven analyzer catalog, source capability
+inventory, read-only baseline execution, human-reviewed strategy snapshots, and
+bounded candidate/brief influence.
+
+The architecture intentionally separates strategy evidence from article source
+evidence:
+
+- strategy findings/snapshots may guide topic and brief selection;
+- article claims still require verified article source evidence;
+- strategy lineage can add publish blockers for strategy-influenced episodes;
+- strategy can never substitute for source, critic, visual, revision, or risk
+  gates.
+
+Outcome learning joins mature content outcomes, privacy-safe Metrica aggregates,
+search outcomes, machine evaluations, and human decisions by canonical
+guide/path/window. It can create refresh findings and a superseding draft
+snapshot only; activation remains an explicit Staff Studio action.
+
 The production default remains draft-only. The rollout stages, kill switches, provider credential rules, and rollback process are documented in [Autonomous Editorial System](../features/autonomous-editor.md) and [Autonomous Editorial Runbook](../runbooks/autonomous-editor.md).
+
+SEO Intelligence details are documented in [SEO Intelligence](../features/seo-intelligence.md).
 
 `diaverse-ai-cofounder` is not in the content publish path. It can remain a private ops/runtime repository, but it must not bypass the content runtime's source safety, privacy suppression, hard gates, human approvals, or rollbackable policy versions.
 

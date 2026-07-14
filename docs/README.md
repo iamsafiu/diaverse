@@ -31,6 +31,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | [Content Factory Foreign Server](runbooks/content-factory-foreign-server.md) | Зарубежный runtime `diaverse-content`, S3 media, edge proxy для `/ru/learn/*` |
 | [Autonomous Editorial System](features/autonomous-editor.md) | Evidence-first content automation, privacy, attribution, learning, visual review, RBAC and promotion gates |
 | [Autonomous Editorial Runbook](runbooks/autonomous-editor.md) | Draft-only operations, rollout stages, kill switches, rollback and verification commands |
+| [SEO Intelligence](features/seo-intelligence.md) | Search/content strategy analyzer catalog, source credentials, Metrica privacy, read-only baseline, snapshots, outcome learning, rollout gates |
 | [Temporary Factory/Raids Staff Gate](runbooks/temporary-factory-raids-staff-gate.md) | Исторический runbook отключенного frontend-only ограничения Factory для staff/tester |
 | [Research](research/shop/shop-research.md) | Исследования, старые варианты, discovery notes |
 | [Logs](logs/shop-network.md) | Исторические технические логи и расследования |
@@ -51,6 +52,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | Content Factory Architecture | [architecture/content-factory.md](architecture/content-factory.md) | Перед изменением `diaverse-content`, `/ru/learn/*`, staff content BFF, SEO fragments или зарубежного runtime |
 | Autonomous Editorial System | [features/autonomous-editor.md](features/autonomous-editor.md) | Перед изменением autonomous editor, content learning, product attribution, visual candidates, publish modes или Studio UI |
 | Autonomous Editorial Runbook | [runbooks/autonomous-editor.md](runbooks/autonomous-editor.md) | Перед promotion, scheduler activation, canary/autopublish, incident response или rollback autonomous editor |
+| SEO Intelligence | [features/seo-intelligence.md](features/seo-intelligence.md) | Перед изменением SEO analyzer catalog, Search Console/Yandex/Metrica imports, strategy snapshots, candidate influence или outcome strategy learning |
 | Ops Agent Architecture | [architecture/ops-agent.md](architecture/ops-agent.md) | Перед изменением Telegram ops-agent, Codex runner, playbooks, action registry, generated actions или case memory |
 | Ops Agent Runbook | [runbooks/ops-agent.md](runbooks/ops-agent.md) | Перед запуском, дежурством, smoke check или rollback Telegram Codex ops-agent |
 | Payment Intake And Reconciliation | [runbooks/payment-intake-reconciliation.md](runbooks/payment-intake-reconciliation.md) | Перед расследованием внешних оплат, replay/reconciliation, настройкой callback или rollout payment inbox |
@@ -69,6 +71,13 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | Staff Logging | [architecture/staff-logging.md](architecture/staff-logging.md) | Перед изменением staff logging |
 | Advent Calendar | [features/advent-calendar.md](features/advent-calendar.md) | Перед изменением Advent guest/payment flows |
 | Diaverse Club Runbook | [club.md](club.md) | Перед изменением club runtime/ops |
+
+## Актуальные Исследования
+
+| Документ | Путь | Когда читать |
+| --- | --- | --- |
+| Analytics Executive Readout | [research/analytics-executive-readout-2026-07-11.md](research/analytics-executive-readout-2026-07-11.md) | Перед обсуждением DAU/WAU/MAU, источников роста и качества июльской аудитории |
+| DAU/WAU/MAU Growth Analysis | [research/dau-wau-mau-growth-analysis-2026-07.md](research/dau-wau-mau-growth-analysis-2026-07.md) | Для технического расчета июльского роста и ограничений source-атрибуции |
 
 ## Repo-Local Документация
 

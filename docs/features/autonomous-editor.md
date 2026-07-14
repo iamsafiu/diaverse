@@ -111,6 +111,7 @@ Visual generation is candidate-based, not overwrite-based:
 Feature flags are intentionally split so an incident can disable one subsystem without disabling all content rendering:
 
 - search sync/import
+- SEO strategy collection/execution/approval/candidate influence/Metrica/scheduler
 - product outcomes
 - lesson activation
 - generation
@@ -122,6 +123,25 @@ Feature flags are intentionally split so an incident can disable one subsystem w
 - publish kill switch
 
 Budgets cover runtime, retries, repeated issue signatures, token/image/cost ceiling, provider failure, and operator cancellation. Budgets are safety limits, not editorial templates.
+
+## SEO Intelligence Strategy Layer
+
+The SEO Intelligence layer is the strategy subsystem for this autonomous editor.
+It analyzes verified demand, inventory, source/SERP facts, privacy-safe behavior
+aggregates, mature editorial outcomes, machine evaluations, and human decisions.
+
+Its outputs are findings and immutable strategy snapshots. A snapshot can affect
+candidate ranking or brief context only when it is active, approved, fresh, and
+scope/hash matched. The influence is bounded and advisory; it is not article
+source evidence and it cannot bypass critics, visual review, hard policy, or
+publish gates.
+
+Outcome learning is proposal-only. It may create refresh/regression findings and
+a superseding draft strategy snapshot. It must not activate snapshots, edit hard
+policy, edit source policy, relax risk rules, relax publish gates, delete
+content, or perform rollback automatically.
+
+Canonical details live in [SEO Intelligence](seo-intelligence.md).
 
 ## Why AI Cofounder Stays Inactive
 
