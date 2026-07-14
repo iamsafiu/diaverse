@@ -53,10 +53,6 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | Autonomous Editorial System | [features/autonomous-editor.md](features/autonomous-editor.md) | Перед изменением autonomous editor, content learning, product attribution, visual candidates, publish modes или Studio UI |
 | Autonomous Editorial Runbook | [runbooks/autonomous-editor.md](runbooks/autonomous-editor.md) | Перед promotion, scheduler activation, canary/autopublish, incident response или rollback autonomous editor |
 | SEO Intelligence | [features/seo-intelligence.md](features/seo-intelligence.md) | Перед изменением SEO analyzer catalog, Search Console/Yandex/Metrica imports, strategy snapshots, candidate influence или outcome strategy learning |
-| Ops Agent Architecture | [architecture/ops-agent.md](architecture/ops-agent.md) | Перед изменением Telegram ops-agent, Codex runner, playbooks, action registry, generated actions или case memory |
-| Ops Agent Runbook | [runbooks/ops-agent.md](runbooks/ops-agent.md) | Перед запуском, дежурством, smoke check или rollback Telegram Codex ops-agent |
-| Payment Intake And Reconciliation | [runbooks/payment-intake-reconciliation.md](runbooks/payment-intake-reconciliation.md) | Перед расследованием внешних оплат, replay/reconciliation, настройкой callback или rollout payment inbox |
-| Prodamus Callback Security | [runbooks/prodamus-callback-security.md](runbooks/prodamus-callback-security.md) | Перед изменением Prodamus trust checks, callback audit или repair fake/suspicious payments |
 | Copywriting Auth Bot Broadcasts | [features/copywriting/auth-bot-broadcasts.md](features/copywriting/auth-bot-broadcasts.md) | Перед изменением рассылок через auth bot в staff copywriting |
 | Copywriting Club10000 Broadcasts | [features/copywriting/club10000-broadcasts.md](features/copywriting/club10000-broadcasts.md) | Перед изменением рассылок через `@club10000_bot` в staff copywriting |
 | Cabinet Auth Guide | [features/cabinet/auth-guide.md](features/cabinet/auth-guide.md) | Перед изменением auth UI/BFF |
@@ -76,7 +72,6 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 
 | Документ | Путь | Когда читать |
 | --- | --- | --- |
-| Analytics Executive Readout | [research/analytics-executive-readout-2026-07-11.md](research/analytics-executive-readout-2026-07-11.md) | Перед обсуждением DAU/WAU/MAU, источников роста и качества июльской аудитории |
 | DAU/WAU/MAU Growth Analysis | [research/dau-wau-mau-growth-analysis-2026-07.md](research/dau-wau-mau-growth-analysis-2026-07.md) | Для технического расчета июльского роста и ограничений source-атрибуции |
 
 ## Repo-Local Документация
