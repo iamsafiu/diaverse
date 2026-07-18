@@ -1,7 +1,7 @@
 # Telegram Codex Ops Agent
 
-Status: planned MVP
-Last updated: 2026-06-26
+Status: internal runtime
+Last updated: 2026-07-17
 
 ## Purpose
 
@@ -15,14 +15,14 @@ The agent must help the operator move faster without turning Telegram or Codex i
 
 | Area | Owner | Notes |
 | --- | --- | --- |
-| Telegram runtime | `aibot` | Bot entrypoint, allowlist, routing, voice layer, case orchestration |
+| Telegram runtime | `aibot` | Bot entrypoint, allowlist, routing, voice layer, case orchestration, and Ops Agent-owned moderation delivery |
 | Case memory | `aibot` | Sanitized case lifecycle, action results, artifacts, generated-action proposals |
 | Playbooks | `aibot` | Markdown knowledge base and YAML index |
 | Codex runner | `aibot` | Controlled server-side runner abstraction around Codex CLI/SDK |
 | Product diagnostics | `diaverseapi` | Signed internal ops endpoints for payment and cabinet diagnostics |
 | Product mutations | `diaverseapi` | Registered actions only, with audit and idempotency |
 | Cross-repo docs | root `diaverse` | Architecture, runbooks, plans, GBrain sync |
-| Staff UI | `diaweb` | Future case dashboard only, not MVP |
+| Staff UI | `diaweb` | Staff support board, per-ticket Ops Agent dispatch, future case dashboard |
 
 `club10000-bot`, `diaverse-auth-bot`, `diaverse-mobile`, and `diaverse-content` have no MVP ownership unless a future case type explicitly touches them.
 
@@ -34,6 +34,7 @@ Telegram operator
   -> allowlist and mode router
      -> Chat mode
         -> lightweight Codex/LLM response or existing thread resume
+        -> optional pending developer-task handoff
         -> Telegram response
      -> Case mode
         -> case memory
@@ -45,7 +46,21 @@ Telegram operator
         -> action preview
         -> approval policy
         -> registered action execution
+        -> optional pending developer-task handoff
         -> Telegram closure summary
+     -> Support dispatch
+        -> signed manual claim from diaverseapi
+        -> ticket analysis and safe registered repair attempts
+        -> optional pending developer-task handoff
+     -> Agent-selected user-summary tool
+        -> Codex Operator interprets free-form request and emits typed arguments
+        -> signed diaverseapi user-summary endpoint
+        -> arbitrary/all-time step aggregation
+        -> optional fixed last-365-day contribution aggregation
+     -> Approved Telegram moderation
+        -> registered diaverseapi action and durable transport queue
+        -> Ops Agent bot live permission/target preflight
+        -> permanent comment permission restriction without membership change
 ```
 
 Telegram is the operator UI. Product state authority stays in `diaverseapi`.
@@ -85,6 +100,7 @@ Explicit commands override classifier inference:
 - `/close [case_id]` - close a case with resolution summary.
 - `/mode chat|ops` - set default mode for the current operator thread.
 - `/playbook <query>` - show the matching playbook summary.
+- `/userstats <tg_id|uuid|@username> --steps <Nd|YYYY-MM-DD..YYYY-MM-DD|all> [--donations]` - technical fallback for user steps and optional contribution summary.
 - `/approve <approval_id>` and `/cancel <approval_id>` - resolve action approval prompts.
 
 Free-form examples:
@@ -93,6 +109,93 @@ Free-form examples:
 - "объясни playbook по оплатам" routes to Chat mode.
 - "пользователь 123 оплатил, но скин не пришел" routes to Case mode.
 - "продолжай" resumes the active Codex thread or ops case when one exists.
+
+## User Steps And Contributions
+
+Codex Operator interprets free-form user-summary requests and may choose the
+typed read-only `user_summary` tool. The orchestrator validates its structured
+arguments and calls the signed `diaverseapi` contract; the agent does not write
+ad-hoc SQL for this capability. `/userstats` remains a deterministic technical
+fallback. Targets may be a UUID, numeric Telegram ID, or an exact normalized
+unique `@username`; ambiguous usernames fail closed. Step ranges are inclusive
+and may be an arbitrary date range, the last `N` days, or all time. If omitted,
+the step range is all time. Legacy activity rows use the canonical user-local
+date compatibility expression.
+
+The exact standalone keyword `донат` adds contributions without changing the
+requested step range. Contributions always use the fixed inclusive UTC window
+`today-364..today`, include successful user-linked Shop, Advent, Crypton, and
+Club payments, normalize supported USD/USDT facts to USDT, deduplicate business
+keys, and report attribution gaps. Manual links, unimported guest orders, and
+unlinked payments are not silently attributed to the user.
+
+## Telegram Comment Moderation
+
+`telegram.discussion_member.restrict_comments` is a high-risk registered
+action. It is disabled by default, requires exact payload-bound approval, and
+accepts only a server-side `discussion_key`; operators cannot inject a chat id.
+Execution queues a transport command and reports `queued` until Telegram ACK is
+stored.
+
+The last mile belongs to the existing `copywriting-ops-agent` Telegram bot and
+uses its own bot token. The ordinary `copywriting-clubbot` claim path explicitly
+excludes moderation command types. The Ops Agent moderation worker can claim
+only `restrict_member_comments` and `restore_member_comments`.
+
+Before every Telegram mutation, the Ops Agent resolves its live identity with
+`getMe`, protects that identity unconditionally, verifies the configured target
+is a linked discussion supergroup, verifies its own administrator status and
+`can_restrict_members`, and rejects creators, administrators, and configured
+protected users. Restriction calls `restrictChatMember` with message-sending
+permissions disabled and no `until_date`; it never calls `banChatMember` and
+does not remove or change Club membership. Restoration is a separate approved
+command and restores discussion permissions without adding or removing the
+member.
+
+The candidate ID `-1001927564724` was verified on 2026-07-18 as a broadcast
+channel, not a supergroup. It is intentionally not enabled for moderation; the
+linked discussion-supergroup ID is still required.
+
+## Developer Task Handoff
+
+Codex and deterministic analysis may recommend developer work, but Ops Agent
+must not directly tag the tracker bot from ordinary chat, case, or support
+analysis output.
+
+The Telegram response flow is:
+
+1. Store a pending developer-task handoff in `aibot` with source kind, safe
+   callback id, sanitized task text, optional case/support context, recommended
+   owner, expiry, and status.
+2. Send the operator-facing text beginning with `Нужно создать задачу для этой
+   проблемы`.
+3. Attach inline buttons `Создать на Ильгизара` and `Создать на Дениса`.
+4. Accept `callback_query` updates from Telegram.
+5. On a valid, authorized, unexpired callback, emit exactly one final tracker
+   command with the selected assignee.
+6. Mark duplicate, stale, malformed, or unauthorized callbacks as rejected
+   without sending a tracker command.
+
+Legacy `@Jirabro_bot создай задачу...` paragraphs from Codex output are captured
+as pending handoffs rather than sent directly.
+
+## Support Dispatch
+
+Support dispatch starts in `diaweb` on a single open support ticket card. Staff
+choose `Ильгизар` or `Денис`, and `diaweb` calls
+`POST /v1/admin/support/tickets/agent-dispatch` with `{ ticket_ids, owner }`.
+`diaverseapi` records `ops_dispatch_requested`, the requesting staff user, and
+the owner preference on the selected tickets.
+
+`aibot` claims manually dispatched tickets through the signed Ops support API.
+With `OPS_AGENT_SUPPORT_AUTO_CLAIM_ENABLED=false`, the claim flow ignores
+ordinary accumulated `new` tickets and only processes manual dispatches. The
+older "claim five accumulated tickets" behavior is behind that explicit flag
+and should remain disabled until a reviewed rollout re-enables it.
+
+The selected owner is a routing preference for developer-task handoff. The
+support analysis may still conclude that no developer work is needed; in that
+case no tracker command or pending handoff is created.
 
 ## Playbook Knowledge Base
 
@@ -177,6 +280,10 @@ MVP payment actions:
 - mark a session as review-needed with an ops note;
 - perform a narrow manual repair only through domain service methods when every guard passes.
 
+Additional high-risk action:
+
+- permanently restrict a non-protected member's ability to write in one allowlisted linked Telegram discussion group, using the Ops Agent bot as the executor.
+
 The agent must preview before execution. Execution requires case id, actor id, idempotency key, and risk-policy result.
 
 ## Generated Actions
@@ -251,8 +358,13 @@ The bot is internal-only and disabled by default. Required controls:
 - HMAC-signed `aibot` -> `diaverseapi` calls with timestamp, key id, body digest, replay window, and request id;
 - separate read-only DB credentials;
 - no public app-server or public Codex web endpoint;
+- live Ops Agent bot identity is always protected from moderation targets;
 - structured logs with request id, case id, action id, result code, and duration;
-- no tokens, HMAC secrets, database URLs, raw Telegram text, raw provider payloads, auth headers, contact data, or raw production rows in logs.
+- developer-task and support-dispatch logs use safe ids, source kind, selected
+  owner, counters, and text lengths only;
+- no tokens, HMAC secrets, database URLs, raw Telegram text, raw support bodies,
+  attachment metadata, raw provider payloads, auth headers, contact data, or raw
+  production rows in logs.
 
 ## See Also
 

@@ -8,6 +8,13 @@
 - `diaweb/frontend/modules/club` owns the staff surface at `/staff/club`, including alerts. Do not manage club alerts from the generic staff logging UI.
 - `aibot` owns club copywriting, AI leaderboard image generation/publishing, and foreign-server Telegram runtime hosting. It does not own club membership or leaderboard truth.
 
+The shared durable Telegram outbox has strict transport ownership. The
+`copywriting-clubbot` claim path explicitly excludes
+`restrict_member_comments` and `restore_member_comments`; those two command
+types can be claimed only through Ops-Agent-signed endpoints and are executed
+with the Ops Agent bot token. Their ACK path does not apply Club membership,
+presence, buddy, payment, or lifecycle transitions.
+
 ## Environment
 
 `diaverseapi`:

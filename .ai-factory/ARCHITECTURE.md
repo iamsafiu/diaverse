@@ -8,7 +8,7 @@ Diaverse uses eight separate repositories coordinated through a shared workspace
 - `diaverse-mobile` handles the Expo / React Native mobile frontend for iOS and Android
 - `diaverseapi` handles cabinet, auth, staff, and game backend domains
 - `aibot` handles internal copywriting workflows consumed by `diaweb`
-- `diaverse-content` handles the standalone content factory for public learn pages, drafts, revisions, slugs, content search, content SEO fragments, first-party content metrics, and manual Codex-operated draft generation
+- `diaverse-content` handles the standalone content factory for public learn pages, drafts, revisions, slugs, content search, content SEO fragments, first-party content metrics, manual Codex-operated draft generation, and the content-owned daily Codex autopilot with gated publication
 - `diaverse-ai-cofounder` is an archived/R&D reference repo retained for historical prompts, strategy notes, and rollback context; it is not an active runtime dependency
 - `club10000-bot` handles the standalone Club10000 Telegram bot, Prodamus callbacks, and its restored bot-local database
 - `diaverse-auth-bot` handles Telegram transport for Diaverse browser login and mobile Telegram linking
@@ -51,6 +51,7 @@ aibot -> diaverseapi     # ops-agent signed diagnostics and registered repair ac
 diaweb -> diaverse-content  # internal JWT-backed BFF integration for content staff workflows
 aibot -> diaverse-content   # optional disabled draft import bridge only after content contracts stabilize
 local Codex session -> diaverse-content # manual content analysis, metrics export, draft-only imports
+diaverse-content autopilot -> dedicated Codex device session # daily article generation, draft import, strict gates, optional auto-publish
 diaverse-ai-cofounder -> workspace/docs only # archived historical reference, no active runtime dependency
 club10000-bot -> diaverseapi   # signed normalized Club10000 payment events only
 diaverse-auth-bot -> diaverseapi   # signed auth login-session and mobile-link approvals only
@@ -104,6 +105,8 @@ trusted Telegram operator -> aibot/app/ops_agent polling runtime
 aibot case memory          -> copywriting database tables and Markdown playbooks
 aibot ops-agent            -> signed HMAC HTTP -> diaverseapi/app/ops_agent
 diaverseapi ops-agent      -> payment diagnostics, action registry, previews, executions
+aibot agent-selected tool   -> signed user steps/contribution summary
+diaverseapi moderation     -> filtered durable outbox -> aibot ops-agent bot
 aibot Codex runner         -> local codex exec with dedicated CODEX_HOME/workspace
 ```
 
@@ -111,6 +114,12 @@ The ops-agent is an internal operator tool. It may investigate with sanitized
 case memory, playbooks, read-only database access, and local Codex analysis,
 but product mutations must go through registered `diaverseapi` actions with
 guards, idempotency keys, risk policy, and audit events.
+Free-form user-statistics requests are interpreted by Codex Operator, which may
+select a typed signed read-only summary tool; `/userstats` remains a technical
+fallback. Telegram comment moderation is transported only by the Ops Agent
+bot: Clubbot cannot claim moderation commands, the live Ops Agent bot identity
+is always protected, and Telegram member permissions change without a ban or
+Club membership transition.
 
 ### Content Factory
 
@@ -122,7 +131,7 @@ aibot          -> optional draft import bridge, disabled until contract approval
 local Codex    -> metrics/context export -> draft-only import -> human review
 ```
 
-`diaverse-content` owns public learn content state, drafts, revisions, slug history, content search, content SEO fragments, content performance summaries, and the manual Codex operator workflow. It must not own Diaverse product/game/club truth and must not write to the Diaverse backend database. Public routes should stay on the main domain under `/ru/learn/*`; staff browser entrypoints stay in `diaweb`, and staff permission truth stays in `diaverseapi`.
+`diaverse-content` owns public learn content state, drafts, revisions, slug history, content search, content SEO fragments, content performance summaries, the manual Codex operator workflow, and the content-owned daily Codex autopilot. Autopilot generation uses a dedicated Codex device session, imports generated articles as drafts first, and publishes only through strict local gates. It must not own Diaverse product/game/club truth and must not write to the Diaverse backend database. Public routes should stay on the main domain under `/ru/learn/*`; staff browser entrypoints stay in `diaweb`, and staff permission truth stays in `diaverseapi`.
 
 Detailed routing, admin boundary, SEO ownership, analytics, draft import, deployment, and rollback rules live in `docs/architecture/content-factory.md`.
 
@@ -148,6 +157,18 @@ diaweb/frontend/modules/finance        -> superadmin finance dashboard and Adven
 ```
 
 Notification creation is a side effect of reward, payment, shop, and guest entitlement flows. It must stay idempotent and non-fatal: failed notification creation is logged, while the underlying grant or purchase continues to use its existing transaction semantics.
+
+### Pet Abilities And Staff Creation
+
+```text
+diaweb staff shop -> diaverseapi /v1/admin/shop/pet-create-schema + /pets
+diaverseapi app/characters/abilities -> versioned code-owned definitions and handlers
+characters -> pet_step_abilities -> zero to three active character assignments
+raid start -> fully resolved participant snapshot -> immutable settlement/trap behavior
+pet skin carousel -> localized type-level ability presentation
+```
+
+Ability behavior belongs to a canonical `Character`, not to a skin or user-owned instance. The first rollout keeps the physical `pet_step_abilities` table and legacy column names for rolling compatibility, while all current ability-bearing pets are backfilled into the assignment resolver. New mechanics require a reviewed server handler; staff may only choose selectable definitions. Pet creation writes the character, 11 default age skins, compatibility icons, assignments, assets, and idempotency audit as one compensated operation and never creates a storefront listing. Mobile rendering remains a separate repository task.
 
 ### AI Context
 
