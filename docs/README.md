@@ -31,6 +31,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | [Content Factory Foreign Server](runbooks/content-factory-foreign-server.md) | Зарубежный runtime `diaverse-content`, S3 media, edge proxy для `/ru/learn/*` |
 | [Autonomous Editorial System](features/autonomous-editor.md) | Evidence-first content automation, privacy, attribution, learning, visual review, RBAC and promotion gates |
 | [Autonomous Editorial Runbook](runbooks/autonomous-editor.md) | Draft-only operations, rollout stages, kill switches, rollback and verification commands |
+| [Referral Structure V1](features/referral-structure.md) | Канонические правила атрибуции, активности, наград, риска и web/staff scope без mobile |
+| [Referral Structure Architecture](architecture/referral-structure.md) | Единый граф `team_referral_chains`, additive backend boundary и совместимость без переписывания Teams/Fives |
 | [SEO Intelligence](features/seo-intelligence.md) | Search/content strategy analyzer catalog, source credentials, Metrica privacy, read-only baseline, snapshots, outcome learning, rollout gates |
 | [Temporary Factory/Raids Staff Gate](runbooks/temporary-factory-raids-staff-gate.md) | Исторический runbook отключенного frontend-only ограничения Factory для staff/tester |
 | [Research](research/shop/shop-research.md) | Исследования, старые варианты, discovery notes |
@@ -52,6 +54,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | Content Factory Architecture | [architecture/content-factory.md](architecture/content-factory.md) | Перед изменением `diaverse-content`, `/ru/learn/*`, staff content BFF, SEO fragments или зарубежного runtime |
 | Autonomous Editorial System | [features/autonomous-editor.md](features/autonomous-editor.md) | Перед изменением autonomous editor, content learning, product attribution, visual candidates, publish modes или Studio UI |
 | Autonomous Editorial Runbook | [runbooks/autonomous-editor.md](runbooks/autonomous-editor.md) | Перед promotion, scheduler activation, canary/autopublish, incident response или rollback autonomous editor |
+| Referral Structure V1 | [features/referral-structure.md](features/referral-structure.md) | Перед изменением referral attribution, qualification, Mentor, rewards, risk или staff review |
+| Referral Structure Architecture | [architecture/referral-structure.md](architecture/referral-structure.md) | Перед изменением графа, схемы, API/BFF, legacy compatibility или rollout referral structure |
 | SEO Intelligence | [features/seo-intelligence.md](features/seo-intelligence.md) | Перед изменением SEO analyzer catalog, Search Console/Yandex/Metrica imports, strategy snapshots, candidate influence или outcome strategy learning |
 | Copywriting Auth Bot Broadcasts | [features/copywriting/auth-bot-broadcasts.md](features/copywriting/auth-bot-broadcasts.md) | Перед изменением рассылок через auth bot в staff copywriting |
 | Copywriting Club10000 Broadcasts | [features/copywriting/club10000-broadcasts.md](features/copywriting/club10000-broadcasts.md) | Перед изменением рассылок через `@club10000_bot` в staff copywriting |

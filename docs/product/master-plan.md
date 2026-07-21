@@ -5,19 +5,26 @@
 > Полное техническое задание senior/lead уровня.
 > Каждая фаза реализации ссылается на этот документ как на источник истины.
 
-Версия: 1.2
-Дата: 2026-03-26
+Версия: 1.3
+Дата: 2026-07-21
 Статус: утверждён (архитектура обновлена)
 
 ---
 
-> **Архитектурные изменения v1.2 (2026-03-26):**
+> **Исторические архитектурные изменения v1.2 (2026-03-26; referral-пункты ниже заменены v1.3):**
 > - Backend НЕ строится с нуля — расширяем существующий **diaverseapi** (отдельный репозиторий)
 > - Единая база данных с мобильным приложением (PostgreSQL, SQLModel)
 > - Новые модули для веб-кабинета живут в `diaverseapi/app/cabinet/`
-> - Партнёрское дерево: используем существующую 5-уровневую структуру BotUser (не ltree)
+> - Партнёрское дерево: прежнее решение о 5-уровневой структуре BotUser отменено в v1.3
 > - Auth: существующий JWT + Telegram WebApp + httpOnly cookies для веба
 > - Финансовый модуль отложен
+
+> **Архитектурные изменения v1.3 (2026-07-21):**
+> - Канонические правила Referral Structure V1 вынесены в [feature contract](../features/referral-structure.md) и [architecture decision](../architecture/referral-structure.md)
+> - Единственный граф связей — `team_referral_chains`; отдельное пятиуровневое дерево по `BotUser` не создаётся
+> - Referral Structure добавляется вокруг существующего графа без переписывания Teams/Fives, их команд и наград
+> - Web входит в V1, mobile исключён и будет проектироваться отдельно
+> - Referral economics больше не считается «отложенным» целиком: включение XDV/resource/DCR выполняется независимыми flags после verification gates
 
 ---
 
@@ -30,7 +37,7 @@
 Целевая аудитория:
 
 - Пользователи мобильного приложения Diaverse (личный кабинет)
-- Партнёры (реферальная программа, 2 линии)
+- Авторизованные пользователи веб-кабинета (реферальная структура без фиксированного ограничения в 2 линии)
 - Сотрудники (управление системой)
 
 ---
@@ -239,8 +246,9 @@ diaverseapi/                     ← ОТДЕЛЬНЫЙ РЕПОЗИТОРИЙ
 | `profile`         | `read`, `update`                                | Пользователь может читать и редактировать свой профиль |
 | `users`           | `read`, `create`, `update`, `delete`, `list`    | Employee/Admin управляет пользователями                |
 | `roles`           | `read`, `create`, `update`, `delete`, `assign`  | Admin назначает роли                                   |
-| `partners`        | `read`, `list`, `analytics`                     | Partner видит свою структуру                           |
-| `partners.tree`   | `read`, `read_all`                              | `read` = своё дерево, `read_all` = employee            |
+| `referrals`       | `read`, `invite`, `claim`                       | Авторизованный пользователь видит свою структуру и награды |
+| `referrals.review` | `read`, `decide`                               | Staff рассматривает отдельные review cases             |
+| `referrals.risk`  | `read`, `manage`                                | Staff управляет risk holds по отдельному разрешению     |
 | `finance`         | `read`, `list`, `export`                        | Просмотр начислений                                    |
 | `finance.payouts` | `read`, `create`, `approve`                     | Управление выплатами                                   |
 | `content`         | `read`, `create`, `update`, `delete`, `publish` | Контент-менеджмент                                     |
@@ -278,7 +286,7 @@ diaverseapi/                     ← ОТДЕЛЬНЫЙ РЕПОЗИТОРИЙ
 | ----------- | ------- | -------------- | ------------- | ---------- |
 | Dashboard   | базовый | полный         | полный        | полный     |
 | Profile     | своё    | своё           | своё + чужие  | всё        |
-| Partners    | -       | своя структура | вся структура | всё        |
+| Partners    | своя структура | своя структура | по granular referral permissions | всё |
 | Finance     | -       | просмотр       | управление    | всё        |
 | Content     | чтение  | чтение         | CRUD          | всё        |
 | Team        | -       | -              | чтение        | всё        |
@@ -454,71 +462,23 @@ users (EXISTING — расширяем через миграции при нео
 
 ### 5.3 Partners (MLM)
 
-Ключевой модуль. Реферальная структура с 5 уровнями.
+Ключевой модуль для всех авторизованных non-guest пользователей, а не только для роли `partner`.
 
-> **Используем существующую структуру партнёрского дерева из diaverseapi.**
-> Таблица `bot_users` уже содержит 5-уровневую реферальную систему.
-> Новых таблиц не создаём — строим API поверх существующих данных.
+Канонические документы:
 
-**Функционал:**
+- [Referral Structure V1](../features/referral-structure.md) — продуктовые состояния, точные UTC-границы, активность, Mentor, rewards, risk и staff permissions;
+- [Referral Structure Architecture](../architecture/referral-structure.md) — единый граф, additive schema, API/BFF, совместимость и rollout.
 
-- Дерево рефералов (визуализация линий 1-5)
-- Реферальная ссылка (генерация, копирование)
-- Метрики:
-  - всего приглашённых
-  - активные / неактивные
-  - по линиям (1-5)
-  - конверсия (приглашённые → активные)
-- Аналитика: график по дням/неделям/месяцам
-- Промокод (опционально)
+**Зафиксированные решения:**
 
-**Backend API:**
-
-```
-GET  /api/v1/cabinet/partners/tree            → дерево (с пагинацией)
-GET  /api/v1/cabinet/partners/tree?depth=1    → только 1 линия
-GET  /api/v1/cabinet/partners/tree?depth=5    → все 5 линий
-GET  /api/v1/cabinet/partners/stats           → агрегированная статистика
-GET  /api/v1/cabinet/partners/referral-link   → реферальная ссылка текущего юзера
-POST /api/v1/cabinet/partners/referral-link   → сгенерировать новую ссылку
-GET  /api/v1/cabinet/partners/analytics       → аналитика по периоду
-```
-
-**Существующая схема БД (в diaverseapi):**
-
-```
-bot_users (EXISTING — НЕ ТРОГАЕМ)
-├── id (Integer, PK)
-├── client_id (BigInteger)
-├── platform_id (BigInteger)
-├── partner_id_level_1 (BigInteger)    ← прямой пригласивший
-├── partner_id_level_2 (BigInteger)    ← 2-й уровень
-├── partner_id_level_3 (BigInteger)    ← 3-й уровень
-├── partner_id_level_4 (BigInteger)    ← 4-й уровень
-├── partner_id_level_5 (BigInteger)    ← 5-й уровень
-├── balance (Numeric 20/3)
-├── partner_balance (Float)
-├── token_xdv (Numeric 20/3)
-├── tg_username
-├── avatar_url
-├── registration_date
-└── ...
-
-referrals (EXISTING — НЕ ТРОГАЕМ)
-├── id
-├── bot_user_id (FK → bot_users.id)
-├── partner_bot_user_id (FK → bot_users.id)
-├── level (1-5)
-├── created_at
-```
-
-**Ключевые решения:**
-
-- Используем существующую 5-уровневую реферальную структуру BotUser
-- НЕ используем ltree — данные уже структурированы как плоские FK-ссылки
-- Новые API-эндпоинты в `cabinet/` строят дерево из существующих `partner_id_level_*` полей
-- Redis кэш для агрегатов (TTL 5 мин)
-- Агрегированные счётчики вычисляются из `referrals` таблицы
+- `team_referral_chains` — единственный граф текущих и исторических связей; второго дерева по `BotUser`/полям `partner_id_level_*` не создаём.
+- Referral-owned таблицы хранят rulesets, ссылки/claims, evidence, projections, entitlements, payment facts, risk/review и outbox, но не дублируют parent-child graph.
+- Existing Teams/Fives остаётся защищённой границей: команды, reward logic, admin UI и team-rulesets в этой фазе не переписываются.
+- Ссылка резервируется на семь дней, но связь создаётся только после явного согласия; server-side first-wins после auth.
+- Активность требует Bronze I и не менее 2,500 server-accepted steps на трёх отдельных UTC-днях.
+- V1 web включает “Моя структура” и отдельную staff console; mobile является явным non-goal.
+- Legacy/team-compatible связи не получают ретроактивные V1/V2 rewards.
+- XDV/resource/DCR economics включается независимыми flags только после migration, concurrency, reconciliation и regression gates.
 
 ---
 
