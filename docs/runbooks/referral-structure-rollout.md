@@ -96,7 +96,7 @@ Run from `diaverseapi` with the environment's normal secret injection. Do not pa
 
 Expected:
 
-- one Alembic head: `ref_legacy_import_20260722` for this release;
+- one repository Alembic head: `merge_ref_pet_heads_20260722`; the referral branch terminates at `ref_legacy_import_20260722` before the no-op merge with the concurrent pet-fatigue branch;
 - every new PostgreSQL identifier is shorter than 63 bytes;
 - referral revision SQL compiles in both directions in the verified test environment;
 - deployment applies additive DDL before referral workers or flags are enabled.
