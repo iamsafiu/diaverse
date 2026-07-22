@@ -3,7 +3,7 @@ owner: workspace
 status: canonical
 domain: referrals
 source_of_truth: diaverseapi + diaweb
-last_reviewed: 2026-07-21
+last_reviewed: 2026-07-22
 review_after: 2026-10-21
 ---
 
@@ -110,18 +110,28 @@ The V1 catalog includes claim states, edge kinds/statuses, reason codes, activit
 
 ## API Boundaries
 
-Expected families, finalized by OpenAPI contracts before UI work:
+Implemented public/authenticated families:
 
 ```text
 POST /v1/referrals/links
-POST /v1/referrals/capture
+POST /v1/referrals/intents/resolve
 POST /v1/referrals/claims/{id}/accept
 POST /v1/referrals/claims/{id}/decline
+GET  /v1/referrals/claims/{id}/reactivation-preview
+POST /v1/referrals/claims/{id}/reactivation-confirm
+GET  /v1/referrals/me
+GET  /v1/referrals/me/mentor
 GET  /v1/referrals/me/structure
 GET  /v1/referrals/me/rewards
-POST /v1/referrals/me/rewards/{id}/claim
-GET  /v1/staff/referrals/*
-POST /v1/staff/referrals/reviews/{id}/decisions
+POST /v1/referrals/rewards/{id}/claim
+GET  /v1/admin/referrals/cases
+GET  /v1/admin/referrals/cases/{id}
+GET  /v1/admin/referrals/moves/{claim_id}/preview
+POST /v1/admin/referrals/moves/{claim_id}/approve|reject
+POST /v1/admin/referrals/cases/{id}/economics
+POST /v1/admin/referrals/rewards/{id}
+GET|POST /v1/admin/referrals/rulesets
+GET  /v1/admin/referrals/invariants
 ```
 
 Responses use an envelope with `allowed`, stable `reason_code`, localized `message_key`, `next_action`, typed `data` and request ID. Public endpoints are rate-limited and disclose no inviter private data beyond the explicit allowlist.
@@ -136,7 +146,9 @@ Shortest-path social/Fives proximity may be reported up to depth five as a deriv
 
 ## Feature Flags And Rollout
 
-Flags are independent and default off: schema/write, capture, qualification, read API, web UI, staff UI, XDV/resource claims, payment projection and DCR claims. The active-user campaign remains off.
+The 12 backend runtime flags are independent and default off: `read_enabled`, `links_enabled`, `attribution_write_enabled`, `qualification_enabled`, `reward_materialization_enabled`, `claim_enabled`, `reactivation_enabled`, `dcr_projection_enabled`, `staff_write_enabled`, `teams_compat_enabled`, `legacy_shadow_enabled`, and `legacy_economic_cutover_enabled`, all under the `referrals.` namespace. The active-user campaign remains off.
+
+Web routes may be deployed while backend flags are off; backend dependencies return stable disabled decisions. There is no client-side flag that can authorize a server mutation.
 
 Rollout order is additive migration, backfill audit, shadow reads, capture without economics, qualification/read UI, staff review, non-money rewards, payment projection, held DCR, then DCR claims. Rollback disables the affected writer/economic flag and workers; it does not drop tables or delete history.
 
@@ -156,5 +168,6 @@ Forbidden everywhere: raw/hashed referral tokens, auth cookies/JWTs, PII, device
 ## See Also
 
 - [Referral Structure V1](../features/referral-structure.md)
+- [Referral Structure Rollout And Rollback](../runbooks/referral-structure-rollout.md)
 - [Product Master Plan](../product/master-plan.md)
 - [Workspace Architecture](../../.ai-factory/ARCHITECTURE.md)

@@ -467,7 +467,8 @@ users (EXISTING — расширяем через миграции при нео
 Канонические документы:
 
 - [Referral Structure V1](../features/referral-structure.md) — продуктовые состояния, точные UTC-границы, активность, Mentor, rewards, risk и staff permissions;
-- [Referral Structure Architecture](../architecture/referral-structure.md) — единый граф, additive schema, API/BFF, совместимость и rollout.
+- [Referral Structure Architecture](../architecture/referral-structure.md) — единый граф, additive schema, API/BFF и совместимость;
+- [Referral Structure Rollout And Rollback](../runbooks/referral-structure-rollout.md) — независимые flags, canary gates, DCR/legacy порядок и non-destructive rollback.
 
 **Зафиксированные решения:**
 

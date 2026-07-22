@@ -3,11 +3,17 @@ owner: workspace
 status: canonical
 domain: referrals
 source_of_truth: diaverseapi + diaweb
-last_reviewed: 2026-07-21
+last_reviewed: 2026-07-22
 review_after: 2026-10-21
 ---
 
 # Referral Structure V1
+
+## Implementation Status
+
+Backend and web implementation was completed and verified on 2026-07-22. Production activation remains deny-by-default: all 12 backend runtime flags default off and must follow the independent stages in the [rollout runbook](../runbooks/referral-structure-rollout.md). No mobile implementation or production flag change is part of this checkpoint.
+
+Implemented browser surfaces are public `/[lang]/referral`, authenticated `/[lang]/partners`, granular `/[lang]/staff/referrals`, and same-origin `/api/referrals/pending*`. Implemented backend families are `/v1/referrals/*` and `/v1/admin/referrals/*`. Backend decisions remain authoritative; the web does not calculate eligibility, risk, Mentor level or economics.
 
 ## Scope And Ownership
 
@@ -205,5 +211,7 @@ Never log raw referral tokens or token hashes, cookies, JWTs, names, usernames, 
 ## See Also
 
 - [Referral Structure Architecture](../architecture/referral-structure.md)
+- [Referral Structure Rollout And Rollback](../runbooks/referral-structure-rollout.md)
+- [DCR Web Commerce Rollout](../tasks/dcr/web-commerce-rollout.md)
 - [Product Master Plan](../product/master-plan.md)
 - [Workspace Architecture](../../.ai-factory/ARCHITECTURE.md)

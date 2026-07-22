@@ -1,3 +1,5 @@
+# Tribute Shop API Runbook
+
 Note for Club checkout: the shop club banner does not use this Tribute API
 runbook. In the club banner flow, Tribute is configured only by
 `NEXT_PUBLIC_CLUB_TRIBUTE_URL` and opens as an external link. It does not create
@@ -191,3 +193,8 @@ private group link in this slice.
   - “Привяжите Telegram, чтобы оплатить через Tribute”
 
   Это особенно полезно, если Tribute станет единственной тестируемой платежкой в Advent.
+
+## Related Runbooks
+
+- [Referral Structure Rollout And Rollback](../runbooks/referral-structure-rollout.md) — referral DCR projection включается последней и только после callback/refund reconciliation.
+- [DCR Web Commerce Rollout](../tasks/dcr/web-commerce-rollout.md) — разграничение real-money top-up и внутреннего DCR spend.
