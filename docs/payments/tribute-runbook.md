@@ -197,4 +197,3 @@ private group link in this slice.
 ## Related Runbooks
 
 - [Referral Structure Rollout And Rollback](../runbooks/referral-structure-rollout.md) — referral DCR projection включается последней и только после callback/refund reconciliation.
-- [DCR Web Commerce Rollout](../tasks/dcr/web-commerce-rollout.md) — разграничение real-money top-up и внутреннего DCR spend.

@@ -302,5 +302,4 @@ The 2026-07-22 local drill exercised the flag decision layer in memory: 12 defau
 
 - [Referral Structure V1](../features/referral-structure.md)
 - [Referral Structure Architecture](../architecture/referral-structure.md)
-- [DCR Web Commerce Rollout](../tasks/dcr/web-commerce-rollout.md)
 - [Tribute Shop API Runbook](../payments/tribute-runbook.md)

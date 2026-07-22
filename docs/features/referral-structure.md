@@ -212,6 +212,6 @@ Never log raw referral tokens or token hashes, cookies, JWTs, names, usernames, 
 
 - [Referral Structure Architecture](../architecture/referral-structure.md)
 - [Referral Structure Rollout And Rollback](../runbooks/referral-structure-rollout.md)
-- [DCR Web Commerce Rollout](../tasks/dcr/web-commerce-rollout.md)
+- [Tribute Shop API Runbook](../payments/tribute-runbook.md)
 - [Product Master Plan](../product/master-plan.md)
 - [Workspace Architecture](../../.ai-factory/ARCHITECTURE.md)

@@ -67,7 +67,6 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | Cabinet Shop Web | [features/cabinet/shop-web.md](features/cabinet/shop-web.md) | Перед изменением shop frontend/BFF |
 | Support Module | [features/support-module.md](features/support-module.md) | Перед изменением support tickets, attachments, staff board или Ops support digest |
 | Редлист | [features/step-cheater-restrictions.md](features/step-cheater-restrictions.md) | Перед изменением step restriction/Redlist, reward eligibility, leagues, clans или Club step rankings |
-| DCR Web Commerce Rollout | [tasks/dcr/web-commerce-rollout.md](tasks/dcr/web-commerce-rollout.md) | Перед изменением DCR shop, Advent, admin, support, finance или mobile compatibility contracts |
 | Site Analytics | [features/site-analytics.md](features/site-analytics.md) | Перед изменением site tracker, content attribution, staff Site analytics или executive KPI definitions |
 | Factory Web | [features/factory.md](features/factory.md) | Перед изменением веб-фабрики, factory API, каталога, ассетов или mobile handoff |
 | Raids User Guide | [features/raids-user-guide.md](features/raids-user-guide.md) | Перед изменением рейдового UX, подсказок, баланса, слотов, автоотправки или пользовательских правил |
