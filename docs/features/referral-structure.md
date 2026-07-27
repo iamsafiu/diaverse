@@ -3,7 +3,7 @@ owner: workspace
 status: canonical
 domain: referrals
 source_of_truth: diaverseapi + diaweb
-last_reviewed: 2026-07-22
+last_reviewed: 2026-07-27
 review_after: 2026-10-21
 ---
 
@@ -94,7 +94,22 @@ At exactly 90 days the user is not eligible. At exactly the 365-day cooldown bou
 
 ### Weekly Review Boundary
 
-For one inviter, the first five accepted new/reactivated relationships in a UTC ISO week may proceed automatically. The sixth and later relationship enters `pending_review`. It still exists in the graph projection but produces no economic entitlement until approved. Review thresholds also include a subtree with at least five active or twenty total descendants.
+For one inviter, the first five accepted new/reactivated relationships in a UTC ISO week may proceed automatically. The sixth and each later relationship enters `pending_review` independently. It still exists in the graph projection, but inviter economics for that relationship require a separate staff decision. Review thresholds also include a subtree with at least five active or twenty total descendants.
+
+The Rewards tab shows the concrete effect before the decision:
+
+- existing inviter XDV/DCR entitlements, their current status, availability and expiry;
+- the status each entitlement will have after approval;
+- future XDV milestones from the relationship's pinned ruleset;
+- future DCR conditions without inventing an amount before a reconciled purchase exists;
+- expired rewards and rewards still held by an independent risk check.
+
+| Staff action | Actual effect |
+| --- | --- |
+| `Разрешить награды пригласившему` | Removes the weekly hold for the selected relationship. Existing rewards move to their real state: claimable, held, expired, or still blocked by another check. Future inviter XDV/DCR may proceed under the pinned rules. |
+| `Запретить награды пригласившему` | Keeps current and future inviter XDV/DCR blocked for the selected relationship only. |
+
+Approval does not credit the balance directly and does not bypass availability dates, expiry, risk/refund checks, or the normal claim flow. Either decision preserves the referral edge and the invitee in the structure, does not change the invitee's own start reward, and does not automatically decide a later relationship. For example, the sixth and seventh invitations require separate decisions.
 
 ### Mentor Level
 
