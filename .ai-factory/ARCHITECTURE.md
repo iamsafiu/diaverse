@@ -58,6 +58,31 @@ diaverse-auth-bot -> diaverseapi   # signed auth login-session and mobile-link a
 workspace -> repos       # AI context only, no runtime dependency
 ```
 
+### PvP World, Combat & Consequences
+
+```text
+diaweb /[lang]/pvp
+  -> same-origin /api/cabinet/pvp/*
+  -> diaverseapi /v1/cabinet/pvp/*
+  -> diaverseapi/app/pvp
+       -> immutable combat snapshots and deterministic engine
+       -> attack / battle / settlement / Hospital reconciliation
+       -> narrow Factory / Character / Pack / Raid / Exchange gateways
+```
+
+`diaverseapi/app/pvp` owns the finite world, placement, public PvP projection,
+routes, scouting, accepted combat snapshots, attack/battle state, settlement,
+Hospital records, PvP locks, idempotency, and reconciliation.
+`diaweb/frontend/modules/pvp` owns the browser map, combat presentation,
+polling, confirmations, reports, Hospital and repair UX.
+The browser must not call `diaverseapi` directly or infer private target state.
+Factory and Characters retain canonical production and pet state; PvP invokes
+their narrow services and stores only causal damage/Hospital records. Exchange,
+Pack and Raids consult live PvP guards. Destructive effects are default-off and
+permanent death has a separate flag. Living contracts:
+`docs/features/pvp-world-recon.md` and
+`docs/features/pvp-combat-consequences.md`.
+
 ### Mobile App
 
 ```text

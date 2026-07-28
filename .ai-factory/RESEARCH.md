@@ -345,4 +345,33 @@ Links (paths):
   - `C:\Users\Indigo\Desktop\diaverse\.ai-factory\RESEARCH.md`
   - `C:\Users\Indigo\Desktop\diaverse\diaverseapi\AGENTS.md`
   - `C:\Users\Indigo\Desktop\diaverse\.ai-factory\plans\`
+
+### 2026-07-27 00:00 — PvP architecture and implementation boundary
+What changed:
+  Consolidated the supplied PvP/map specifications, source-code reconnaissance,
+  architecture choices, and product decisions into two independently releasable
+  implementation plans.
+
+Key notes:
+  - Delivery is split into `PvP World & Recon` and `PvP Combat & Consequences`.
+  - `diaverseapi/app/pvp` is the server-authoritative bounded context for the
+    finite 1000x1000 world, scouting, combat snapshots, attacks, battles,
+    settlement, Hospital records, locks, idempotency, and reconciliation.
+  - `diaweb/frontend/modules/pvp` owns presentation, polling, confirmations,
+    reports, Hospital and repair UX through the same-origin BFF.
+  - Public map/profile data is allowlisted; private factory, inventory, pet, and
+    Hospital state is exposed only through persisted, granted facts.
+  - Combat uses deterministic, versioned rules, immutable evidence, stable
+    row-lock ordering, narrow cross-domain gateways, and independently gated
+    destructive effects.
+  - The final plans and living contracts are preserved under
+    `.ai-factory/plans/` and `docs/features/`, with rollout/recovery guidance in
+    `docs/runbooks/pvp-combat-consequences.md`.
+
+Links (paths):
+  - `.ai-factory/plans/feature-pvp-world-recon.md`
+  - `.ai-factory/plans/feature-pvp-combat-consequences.md`
+  - `docs/features/pvp-world-recon.md`
+  - `docs/features/pvp-combat-consequences.md`
+  - `docs/runbooks/pvp-combat-consequences.md`
 <!-- aif:sessions:end -->

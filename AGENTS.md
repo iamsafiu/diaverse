@@ -75,6 +75,7 @@ diaverse/
 
 - Cross-repo architecture, ownership, and integration rules live in `diaverse/.ai-factory/*`
 - Autonomous editorial system architecture, privacy, metrics, promotion, and rollback rules live in `diaverse/docs/features/autonomous-editor.md` and `diaverse/docs/runbooks/autonomous-editor.md`
+- PvP combat ownership, state machines, privacy, rollout, recovery, and rollback live in `diaverse/docs/features/pvp-combat-consequences.md` and `diaverse/docs/runbooks/pvp-combat-consequences.md`
 - Web frontend implementation truth lives in `diaweb`
 - Mobile frontend implementation truth lives in `diaverse-mobile`
 - Backend implementation truth lives in `diaverseapi`

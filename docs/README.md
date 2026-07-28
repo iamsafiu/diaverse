@@ -27,6 +27,9 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | [Product](product/master-plan.md) | Master plan, фазы, исходные продуктовые спецификации |
 | [Architecture](architecture/copywriting-web-architecture.md) | Cross-repo архитектура, file maps, ключевые потоки |
 | [Features](features/factory.md) | Живые документы по factory, auth, RBAC, shop, Advent, pets, analytics |
+| [PvP World & Recon](features/pvp-world-recon.md) | Карта 1000×1000, публичные профили, разведка, privacy, rollout и rollback |
+| [PvP Combat & Consequences](features/pvp-combat-consequences.md) | Армия, атака, бой, Factory damage, Hospital, settlement и privacy |
+| [PvP Combat Operations](runbooks/pvp-combat-consequences.md) | Staged rollout, aggregate audit, recovery и rollback |
 | [Runbooks](runbooks/copywriting-production-runtime.md) | Deploy, nginx, VPS, production/runtime операции |
 | [Content Factory Foreign Server](runbooks/content-factory-foreign-server.md) | Зарубежный runtime `diaverse-content`, S3 media, edge proxy для `/ru/learn/*` |
 | [Autonomous Editorial System](features/autonomous-editor.md) | Evidence-first content automation, privacy, attribution, learning, visual review, RBAC and promotion gates |
@@ -69,6 +72,9 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gbrain-health.ps1
 | Редлист | [features/step-cheater-restrictions.md](features/step-cheater-restrictions.md) | Перед изменением step restriction/Redlist, reward eligibility, leagues, clans или Club step rankings |
 | Site Analytics | [features/site-analytics.md](features/site-analytics.md) | Перед изменением site tracker, content attribution, staff Site analytics или executive KPI definitions |
 | Factory Web | [features/factory.md](features/factory.md) | Перед изменением веб-фабрики, factory API, каталога, ассетов или mobile handoff |
+| PvP World & Recon | [features/pvp-world-recon.md](features/pvp-world-recon.md) | Перед изменением PvP-карты, публичных профилей, разведки, rollout или Part-2 boundary |
+| PvP Combat & Consequences | [features/pvp-combat-consequences.md](features/pvp-combat-consequences.md) | Перед изменением армии, атаки, боя, Factory damage, Hospital, settlement или combat privacy |
+| PvP Combat Operations | [runbooks/pvp-combat-consequences.md](runbooks/pvp-combat-consequences.md) | Перед rollout, recovery, safe-cancel или rollback PvP combat |
 | Raids User Guide | [features/raids-user-guide.md](features/raids-user-guide.md) | Перед изменением рейдового UX, подсказок, баланса, слотов, автоотправки или пользовательских правил |
 | Staff Logging | [architecture/staff-logging.md](architecture/staff-logging.md) | Перед изменением staff logging |
 | Advent Calendar | [features/advent-calendar.md](features/advent-calendar.md) | Перед изменением Advent guest/payment flows |
